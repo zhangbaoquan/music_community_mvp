@@ -14,7 +14,7 @@ class MusicCommunityApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GetMaterialApp(
-      title: 'Mental Corner',
+      title: '亲亲音乐',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         useMaterial3: true,
