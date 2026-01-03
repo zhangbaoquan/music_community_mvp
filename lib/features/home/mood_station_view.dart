@@ -2,11 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../player/player_controller.dart'; // import
+
 class MoodStationView extends StatelessWidget {
   const MoodStationView({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final playerCtrl = Get.find<PlayerController>(); // Find controller
+
     return Scaffold(
       backgroundColor: Colors.white,
       body: SingleChildScrollView(
@@ -53,6 +57,7 @@ class MoodStationView extends StatelessWidget {
                       color: Colors.orange[50]!,
                       iconColor: Colors.orange,
                       description: "Upbeat & Energetic",
+                      onTap: () => playerCtrl.playMood("Happy"),
                     ),
                     _buildMoodCard(
                       label: "Melancholy",
@@ -60,6 +65,7 @@ class MoodStationView extends StatelessWidget {
                       color: Colors.blueGrey[50]!,
                       iconColor: Colors.blueGrey,
                       description: "Sad & Reflective",
+                      onTap: () => playerCtrl.playMood("Melancholy"),
                     ),
                     _buildMoodCard(
                       label: "Peaceful",
@@ -67,6 +73,7 @@ class MoodStationView extends StatelessWidget {
                       color: Colors.green[50]!,
                       iconColor: Colors.green,
                       description: "Calm & Relaxing",
+                      onTap: () => playerCtrl.playMood("Peaceful"),
                     ),
                     _buildMoodCard(
                       label: "Focused",
@@ -74,6 +81,7 @@ class MoodStationView extends StatelessWidget {
                       color: Colors.brown[50]!,
                       iconColor: Colors.brown,
                       description: "Deep Work & Study",
+                      onTap: () => playerCtrl.playMood("Focused"),
                     ),
                   ],
                 );
@@ -91,19 +99,12 @@ class MoodStationView extends StatelessWidget {
     required Color color,
     required Color iconColor,
     required String description,
+    required VoidCallback onTap, // Add callback
   }) {
     return Material(
       color: Colors.transparent,
       child: InkWell(
-        onTap: () {
-          // TODO: Play music based on mood
-          Get.snackbar(
-            "Mood Selected",
-            "Playing $label tunes...",
-            snackPosition: SnackPosition.BOTTOM,
-            margin: const EdgeInsets.all(16),
-          );
-        },
+        onTap: onTap, // Use callback
         borderRadius: BorderRadius.circular(24),
         child: Container(
           decoration: BoxDecoration(

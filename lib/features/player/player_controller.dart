@@ -3,7 +3,7 @@ import 'package:just_audio/just_audio.dart';
 
 class PlayerController extends GetxController {
   final AudioPlayer _player = AudioPlayer();
-  
+
   // Observables
   final isPlaying = false.obs;
   final currentTitle = ''.obs;
@@ -38,7 +38,7 @@ class PlayerController extends GetxController {
     _player.positionStream.listen((position) {
       currentPosition.value = position;
     });
-    
+
     // Listen to buffered position
     _player.bufferedPositionStream.listen((buffered) {
       bufferedPosition.value = buffered;
@@ -48,16 +48,47 @@ class PlayerController extends GetxController {
     await loadMockTrack();
   }
 
-  Future<void> loadMockTrack() async {
-    try {
-      // Using a reliable test audio from standard sources or public domain
-      // This is a sample MP3 from generic testing sources
-      await _player.setUrl('https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3');
-      currentTitle.value = 'Healing Rain';
-      currentArtist.value = 'Nature Sounds';
-    } catch (e) {
-      print("Error loading audio: $e");
+  // Demo Playlist Data
+  final Map<String, Map<String, String>> _moodPlaylists = {
+    'Happy': {
+      'url': 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3',
+      'title': 'Sunny Day',
+      'artist': 'Joyful Beats',
+    },
+    'Melancholy': {
+      'url': 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3',
+      'title': 'Rainy Window',
+      'artist': 'Blue Moods',
+    },
+    'Peaceful': {
+      'url': 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3',
+      'title': 'Ocean Breeze',
+      'artist': 'Nature Sounds',
+    },
+    'Focused': {
+      'url': 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3',
+      'title': 'Deep Work',
+      'artist': 'Lofi Study',
+    },
+  };
+
+  Future<void> playMood(String mood) async {
+    final track = _moodPlaylists[mood];
+    if (track != null) {
+      try {
+        await _player.setUrl(track['url']!);
+        currentTitle.value = track['title']!;
+        currentArtist.value = track['artist']!;
+        _player.play();
+      } catch (e) {
+        Get.snackbar("Error", "Could not load track for $mood");
+      }
     }
+  }
+
+  // Initial load can be empty or a default track
+  Future<void> loadMockTrack() async {
+    // Optional: load a default track without playing
   }
 
   void togglePlay() {
