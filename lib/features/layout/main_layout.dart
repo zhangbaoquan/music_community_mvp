@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../player/player_bar.dart';
+import '../home/mood_station_view.dart'; // import mood station
 import '../player/player_controller.dart'; // import controller
 import '../diary/diary_view.dart';
 import '../auth/auth_controller.dart';
@@ -24,8 +25,8 @@ class MainLayout extends StatelessWidget {
   ); // Inject PlayerController
 
   final List<Widget> _pages = [
-    // Tab 0: Mood Station (Placeholder)
-    const Center(child: Text("Mood Station (Coming Soon)")),
+    // Tab 0: Mood Station (New Home)
+    const MoodStationView(),
 
     // Tab 1: Mental Corner (Diary)
     const DiaryView(),
