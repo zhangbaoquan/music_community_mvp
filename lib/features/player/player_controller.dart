@@ -52,23 +52,23 @@ class PlayerController extends GetxController {
   final Map<String, Map<String, String>> _moodPlaylists = {
     'Happy': {
       'url': 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3',
-      'title': 'Sunny Day',
-      'artist': 'Joyful Beats',
+      'title': '晴朗的一天',
+      'artist': '欢快节拍',
     },
     'Melancholy': {
       'url': 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3',
-      'title': 'Rainy Window',
-      'artist': 'Blue Moods',
+      'title': '雨窗之思',
+      'artist': '蓝色心绪',
     },
     'Peaceful': {
       'url': 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3',
-      'title': 'Ocean Breeze',
-      'artist': 'Nature Sounds',
+      'title': '海风轻拂',
+      'artist': '自然之声',
     },
     'Focused': {
       'url': 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3',
-      'title': 'Deep Work',
-      'artist': 'Lofi Study',
+      'title': '深度工作',
+      'artist': 'Lofi 学习',
     },
   };
 

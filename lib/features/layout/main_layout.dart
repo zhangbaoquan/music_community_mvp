@@ -5,6 +5,7 @@ import '../player/player_bar.dart';
 import '../home/mood_station_view.dart'; // import mood station
 import '../player/player_controller.dart'; // import controller
 import '../diary/diary_view.dart';
+import '../profile/profile_view.dart'; // import profile view
 import '../auth/auth_controller.dart';
 
 class NavigationController extends GetxController {
@@ -31,8 +32,8 @@ class MainLayout extends StatelessWidget {
     // Tab 1: Mental Corner (Diary)
     const DiaryView(),
 
-    // Tab 2: Profile (Placeholder)
-    const Center(child: Text("Profile (Coming Soon)")),
+    // Tab 2: Profile
+    const ProfileView(),
   ];
 
   @override
@@ -72,7 +73,7 @@ class MainLayout extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.only(left: 12, bottom: 40),
             child: Text(
-              'QinQin Music',
+              '亲亲音乐',
               style: GoogleFonts.outfit(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
@@ -82,20 +83,16 @@ class MainLayout extends StatelessWidget {
           ),
 
           // Navigation Items
-          _navItem(
-            icon: Icons.radio_button_checked,
-            label: 'Mood Station',
-            index: 0,
-          ),
-          _navItem(icon: Icons.book, label: 'Mental Corner', index: 1),
-          _navItem(icon: Icons.person, label: 'Profile', index: 2),
+          _navItem(icon: Icons.radio_button_checked, label: '心情电台', index: 0),
+          _navItem(icon: Icons.book, label: '心事角落', index: 1),
+          _navItem(icon: Icons.person, label: '个人中心', index: 2),
 
           const Spacer(),
 
           // Sign Out
           _navItem(
             icon: Icons.logout,
-            label: 'Sign Out',
+            label: '退出登录',
             index: 99,
             onTap: () => authCtrl.signOut(),
           ),

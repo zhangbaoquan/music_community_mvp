@@ -20,7 +20,7 @@ class MoodStationView extends StatelessWidget {
           children: [
             // Header
             Text(
-              "How are you feeling?",
+              "今天心情如何？",
               style: GoogleFonts.outfit(
                 fontSize: 48,
                 fontWeight: FontWeight.bold,
@@ -29,7 +29,7 @@ class MoodStationView extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             Text(
-              "Select your mood to tune into your vibe.",
+              "选择一个心情，聆听专属旋律。",
               style: GoogleFonts.outfit(fontSize: 18, color: Colors.grey[500]),
             ),
 
@@ -52,35 +52,35 @@ class MoodStationView extends StatelessWidget {
                   childAspectRatio: 1.2,
                   children: [
                     _buildMoodCard(
-                      label: "Happy",
+                      label: "开心",
                       icon: Icons.sunny,
                       color: Colors.orange[50]!,
                       iconColor: Colors.orange,
-                      description: "Upbeat & Energetic",
+                      description: "元气满满 & 充满活力",
                       onTap: () => playerCtrl.playMood("Happy"),
                     ),
                     _buildMoodCard(
-                      label: "Melancholy",
+                      label: "忧郁",
                       icon: Icons.cloud,
                       color: Colors.blueGrey[50]!,
                       iconColor: Colors.blueGrey,
-                      description: "Sad & Reflective",
+                      description: "悲伤 & 沉思",
                       onTap: () => playerCtrl.playMood("Melancholy"),
                     ),
                     _buildMoodCard(
-                      label: "Peaceful",
+                      label: "平静",
                       icon: Icons.spa,
                       color: Colors.green[50]!,
                       iconColor: Colors.green,
-                      description: "Calm & Relaxing",
+                      description: "放松 & 治愈",
                       onTap: () => playerCtrl.playMood("Peaceful"),
                     ),
                     _buildMoodCard(
-                      label: "Focused",
+                      label: "专注",
                       icon: Icons.coffee,
                       color: Colors.brown[50]!,
                       iconColor: Colors.brown,
-                      description: "Deep Work & Study",
+                      description: "深度工作 & 学习",
                       onTap: () => playerCtrl.playMood("Focused"),
                     ),
                   ],

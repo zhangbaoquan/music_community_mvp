@@ -64,7 +64,7 @@ class PlayerBar extends StatelessWidget {
                 children: [
                   Text(
                     controller.currentTitle.value.isEmpty
-                        ? "No Song"
+                        ? "暂无音乐"
                         : controller.currentTitle.value,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -76,7 +76,7 @@ class PlayerBar extends StatelessWidget {
                   ),
                   Text(
                     controller.currentArtist.value.isEmpty
-                        ? "Unknown"
+                        ? "未知歌手"
                         : controller.currentArtist.value,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,

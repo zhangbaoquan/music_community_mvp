@@ -17,13 +17,8 @@ class _DiaryViewState extends State<DiaryView> {
   final textController = TextEditingController();
 
   // Mood Selection State
-  String selectedMood = 'Peaceful';
-  final List<String> moodOptions = [
-    'Happy',
-    'Melancholy',
-    'Peaceful',
-    'Focused',
-  ];
+  String selectedMood = '平静';
+  final List<String> moodOptions = ['开心', '忧郁', '平静', '专注'];
 
   @override
   Widget build(BuildContext context) {
@@ -38,7 +33,7 @@ class _DiaryViewState extends State<DiaryView> {
         children: [
           // Header
           Text(
-            "Mood Diary",
+            "心情日记",
             style: GoogleFonts.outfit(
               fontSize: 20,
               fontWeight: FontWeight.bold,
@@ -61,7 +56,7 @@ class _DiaryViewState extends State<DiaryView> {
                   controller: textController,
                   maxLines: 3,
                   decoration: InputDecoration(
-                    hintText: "Write down your thoughts...",
+                    hintText: "记录当下的心情与故事...",
                     hintStyle: GoogleFonts.outfit(color: Colors.grey[400]),
                     border: InputBorder.none,
                     contentPadding: EdgeInsets.zero,
@@ -135,7 +130,7 @@ class _DiaryViewState extends State<DiaryView> {
                         ),
                       ),
                       child: Text(
-                        "Save",
+                        "保存",
                         style: GoogleFonts.outfit(fontWeight: FontWeight.w600),
                       ),
                     ),
@@ -157,7 +152,7 @@ class _DiaryViewState extends State<DiaryView> {
               if (controller.entries.isEmpty) {
                 return Center(
                   child: Text(
-                    "No thoughts recorded yet.\nStart writing above!",
+                    "还没有日记哦。\n在上方写下第一篇吧！",
                     textAlign: TextAlign.center,
                     style: GoogleFonts.outfit(color: Colors.grey[400]),
                   ),
@@ -185,7 +180,7 @@ class _DiaryViewState extends State<DiaryView> {
                             // Date
                             Text(
                               DateFormat(
-                                'MMM d, y • HH:mm',
+                                'yyyy年M月d日 • HH:mm',
                               ).format(entry.createdAt.toLocal()),
                               style: GoogleFonts.ibmPlexMono(
                                 fontSize: 12,
@@ -245,13 +240,13 @@ class _DiaryViewState extends State<DiaryView> {
 
   IconData _getMoodIcon(String mood) {
     switch (mood) {
-      case 'Happy':
+      case '开心':
         return Icons.sunny;
-      case 'Melancholy':
+      case '忧郁':
         return Icons.cloud;
-      case 'Peaceful':
+      case '平静':
         return Icons.spa;
-      case 'Focused':
+      case '专注':
         return Icons.coffee;
       default:
         return Icons.circle;
@@ -260,13 +255,13 @@ class _DiaryViewState extends State<DiaryView> {
 
   Color _getMoodColor(String mood) {
     switch (mood) {
-      case 'Happy':
+      case '开心':
         return Colors.orange[100]!;
-      case 'Melancholy':
+      case '忧郁':
         return Colors.blueGrey[100]!;
-      case 'Peaceful':
+      case '平静':
         return Colors.green[100]!;
-      case 'Focused':
+      case '专注':
         return Colors.brown[100]!;
       default:
         return Colors.grey[200]!;
