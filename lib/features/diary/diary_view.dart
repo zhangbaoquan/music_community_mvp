@@ -2,15 +2,31 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'diary_controller.dart';
+import 'package:intl/intl.dart';
 
-class DiaryView extends StatelessWidget {
+class DiaryView extends StatefulWidget {
   const DiaryView({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final controller = Get.put(DiaryController());
-    final textController = TextEditingController();
+  State<DiaryView> createState() => _DiaryViewState();
+}
 
+class _DiaryViewState extends State<DiaryView> {
+  // Use putOrFind to be safe, though usually put is fine for pages
+  final controller = Get.put(DiaryController());
+  final textController = TextEditingController();
+
+  // Mood Selection State
+  String selectedMood = 'Peaceful';
+  final List<String> moodOptions = [
+    'Happy',
+    'Melancholy',
+    'Peaceful',
+    'Focused',
+  ];
+
+  @override
+  Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
@@ -20,6 +36,7 @@ class DiaryView extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Header
           Text(
             "Mood Diary",
             style: GoogleFonts.outfit(
@@ -29,84 +46,230 @@ class DiaryView extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 16),
-          
-          // Input Area
-          TextField(
-            controller: textController,
-            maxLines: 3,
-            decoration: InputDecoration(
-              hintText: "Write down your thoughts...",
-              hintStyle: GoogleFonts.outfit(color: Colors.grey[400]),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide.none,
-              ),
-              filled: true,
-              fillColor: Colors.white,
-              contentPadding: const EdgeInsets.all(16),
+
+          // Input Area (Write a new diary)
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: Colors.grey[200]!),
             ),
-          ),
-          const SizedBox(height: 16),
-          Align(
-            alignment: Alignment.centerRight,
-            child: ElevatedButton(
-              onPressed: () {
-                controller.addEntry(textController.text);
-                textController.clear();
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF1A1A1A),
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-              ),
-              child: Text("Save Mood", style: GoogleFonts.outfit(fontWeight: FontWeight.w600)),
-            ),
-          ),
-          
-          const SizedBox(height: 32),
-          
-          // List Area
-          Expanded(
-            child: Obx(() => ListView.separated(
-              itemCount: controller.entries.length,
-              separatorBuilder: (_, __) => const SizedBox(height: 16),
-              itemBuilder: (context, index) {
-                final entry = controller.entries[index];
-                return Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: Colors.grey[200]!),
+            child: Column(
+              children: [
+                TextField(
+                  controller: textController,
+                  maxLines: 3,
+                  decoration: InputDecoration(
+                    hintText: "Write down your thoughts...",
+                    hintStyle: GoogleFonts.outfit(color: Colors.grey[400]),
+                    border: InputBorder.none,
+                    contentPadding: EdgeInsets.zero,
                   ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(entry.date, style: GoogleFonts.ibmPlexMono(fontSize: 12, color: Colors.grey)),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                            decoration: BoxDecoration(
-                              color: Colors.amber[50],
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Text(entry.mood, style: GoogleFonts.outfit(fontSize: 10, color: Colors.amber[800])),
-                          ),
-                        ],
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    // Mood Selector Dropdown
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      decoration: BoxDecoration(
+                        color: Colors.grey[50],
+                        borderRadius: BorderRadius.circular(8),
                       ),
-                      const SizedBox(height: 8),
-                      Text(entry.content, style: GoogleFonts.outfit(color: const Color(0xFF333333))),
-                    ],
+                      child: DropdownButtonHideUnderline(
+                        child: DropdownButton<String>(
+                          value: selectedMood,
+                          icon: const Icon(Icons.arrow_drop_down_rounded),
+                          items: moodOptions.map((String mood) {
+                            return DropdownMenuItem<String>(
+                              value: mood,
+                              child: Row(
+                                children: [
+                                  Icon(
+                                    _getMoodIcon(mood),
+                                    size: 16,
+                                    color: Colors.grey[600],
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    mood,
+                                    style: GoogleFonts.outfit(fontSize: 14),
+                                  ),
+                                ],
+                              ),
+                            );
+                          }).toList(),
+                          onChanged: (String? newValue) {
+                            if (newValue != null) {
+                              setState(() {
+                                selectedMood = newValue;
+                              });
+                            }
+                          },
+                        ),
+                      ),
+                    ),
+
+                    // Save Button
+                    ElevatedButton(
+                      onPressed: () {
+                        if (textController.text.isNotEmpty) {
+                          controller.addEntry(
+                            textController.text,
+                            selectedMood,
+                          );
+                          textController.clear();
+                        }
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF1A1A1A),
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 24,
+                          vertical: 12,
+                        ),
+                      ),
+                      child: Text(
+                        "Save",
+                        style: GoogleFonts.outfit(fontWeight: FontWeight.w600),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 32),
+
+          // List Area (Display existing diaries)
+          Expanded(
+            child: Obx(() {
+              if (controller.isLoading.value) {
+                return const Center(child: CircularProgressIndicator());
+              }
+
+              if (controller.entries.isEmpty) {
+                return Center(
+                  child: Text(
+                    "No thoughts recorded yet.\nStart writing above!",
+                    textAlign: TextAlign.center,
+                    style: GoogleFonts.outfit(color: Colors.grey[400]),
                   ),
                 );
-              },
-            )),
+              }
+
+              return ListView.separated(
+                itemCount: controller.entries.length,
+                separatorBuilder: (_, __) => const SizedBox(height: 16),
+                itemBuilder: (context, index) {
+                  final entry = controller.entries[index];
+                  return Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: Colors.grey[200]!),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            // Date
+                            Text(
+                              DateFormat(
+                                'MMM d, y • HH:mm',
+                              ).format(entry.createdAt.toLocal()),
+                              style: GoogleFonts.ibmPlexMono(
+                                fontSize: 12,
+                                color: Colors.grey,
+                              ),
+                            ),
+                            // Mood Tag
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 4,
+                              ),
+                              decoration: BoxDecoration(
+                                color: _getMoodColor(entry.moodType),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    _getMoodIcon(entry.moodType),
+                                    size: 10,
+                                    color: Colors.black54,
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    entry.moodType,
+                                    style: GoogleFonts.outfit(
+                                      fontSize: 10,
+                                      color: Colors.black87,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          entry.content,
+                          style: GoogleFonts.outfit(
+                            color: const Color(0xFF333333),
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              );
+            }),
           ),
         ],
       ),
     );
+  }
+
+  IconData _getMoodIcon(String mood) {
+    switch (mood) {
+      case 'Happy':
+        return Icons.sunny;
+      case 'Melancholy':
+        return Icons.cloud;
+      case 'Peaceful':
+        return Icons.spa;
+      case 'Focused':
+        return Icons.coffee;
+      default:
+        return Icons.circle;
+    }
+  }
+
+  Color _getMoodColor(String mood) {
+    switch (mood) {
+      case 'Happy':
+        return Colors.orange[100]!;
+      case 'Melancholy':
+        return Colors.blueGrey[100]!;
+      case 'Peaceful':
+        return Colors.green[100]!;
+      case 'Focused':
+        return Colors.brown[100]!;
+      default:
+        return Colors.grey[200]!;
+    }
   }
 }

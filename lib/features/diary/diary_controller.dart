@@ -1,30 +1,82 @@
 import 'package:get/get.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class DiaryEntry {
+  final String id;
   final String content;
-  final String date;
-  final String mood;
+  final DateTime createdAt;
+  final String moodType;
 
-  DiaryEntry({required this.content, required this.date, required this.mood});
+  DiaryEntry({
+    required this.id,
+    required this.content,
+    required this.createdAt,
+    required this.moodType,
+  });
+
+  factory DiaryEntry.fromJson(Map<String, dynamic> json) {
+    return DiaryEntry(
+      id: json['id'] ?? '',
+      content: json['content'] ?? '',
+      createdAt: DateTime.tryParse(json['created_at']) ?? DateTime.now(),
+      moodType: json['mood_type'] ?? 'Calm',
+    );
+  }
 }
 
 class DiaryController extends GetxController {
+  final _supabase = Supabase.instance.client;
   var entries = <DiaryEntry>[].obs;
-  
+  var isLoading = false.obs;
+
   @override
   void onInit() {
     super.onInit();
-    // Load some dummy data
-    entries.add(DiaryEntry(content: "今天听这首歌，感觉很平静...", date: "2024-12-28", mood: "Peaceful"));
+    fetchEntries();
   }
 
-  void addEntry(String content) {
-    if (content.isNotEmpty) {
-      entries.insert(0, DiaryEntry(
-        content: content,
-        date: DateTime.now().toString().split(' ')[0], 
-        mood: "Calm" // Default for MVP
-      ));
+  Future<void> fetchEntries() async {
+    try {
+      isLoading.value = true;
+      final userId = _supabase.auth.currentUser?.id;
+      if (userId == null) return;
+
+      final response = await _supabase
+          .from('mood_diaries')
+          .select()
+          .eq('user_id', userId)
+          .order('created_at', ascending: false);
+
+      final List<dynamic> data = response;
+      entries.value = data.map((json) => DiaryEntry.fromJson(json)).toList();
+    } catch (e) {
+      Get.snackbar("Error", "Failed to load diaries: $e");
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  Future<void> addEntry(String content, String mood) async {
+    try {
+      final userId = _supabase.auth.currentUser?.id;
+      if (userId == null) {
+        Get.snackbar("Error", "Please login first");
+        return;
+      }
+
+      final newEntry = {
+        'user_id': userId,
+        'content': content,
+        'mood_type': mood,
+      };
+
+      await _supabase.from('mood_diaries').insert(newEntry);
+
+      // Refresh list
+      fetchEntries();
+      Get.snackbar("Success", "Diary saved!");
+    } catch (e) {
+      Get.snackbar("Error", "Failed to save diary: $e");
     }
   }
 }
