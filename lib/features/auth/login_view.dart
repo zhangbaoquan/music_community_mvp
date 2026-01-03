@@ -41,7 +41,7 @@ class _LoginViewState extends State<LoginView> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Text(
-                'QinQin Music',
+                '亲亲音乐',
                 textAlign: TextAlign.center,
                 style: GoogleFonts.outfit(
                   fontSize: 28,
@@ -51,7 +51,7 @@ class _LoginViewState extends State<LoginView> {
               ),
               const SizedBox(height: 8),
               Text(
-                _isLogin ? 'Welcome back' : 'Create an account',
+                _isLogin ? '欢迎回来' : '创建一个账号',
                 textAlign: TextAlign.center,
                 style: GoogleFonts.outfit(
                   fontSize: 16,
@@ -64,7 +64,7 @@ class _LoginViewState extends State<LoginView> {
                 TextField(
                   controller: _usernameCtrl,
                   decoration: const InputDecoration(
-                    labelText: 'Username',
+                    labelText: '用户名称',
                     border: OutlineInputBorder(),
                   ),
                 ),
@@ -74,7 +74,7 @@ class _LoginViewState extends State<LoginView> {
               TextField(
                 controller: _emailCtrl,
                 decoration: const InputDecoration(
-                  labelText: 'Email',
+                  labelText: '邮箱',
                   border: OutlineInputBorder(),
                 ),
               ),
@@ -84,7 +84,7 @@ class _LoginViewState extends State<LoginView> {
                 controller: _passwordCtrl,
                 obscureText: true,
                 decoration: const InputDecoration(
-                  labelText: 'Password',
+                  labelText: '密码',
                   border: OutlineInputBorder(),
                 ),
               ),
@@ -110,7 +110,7 @@ class _LoginViewState extends State<LoginView> {
                     borderRadius: BorderRadius.circular(12),
                   ),
                 ),
-                child: Text(_isLogin ? 'Sign In' : 'Sign Up'),
+                child: Text(_isLogin ? '登录' : '注册'),
               ),
 
               const SizedBox(height: 16),
@@ -123,8 +123,8 @@ class _LoginViewState extends State<LoginView> {
                 },
                 child: Text(
                   _isLogin
-                      ? 'No account? Create one'
-                      : 'Already have an account? Sign in',
+                      ? '没有账号? 创建一个'
+                      : '已经有账号? 登录',
                 ),
               ),
             ],
