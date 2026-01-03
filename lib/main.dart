@@ -1,10 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'features/player/player_view.dart';
-import 'features/diary/diary_view.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'features/auth/auth_controller.dart';
 
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  await Supabase.initialize(
+    url: 'http://qinqinmusic.com:8000',
+    anonKey:
+        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyAgCiAgICAicm9sZSI6ICJhbm9uIiwKICAgICJpc3MiOiAic3VwYWJhc2UtZGVtbyIsCiAgICAiaWF0IjogMTY0MTc2OTIwMCwKICAgICJleHAiOiAxNzk5NTM1NjAwCn0.dc_X5iR_VP_qT0zsiyj_I_OZ2T9FtRU2BBNWN8Bu4GE',
+  );
+
   runApp(const MusicCommunityApp());
 }
 
@@ -13,6 +21,9 @@ class MusicCommunityApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Inject AuthController to listen to auth state and redirect
+    Get.put(AuthController());
+
     return GetMaterialApp(
       title: '亲亲音乐',
       debugShowCheckedModeBanner: false,
@@ -22,61 +33,8 @@ class MusicCommunityApp extends StatelessWidget {
         scaffoldBackgroundColor: Colors.white,
         textTheme: GoogleFonts.outfitTextTheme(),
       ),
-      home: HomeView(),
-    );
-  }
-}
-
-class HomeView extends GetResponsiveView {
-  HomeView({super.key});
-
-  @override
-  Widget builder() {
-    // Desktop / Tablet Landscape Layout
-    if (screen.width > 800) {
-      return Scaffold(
-        body: Center(
-          child: Container(
-            constraints: const BoxConstraints(maxWidth: 1000),
-            padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 20),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Left Panel: Player
-                const Expanded(
-                  flex: 4,
-                  child: SingleChildScrollView(child: PlayerView()),
-                ),
-                const SizedBox(width: 40),
-                // Right Panel: Diary
-                const Expanded(
-                  flex: 6,
-                  child: DiaryView(),
-                ),
-              ],
-            ),
-          ),
-        ),
-      );
-    }
-
-    // Mobile Layout
-    return const Scaffold(
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: EdgeInsets.all(20),
-          child: Column(
-            children: [
-              PlayerView(),
-              SizedBox(height: 32),
-              SizedBox(
-                height: 500, // Fixed height for diary on mobile
-                child: DiaryView(),
-              ),
-            ],
-          ),
-        ),
-      ),
+      // AuthController will redirect to Home or Login
+      home: const Scaffold(body: Center(child: CircularProgressIndicator())),
     );
   }
 }
