@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'package:music_community_mvp/core/shim_google_fonts.dart';
 import 'player_controller.dart';
 
 class PlayerBar extends StatelessWidget {
@@ -8,35 +8,81 @@ class PlayerBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Reuse the existing controller
     final controller = Get.find<PlayerController>();
 
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 24),
-      height: 80,
-      color: Colors.white,
-      child: Row(
-        children: [
-          // 1. Song Info (Left)
-          _buildSongInfo(controller),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isMobile = constraints.maxWidth < 600;
 
-          const Spacer(flex: 1),
-
-          // 2. Player Controls (Center)
-          _buildControls(controller),
-
-          const Spacer(flex: 1),
-
-          // 3. Extra Controls / Volume (Right)
-          _buildExtraControls(controller),
-        ],
-      ),
+        return Container(
+          padding: const EdgeInsets.symmetric(horizontal: 24),
+          height: 80,
+          color: Colors.white,
+          child: isMobile
+              ? _buildMobileLayout(controller)
+              : _buildDesktopLayout(controller),
+        );
+      },
     );
   }
 
-  Widget _buildSongInfo(PlayerController controller) {
+  Widget _buildMobileLayout(PlayerController controller) {
+    return Row(
+      children: [
+        // Song Info (Expanded)
+        Expanded(child: _buildSongInfo(controller, isMobile: true)),
+
+        // Controls (Compact)
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            GestureDetector(
+              onTap: controller.togglePlay,
+              child: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: const BoxDecoration(
+                  color: Color(0xFF1A1A1A),
+                  shape: BoxShape.circle,
+                ),
+                child: Obx(
+                  () => Icon(
+                    controller.isPlaying.value
+                        ? Icons.pause_rounded
+                        : Icons.play_arrow_rounded,
+                    color: Colors.white,
+                    size: 24,
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(width: 16),
+            IconButton(
+              onPressed: () {},
+              icon: const Icon(Icons.skip_next_rounded),
+              iconSize: 28,
+              color: const Color(0xFF1A1A1A),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDesktopLayout(PlayerController controller) {
+    return Row(
+      children: [
+        _buildSongInfo(controller),
+        const Spacer(flex: 1),
+        _buildControls(controller),
+        const Spacer(flex: 1),
+        _buildExtraControls(controller),
+      ],
+    );
+  }
+
+  Widget _buildSongInfo(PlayerController controller, {bool isMobile = false}) {
     return SizedBox(
-      width: 200,
+      width: isMobile ? null : 200, // No fixed width on mobile
       child: Row(
         children: [
           // Mini Album Art
@@ -44,15 +90,16 @@ class PlayerBar extends StatelessWidget {
             height: 48,
             width: 48,
             decoration: BoxDecoration(
-              color: Colors.grey[200],
+              color: Colors.grey[800], // Dark placeholder background
               borderRadius: BorderRadius.circular(8),
-              image: const DecorationImage(
-                image: NetworkImage(
-                  'https://images.unsplash.com/photo-1493225255756-d9584f8606e9?q=80&w=200&auto=format&fit=crop',
-                ),
-                fit: BoxFit.cover,
+              // Remove NetworkImage to avoid Unsplash blocking
+              gradient: const LinearGradient(
+                colors: [Color(0xFF1A1A1A), Color(0xFF333333)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
               ),
             ),
+            child: const Icon(Icons.music_note, color: Colors.white, size: 24),
           ),
           const SizedBox(width: 12),
           // Text Info

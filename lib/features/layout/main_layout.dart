@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'package:music_community_mvp/core/shim_google_fonts.dart';
 import '../player/player_bar.dart';
 import '../home/mood_station_view.dart'; // import mood station
 import '../player/player_controller.dart'; // import controller
@@ -38,30 +38,42 @@ class MainLayout extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Column(
-        children: [
-          // Main Content Area (SideNav + Page)
-          Expanded(
-            child: Row(
-              children: [
-                // Side Navigation
-                _buildSideNav(),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isMobile = constraints.maxWidth < 600;
 
-                // Page Content
-                Expanded(child: Obx(() => _pages[navCtrl.selectedIndex.value])),
-              ],
-            ),
+        return Scaffold(
+          drawer: isMobile
+              ? Drawer(child: _buildSideNav(isDrawer: true))
+              : null, // Optional drawer for mobile
+          body: Column(
+            children: [
+              Expanded(
+                child: Row(
+                  children: [
+                    // Side Navigation (Desktop only)
+                    if (!isMobile) _buildSideNav(),
+
+                    // Page Content
+                    Expanded(
+                      child: Obx(() => _pages[navCtrl.selectedIndex.value]),
+                    ),
+                  ],
+                ),
+              ),
+
+              // Persistent Player Bar
+              _buildPlayerBar(),
+            ],
           ),
-
-          // Persistent Player Bar (Fixed 80px height)
-          _buildPlayerBar(),
-        ],
-      ),
+          // Bottom Navigation (Mobile only)
+          bottomNavigationBar: isMobile ? _buildBottomNav() : null,
+        );
+      },
     );
   }
 
-  Widget _buildSideNav() {
+  Widget _buildSideNav({bool isDrawer = false}) {
     return Container(
       width: 240,
       color: Colors.grey[50],
@@ -72,13 +84,18 @@ class MainLayout extends StatelessWidget {
           // Logo Area
           Padding(
             padding: const EdgeInsets.only(left: 12, bottom: 40),
-            child: Text(
-              '亲亲音乐',
-              style: GoogleFonts.outfit(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-                color: const Color(0xFF1A1A1A),
-              ),
+            child: Row(
+              children: [
+                Text(
+                  '亲亲音乐',
+                  style: GoogleFonts.outfit(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: const Color(0xFF1A1A1A),
+                  ),
+                ),
+                if (isDrawer) const Spacer(), // Close button for drawer?
+              ],
             ),
           ),
 
@@ -96,6 +113,27 @@ class MainLayout extends StatelessWidget {
             index: 99,
             onTap: () => authCtrl.signOut(),
           ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBottomNav() {
+    return Obx(
+      () => BottomNavigationBar(
+        currentIndex: navCtrl.selectedIndex.value,
+        onTap: (index) => navCtrl.changePage(index),
+        backgroundColor: Colors.white,
+        selectedItemColor: const Color(0xFF1A1A1A),
+        unselectedItemColor: Colors.grey[400],
+        type: BottomNavigationBarType.fixed,
+        items: const [
+          BottomNavigationBarItem(
+            icon: Icon(Icons.radio_button_checked),
+            label: '电台',
+          ),
+          BottomNavigationBarItem(icon: Icon(Icons.book), label: '日记'),
+          BottomNavigationBarItem(icon: Icon(Icons.person), label: '我的'),
         ],
       ),
     );

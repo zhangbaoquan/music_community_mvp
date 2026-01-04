@@ -52,25 +52,25 @@ class PlayerController extends GetxController {
   final Map<String, Map<String, String>> _moodPlaylists = {
     'Happy': {
       'url':
-          'http://43.154.248.236:8000/storage/v1/object/public/songs/happy_diyue.mp3',
+          'http://qinqinmusic.com/storage/v1/object/public/songs/happy_diyue.mp3',
       'title': '笛月',
       'artist': '董敏 - 笛月',
     },
     'Melancholy': {
       'url':
-          'http://43.154.248.236:8000/storage/v1/object/public/songs/sad_dayu.mp3',
+          'http://qinqinmusic.com/storage/v1/object/public/songs/sad_dayu.mp3',
       'title': '大鱼',
       'artist': '大鱼海棠',
     },
     'Peaceful': {
       'url':
-          'http://43.154.248.236:8000/storage/v1/object/public/songs/calmness_OldMemory.mp3',
+          'http://qinqinmusic.com/storage/v1/object/public/songs/calmness_OldMemory.mp3',
       'title': 'Old Memory',
       'artist': '纯音乐',
     },
     'Focused': {
       'url':
-          'http://43.154.248.236:8000/storage/v1/object/public/songs/focus_FengJuZhuDeJieDao.mp3',
+          'http://qinqinmusic.com/storage/v1/object/public/songs/focus_FengJuZhuDeJieDao.mp3',
       'title': '风居住的街道',
       'artist': '矶村由纪子',
     },
@@ -81,12 +81,24 @@ class PlayerController extends GetxController {
     if (track != null) {
       try {
         await _player.stop(); // Ensure previous track is stopped
-        await _player.setUrl(track['url']!);
+        final url = track['url']!;
+        print(
+          "Attempting to load URL: $url",
+        ); // Debug log available in browser console
+
+        await _player.setUrl(url);
         currentTitle.value = track['title']!;
         currentArtist.value = track['artist']!;
         _player.play();
       } catch (e) {
-        Get.snackbar("Error", "Could not load track for $mood");
+        print("Error playing $mood: $e");
+        Get.snackbar(
+          "播放失败 (Error)",
+          "无法加载歌曲: $mood\n$e",
+          duration: const Duration(seconds: 5),
+          backgroundColor: Get.theme.colorScheme.errorContainer,
+          colorText: Get.theme.colorScheme.onErrorContainer,
+        );
       }
     }
   }

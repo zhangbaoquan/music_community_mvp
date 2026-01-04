@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'package:music_community_mvp/core/shim_google_fonts.dart';
 import 'profile_controller.dart';
 
 class ProfileView extends StatelessWidget {
