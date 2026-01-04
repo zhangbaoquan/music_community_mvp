@@ -51,24 +51,28 @@ class PlayerController extends GetxController {
   // Demo Playlist Data
   final Map<String, Map<String, String>> _moodPlaylists = {
     'Happy': {
-      'url': 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3',
-      'title': '晴朗的一天',
-      'artist': '欢快节拍',
+      'url':
+          'http://43.154.248.236:8000/storage/v1/object/public/songs/happy_diyue.mp3',
+      'title': '笛月',
+      'artist': '董敏 - 笛月',
     },
     'Melancholy': {
-      'url': 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3',
-      'title': '雨窗之思',
-      'artist': '蓝色心绪',
+      'url':
+          'http://43.154.248.236:8000/storage/v1/object/public/songs/sad_dayu.mp3',
+      'title': '大鱼',
+      'artist': '大鱼海棠',
     },
     'Peaceful': {
-      'url': 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3',
-      'title': '海风轻拂',
-      'artist': '自然之声',
+      'url':
+          'http://43.154.248.236:8000/storage/v1/object/public/songs/calmness_OldMemory.mp3',
+      'title': 'Old Memory',
+      'artist': '纯音乐',
     },
     'Focused': {
-      'url': 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3',
-      'title': '深度工作',
-      'artist': 'Lofi 学习',
+      'url':
+          'http://43.154.248.236:8000/storage/v1/object/public/songs/focus_FengJuZhuDeJieDao.mp3',
+      'title': '风居住的街道',
+      'artist': '矶村由纪子',
     },
   };
 
@@ -76,6 +80,7 @@ class PlayerController extends GetxController {
     final track = _moodPlaylists[mood];
     if (track != null) {
       try {
+        await _player.stop(); // Ensure previous track is stopped
         await _player.setUrl(track['url']!);
         currentTitle.value = track['title']!;
         currentArtist.value = track['artist']!;
