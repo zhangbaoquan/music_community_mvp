@@ -47,6 +47,9 @@ class CommentsSheet extends StatelessWidget {
               Expanded(
                 child: TextField(
                   controller: textController,
+                  minLines: 1,
+                  maxLines: 5,
+                  maxLength: 200, // Show character count (e.g. 0/200)
                   onSubmitted: (_) {
                     if (!controller.isPosting.value) {
                       controller.postComment(textController.text);
@@ -62,7 +65,14 @@ class CommentsSheet extends StatelessWidget {
                     ),
                     filled: true,
                     fillColor: Colors.grey[50],
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 12,
+                    ),
+                    counterStyle: const TextStyle(
+                      fontSize: 10,
+                      color: Colors.grey,
+                    ),
                   ),
                 ),
               ),
