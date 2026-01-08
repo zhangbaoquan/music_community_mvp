@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:music_community_mvp/core/shim_google_fonts.dart';
+import 'package:music_community_mvp/features/social/comments_sheet.dart';
 import 'player_controller.dart';
 
 class PlayerBar extends StatelessWidget {
@@ -44,18 +45,42 @@ class PlayerBar extends StatelessWidget {
                   color: Color(0xFF1A1A1A),
                   shape: BoxShape.circle,
                 ),
-                child: Obx(
-                  () => Icon(
+                child: Obx(() {
+                  if (controller.isBuffering.value) {
+                    return const SizedBox(
+                      width: 24,
+                      height: 24,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
+                    );
+                  }
+                  return Icon(
                     controller.isPlaying.value
                         ? Icons.pause_rounded
                         : Icons.play_arrow_rounded,
                     color: Colors.white,
                     size: 24,
-                  ),
-                ),
+                  );
+                }),
               ),
             ),
             const SizedBox(width: 16),
+            const SizedBox(width: 8),
+            IconButton(
+              onPressed: () {
+                Get.bottomSheet(
+                  const CommentsSheet(),
+                  isScrollControlled: true,
+                  backgroundColor: Colors.transparent,
+                );
+              },
+              icon: const Icon(Icons.mode_comment_outlined),
+              iconSize: 24,
+              color: const Color(0xFF1A1A1A),
+            ),
+            const SizedBox(width: 8),
             IconButton(
               onPressed: () {},
               icon: const Icon(Icons.skip_next_rounded),
@@ -165,13 +190,22 @@ class PlayerBar extends StatelessWidget {
                     color: Color(0xFF1A1A1A),
                     shape: BoxShape.circle,
                   ),
-                  child: Icon(
-                    controller.isPlaying.value
-                        ? Icons.pause_rounded
-                        : Icons.play_arrow_rounded,
-                    color: Colors.white,
-                    size: 24,
-                  ),
+                  child: controller.isBuffering.value
+                      ? const SizedBox(
+                          width: 24,
+                          height: 24,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                      : Icon(
+                          controller.isPlaying.value
+                              ? Icons.pause_rounded
+                              : Icons.play_arrow_rounded,
+                          color: Colors.white,
+                          size: 24,
+                        ),
                 ),
               ),
               const SizedBox(width: 16),
@@ -226,6 +260,18 @@ class PlayerBar extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.end,
         children: [
+          IconButton(
+            onPressed: () {
+              Get.bottomSheet(
+                const CommentsSheet(),
+                isScrollControlled: true,
+                backgroundColor: Colors.transparent,
+              );
+            },
+            icon: const Icon(Icons.mode_comment_outlined),
+            color: Colors.grey[600],
+          ),
+          const SizedBox(width: 16),
           Icon(Icons.playlist_play_rounded, color: Colors.grey[600]),
           const SizedBox(width: 16),
           Icon(Icons.volume_up_rounded, color: Colors.grey[600]),

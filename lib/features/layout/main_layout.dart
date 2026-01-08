@@ -189,21 +189,26 @@ class MainLayout extends StatelessWidget {
   }
 
   Widget _buildPlayerBar() {
-    return Container(
-      height: 80,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border(top: BorderSide(color: Colors.grey[200]!)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 20,
-            offset: const Offset(0, -5),
-          ),
-        ],
-      ),
-      // Using the new compact PlayerBar widget here
-      child: const PlayerBar(),
-    );
+    return Obx(() {
+      if (playerCtrl.currentTitle.value.isEmpty) {
+        return const SizedBox.shrink();
+      }
+      return Container(
+        height: 80,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          border: Border(top: BorderSide(color: Colors.grey[200]!)),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 20,
+              offset: const Offset(0, -5),
+            ),
+          ],
+        ),
+        // Using the new compact PlayerBar widget here
+        child: const PlayerBar(),
+      );
+    });
   }
 }

@@ -6,6 +6,8 @@ class PlayerController extends GetxController {
 
   // Observables
   final isPlaying = false.obs;
+  final isBuffering = false.obs; // Add buffering state
+  final currentMood = ''.obs; // The ID for the current song (e.g. 'Happy')
   final currentTitle = ''.obs;
   final currentArtist = ''.obs;
   final currentPosition = Duration.zero.obs;
@@ -22,6 +24,11 @@ class PlayerController extends GetxController {
     // Listen to player state
     _player.playerStateStream.listen((state) {
       isPlaying.value = state.playing;
+      // Update buffering state
+      isBuffering.value =
+          state.processingState == ProcessingState.buffering ||
+          state.processingState == ProcessingState.loading;
+
       if (state.processingState == ProcessingState.completed) {
         isPlaying.value = false;
         _player.seek(Duration.zero);
@@ -87,6 +94,7 @@ class PlayerController extends GetxController {
         ); // Debug log available in browser console
 
         await _player.setUrl(url);
+        currentMood.value = mood; // Update current mood ID
         currentTitle.value = track['title']!;
         currentArtist.value = track['artist']!;
         _player.play();
