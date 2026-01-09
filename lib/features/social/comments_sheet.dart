@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:music_community_mvp/core/shim_google_fonts.dart';
 import 'comments_controller.dart';
 import 'comment_model.dart';
+import 'story_editor_view.dart';
 
 class CommentsSheet extends StatelessWidget {
   const CommentsSheet({super.key});
@@ -188,8 +189,11 @@ class CommentsSheet extends StatelessWidget {
                   children: [
                     TextButton.icon(
                       onPressed: () {
-                        // TODO: Navigate to Long Form Editor
-                        Get.snackbar("敬请期待", "长篇故事编辑器正在装修中...");
+                        // Open Full Screen Editor
+                        Get.to(
+                          () => const StoryEditorView(),
+                          transition: Transition.downToUp,
+                        );
                       },
                       icon: const Icon(
                         Icons.edit_note_rounded,
