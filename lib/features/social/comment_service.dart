@@ -59,4 +59,69 @@ class CommentService {
         )
         .subscribe();
   }
+
+  // Toggle Like
+  Future<bool> toggleLike(String commentId) async {
+    final userId = _supabase.auth.currentUser!.id;
+    try {
+      // Check if exists
+      final check = await _supabase
+          .from('comment_likes')
+          .select()
+          .eq('user_id', userId)
+          .eq('comment_id', commentId)
+          .maybeSingle();
+
+      if (check != null) {
+        // Remove
+        await _supabase
+            .from('comment_likes')
+            .delete()
+            .eq('user_id', userId)
+            .eq('comment_id', commentId);
+        return false; // Liked -> Unliked
+      } else {
+        // Add
+        await _supabase.from('comment_likes').insert({
+          'user_id': userId,
+          'comment_id': commentId,
+        });
+        return true; // Unliked -> Liked
+      }
+    } catch (e) {
+      print("Like error: $e");
+      rethrow;
+    }
+  }
+
+  // Toggle Collection
+  Future<bool> toggleCollection(String commentId) async {
+    final userId = _supabase.auth.currentUser!.id;
+    try {
+      final check = await _supabase
+          .from('comment_collections')
+          .select()
+          .eq('user_id', userId)
+          .eq('comment_id', commentId)
+          .maybeSingle();
+
+      if (check != null) {
+        await _supabase
+            .from('comment_collections')
+            .delete()
+            .eq('user_id', userId)
+            .eq('comment_id', commentId);
+        return false;
+      } else {
+        await _supabase.from('comment_collections').insert({
+          'user_id': userId,
+          'comment_id': commentId,
+        });
+        return true;
+      }
+    } catch (e) {
+      print("Collect error: $e");
+      rethrow;
+    }
+  }
 }
