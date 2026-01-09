@@ -69,13 +69,7 @@ class PlayerBar extends StatelessWidget {
             const SizedBox(width: 16),
             const SizedBox(width: 8),
             IconButton(
-              onPressed: () {
-                Get.bottomSheet(
-                  const CommentsSheet(),
-                  isScrollControlled: true,
-                  backgroundColor: Colors.transparent,
-                );
-              },
+              onPressed: () => _showComments(),
               icon: const Icon(Icons.mode_comment_outlined),
               iconSize: 24,
               color: const Color(0xFF1A1A1A),
@@ -261,13 +255,7 @@ class PlayerBar extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.end,
         children: [
           IconButton(
-            onPressed: () {
-              Get.bottomSheet(
-                const CommentsSheet(),
-                isScrollControlled: true,
-                backgroundColor: Colors.transparent,
-              );
-            },
+            onPressed: () => _showComments(), // Use helper
             icon: const Icon(Icons.mode_comment_outlined),
             color: Colors.grey[600],
           ),
@@ -278,5 +266,45 @@ class PlayerBar extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  void _showComments() {
+    if (Get.width >= 600) {
+      // Desktop: Side Drawer
+      Get.generalDialog(
+        barrierDismissible: true,
+        barrierLabel: "Comments",
+        transitionDuration: const Duration(milliseconds: 200),
+        pageBuilder: (context, anim1, anim2) {
+          return Align(
+            alignment: Alignment.centerRight,
+            child: Material(
+              color: Colors.transparent,
+              child: SizedBox(
+                width: 400, // Fixed width for drawer
+                height: double.infinity,
+                child: const CommentsSheet(),
+              ),
+            ),
+          );
+        },
+        transitionBuilder: (context, anim1, anim2, child) {
+          return SlideTransition(
+            position: Tween(
+              begin: const Offset(1, 0),
+              end: const Offset(0, 0),
+            ).animate(CurvedAnimation(parent: anim1, curve: Curves.easeOut)),
+            child: child,
+          );
+        },
+      );
+    } else {
+      // Mobile: Bottom Sheet
+      Get.bottomSheet(
+        const CommentsSheet(),
+        isScrollControlled: true,
+        backgroundColor: Colors.transparent,
+      );
+    }
   }
 }
