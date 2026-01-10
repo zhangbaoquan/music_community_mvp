@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:music_community_mvp/core/shim_google_fonts.dart';
+import 'package:flutter_markdown/flutter_markdown.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'comments_controller.dart';
 import 'comment_model.dart';
 import 'story_editor_view.dart';
@@ -223,6 +225,9 @@ class CommentsSheet extends StatelessWidget {
   }
 
   Widget _buildCommentItem(Comment comment, CommentsController controller) {
+    final currentUserId = Supabase.instance.client.auth.currentUser?.id;
+    final isAuthor = currentUserId == comment.userId;
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       decoration: const BoxDecoration(
@@ -251,36 +256,116 @@ class CommentsSheet extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Name & Date
+                // Name & Date & Delete
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
-                      comment.userNickname ?? "匿名用户",
-                      style: GoogleFonts.outfit(
-                        fontWeight: FontWeight.w600,
-                        fontSize: 13,
-                        color: Colors.grey[700],
+                    Expanded(
+                      child: Row(
+                        children: [
+                          Flexible(
+                            child: Text(
+                              comment.userNickname ?? "匿名用户",
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: GoogleFonts.outfit(
+                                fontWeight: FontWeight.w600,
+                                fontSize: 13,
+                                color: Colors.grey[700],
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            _formatDate(comment.createdAt),
+                            style: GoogleFonts.outfit(
+                              fontSize: 12,
+                              color: Colors.grey[400],
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                    Text(
-                      _formatDate(comment.createdAt),
-                      style: GoogleFonts.outfit(
-                        fontSize: 12,
-                        color: Colors.grey[400],
+                    if (isAuthor)
+                      PopupMenuButton<String>(
+                        icon: Icon(
+                          Icons.more_horiz_rounded,
+                          size: 18,
+                          color: Colors.grey[400],
+                        ),
+                        padding: EdgeInsets.zero,
+                        color: Colors.white,
+                        elevation: 4,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        onSelected: (value) {
+                          if (value == 'edit') {
+                            Get.to(
+                              () => StoryEditorView(
+                                editingCommentId: comment.id,
+                                initialContent: comment.content,
+                              ),
+                              transition: Transition.downToUp,
+                            );
+                          } else if (value == 'delete') {
+                            controller.deleteComment(comment.id);
+                          }
+                        },
+                        itemBuilder: (context) => [
+                          PopupMenuItem(
+                            value: 'edit',
+                            child: Row(
+                              children: [
+                                Icon(
+                                  Icons.edit_rounded,
+                                  size: 16,
+                                  color: Colors.grey[700],
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  "编辑",
+                                  style: GoogleFonts.outfit(fontSize: 14),
+                                ),
+                              ],
+                            ),
+                          ),
+                          PopupMenuItem(
+                            value: 'delete',
+                            child: Row(
+                              children: [
+                                Icon(
+                                  Icons.delete_outline_rounded,
+                                  size: 16,
+                                  color: Colors.red[400],
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  "删除",
+                                  style: GoogleFonts.outfit(
+                                    fontSize: 14,
+                                    color: Colors.red[400],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
                       ),
-                    ),
                   ],
                 ),
                 const SizedBox(height: 6),
 
-                // Text
-                Text(
-                  comment.content,
-                  style: GoogleFonts.outfit(
-                    fontSize: 15,
-                    color: const Color(0xFF2A2A2A),
-                    height: 1.6,
+                // Markdown Text
+                MarkdownBody(
+                  data: comment.content,
+                  styleSheet: MarkdownStyleSheet(
+                    p: GoogleFonts.outfit(
+                      fontSize: 15,
+                      color: const Color(0xFF2A2A2A),
+                      height: 1.6,
+                    ),
+                    // Customize headers etc if needed
                   ),
                 ),
 
@@ -304,8 +389,7 @@ class CommentsSheet extends StatelessWidget {
                       icon: comment.isCollected
                           ? Icons.bookmark_rounded
                           : Icons.bookmark_border_rounded,
-                      label:
-                          "收藏", // We don't show collection count usually, or we can. Let's just say "收藏" or "已收藏"
+                      label: "收藏",
                       color: comment.isCollected
                           ? Colors.orange
                           : Colors.grey[400]!,

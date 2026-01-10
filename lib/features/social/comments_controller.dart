@@ -1,3 +1,4 @@
+import 'dart:typed_data';
 import 'package:get/get.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../player/player_controller.dart';
@@ -180,6 +181,53 @@ class CommentsController extends GetxController {
       comment.isCollected = oldState;
       comments.refresh();
       Get.snackbar("操作失败", "收藏失败，请重试");
+    }
+  }
+
+  // Delete Comment
+  Future<void> deleteComment(String commentId) async {
+    // 1. Optimistic Remove
+    final index = comments.indexWhere((c) => c.id == commentId);
+    if (index == -1) return;
+
+    final removed = comments.removeAt(index);
+
+    try {
+      await _service.deleteComment(commentId);
+      Get.snackbar("删除成功", "你的故事已随风而去 🍃");
+    } catch (e) {
+      // Revert
+      comments.insert(index, removed);
+      Get.snackbar("删除失败", "删除失败，请重试");
+    }
+  }
+
+  // Upload Image
+  Future<String?> uploadImage(Uint8List bytes, String ext) async {
+    try {
+      return await _service.uploadImage(bytes, ext);
+    } catch (e) {
+      Get.snackbar("上传失败", "图片上传失败，请重试");
+      return null;
+    }
+  }
+
+  // Update Comment
+  Future<void> updateComment(String commentId, String newContent) async {
+    final index = comments.indexWhere((c) => c.id == commentId);
+    if (index == -1) return;
+
+    final oldContent = comments[index].content;
+    comments[index].content = newContent; // Optimistic
+    comments.refresh();
+
+    try {
+      await _service.updateComment(commentId, newContent);
+      Get.snackbar("修改成功", "你的故事已更新 ✨");
+    } catch (e) {
+      comments[index].content = oldContent; // Revert
+      comments.refresh();
+      Get.snackbar("修改失败", "修改失败，请重试");
     }
   }
 

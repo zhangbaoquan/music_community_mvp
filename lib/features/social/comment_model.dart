@@ -2,7 +2,7 @@ class Comment {
   final String id;
   final String userId;
   final String songId;
-  final String content;
+  String content;
   final String? userNickname;
   final DateTime createdAt;
 

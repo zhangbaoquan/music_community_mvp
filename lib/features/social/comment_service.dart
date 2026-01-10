@@ -1,3 +1,4 @@
+import 'dart:typed_data'; // For Uint8List
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'comment_model.dart';
 
@@ -121,6 +122,61 @@ class CommentService {
       }
     } catch (e) {
       print("Collect error: $e");
+      rethrow;
+    }
+  }
+
+  // Delete Comment
+  Future<void> deleteComment(String commentId) async {
+    final userId = _supabase.auth.currentUser!.id;
+    try {
+      await _supabase
+          .from('comments')
+          .delete()
+          .eq('id', commentId)
+          .eq('user_id', userId); // Double check ownership safely
+    } catch (e) {
+      print("Delete error: $e");
+      rethrow;
+    }
+  }
+
+  // Update Comment
+  Future<void> updateComment(String commentId, String newContent) async {
+    final userId = _supabase.auth.currentUser!.id;
+    try {
+      await _supabase
+          .from('comments')
+          .update({'content': newContent})
+          .eq('id', commentId)
+          .eq('user_id', userId);
+    } catch (e) {
+      print("Update error: $e");
+      rethrow;
+    }
+  }
+
+  // Upload Image
+  Future<String> uploadImage(Uint8List bytes, String extension) async {
+    try {
+      final userId = _supabase.auth.currentUser!.id;
+      final fileName = '${DateTime.now().millisecondsSinceEpoch}.$extension';
+      final path = '$userId/$fileName';
+
+      await _supabase.storage
+          .from('story_images')
+          .uploadBinary(
+            path,
+            bytes,
+            fileOptions: const FileOptions(cacheControl: '3600', upsert: false),
+          );
+
+      final publicUrl = _supabase.storage
+          .from('story_images')
+          .getPublicUrl(path);
+      return publicUrl;
+    } catch (e) {
+      print("Upload error: $e");
       rethrow;
     }
   }
