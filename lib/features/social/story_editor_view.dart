@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 import 'package:flutter_quill/quill_delta.dart';
+import 'package:flutter_quill_extensions/flutter_quill_extensions.dart'; // Import Extensions
 import 'package:music_community_mvp/core/shim_google_fonts.dart';
 import 'comments_controller.dart';
 
@@ -77,15 +78,60 @@ class _StoryEditorViewState extends State<StoryEditorView> {
     for (int i = 0; i < lines.length; i++) {
       final line = lines[i];
 
+      // Fix: Skip trailing empty line if it's the result of the last newline split
+      // But keep empty lines that are intentional newlines between paragraphs
+      if (i == lines.length - 1 && line.isEmpty) {
+        continue;
+      }
+
       // Checklist: Image?
       // Pattern: ![Alt](url)
       final imageRegExp = RegExp(r'!\[(.*?)\]\((.*?)\)');
       final imageMatch = imageRegExp.firstMatch(line);
 
       if (imageMatch != null) {
-        final imageUrl = imageMatch.group(2);
-        if (imageUrl != null) {
-          delta.insert({'image': imageUrl});
+        String imageUrl = imageMatch.group(2) ?? "";
+        final attributes = <String, dynamic>{};
+
+        // Parse attributes from URL query params
+        if (imageUrl.contains('?')) {
+          final uri = Uri.parse(imageUrl);
+          final query = Map<String, String>.from(uri.queryParameters);
+
+          if (query.containsKey('q_w')) {
+            attributes['width'] = query['q_w'];
+            // Also set 'style' for extensions compatibility
+            attributes['style'] = 'width: ${query['q_w']}px;';
+            query.remove('q_w');
+          }
+          if (query.containsKey('q_h')) {
+            attributes['height'] = query['q_h'];
+            if (attributes.containsKey('style')) {
+              attributes['style'] += ' height: ${query['q_h']}px;';
+            } else {
+              attributes['style'] = 'height: ${query['q_h']}px;';
+            }
+            query.remove('q_h');
+          }
+          if (query.containsKey('q_a')) {
+            attributes['align'] = query['q_a'];
+            query.remove('q_a');
+          }
+
+          // Clean URL (remove our custom params)
+          if (query.isEmpty) {
+            imageUrl = uri.replace(query: null).toString();
+            if (imageUrl.endsWith('?'))
+              imageUrl = imageUrl.substring(0, imageUrl.length - 1);
+          } else {
+            imageUrl = uri.replace(queryParameters: query).toString();
+          }
+        }
+
+        if (imageUrl.isNotEmpty) {
+          delta.insert({
+            'image': imageUrl,
+          }, attributes.isNotEmpty ? attributes : null);
           delta.insert('\n'); // Image needs its own block usually
           continue;
         }
@@ -161,13 +207,22 @@ class _StoryEditorViewState extends State<StoryEditorView> {
         if (url != null) {
           final index = _quillController.selection.baseOffset;
           final length = _quillController.selection.extentOffset - index;
+
+          // 1. Insert Image
           _quillController.replaceText(
             index,
             length,
             BlockEmbed.image(url),
             null,
           );
+
+          // 2. Apply Center Alignment to the line
+          _quillController.formatSelection(Attribute.centerAlignment);
+
+          // 3. Move cursor after (and reset format?)
           _quillController.moveCursorToPosition(index + 1);
+          // Optional: reset alignment for new line
+          _quillController.formatSelection(Attribute.leftAlignment);
         }
       }
     } catch (e) {
@@ -182,9 +237,6 @@ class _StoryEditorViewState extends State<StoryEditorView> {
     for (final op in delta.toList()) {
       if (op.data is String) {
         String text = op.data as String;
-
-        // Simplify: don't double-escape if already valid?
-        // But here we are converting FROM Delta (rich text) TO Markdown string.
 
         if (op.attributes != null) {
           if (op.attributes!.containsKey('bold')) {
@@ -204,7 +256,44 @@ class _StoryEditorViewState extends State<StoryEditorView> {
       } else if (op.data is Map) {
         final map = op.data as Map;
         if (map.containsKey('image')) {
-          buffer.write("\n![image](${map['image']})\n");
+          var imageUrl = map['image'].toString();
+
+          if (op.attributes != null) {
+            final attrs = <String>[];
+
+            // 1. Direct Attributes
+            if (op.attributes!.containsKey('width'))
+              attrs.add('q_w=${op.attributes!['width']}');
+            if (op.attributes!.containsKey('height'))
+              attrs.add('q_h=${op.attributes!['height']}');
+            if (op.attributes!.containsKey('align'))
+              attrs.add('q_a=${op.attributes!['align']}');
+
+            // 2. Style Attribute (CSS String) - Extensions often write here
+            if (op.attributes!.containsKey('style')) {
+              final style = op.attributes!['style'].toString();
+              // Extract width
+              final wMatch = RegExp(r'width:\s*([\d\.]+)').firstMatch(style);
+              if (wMatch != null && !op.attributes!.containsKey('width')) {
+                attrs.add('q_w=${wMatch.group(1)}');
+              }
+              // Extract height
+              final hMatch = RegExp(r'height:\s*([\d\.]+)').firstMatch(style);
+              if (hMatch != null && !op.attributes!.containsKey('height')) {
+                attrs.add('q_h=${hMatch.group(1)}');
+              }
+              // Extract alignment (text-align, margin, etc - simplified)
+            }
+
+            if (attrs.isNotEmpty) {
+              final separator = imageUrl.contains('?') ? '&' : '?';
+              imageUrl += '$separator${attrs.join('&')}';
+            }
+          }
+
+          // Fix: Don't wrap in extra newlines. The loop structure handles block separation.
+          // If previous block wasn't newline, we might want one, but let's stick to minimal.
+          buffer.write("![image]($imageUrl)");
         }
       }
     }
@@ -332,77 +421,13 @@ class _StoryEditorViewState extends State<StoryEditorView> {
                   padding: EdgeInsets.zero,
                   showCursor: true,
                   minHeight: 300,
-                  embedBuilders: [ImageEmbedBuilder()],
+                  // Use Extensions for Resizing/Alignment Support
+                  embedBuilders: [...FlutterQuillEmbeds.editorBuilders()],
                 ),
               ),
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class ImageEmbedBuilder extends EmbedBuilder {
-  @override
-  String get key => 'image';
-
-  @override
-  Widget build(BuildContext context, EmbedContext embedContext) {
-    String imageUrl = "";
-    if (embedContext.node.value.data is String) {
-      imageUrl = embedContext.node.value.data as String;
-    }
-
-    if (imageUrl.isEmpty) {
-      return const SizedBox();
-    }
-
-    return Container(
-      margin: const EdgeInsets.symmetric(vertical: 8),
-      child: Image.network(
-        imageUrl,
-        fit: BoxFit.contain,
-        errorBuilder: (context, error, stackTrace) {
-          return Container(
-            height: 200,
-            width: double.infinity,
-            color: Colors.grey[200],
-            alignment: Alignment.center,
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Icon(Icons.broken_image, color: Colors.grey, size: 48),
-                const SizedBox(height: 8),
-                Text(
-                  "图片加载失败",
-                  style: GoogleFonts.outfit(color: Colors.grey[600]),
-                ),
-                Text(
-                  "$error",
-                  style: const TextStyle(fontSize: 10, color: Colors.grey),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
-            ),
-          );
-        },
-        loadingBuilder: (context, child, loadingProgress) {
-          if (loadingProgress == null) return child;
-          return Container(
-            height: 200,
-            width: double.infinity,
-            color: Colors.grey[100],
-            alignment: Alignment.center,
-            child: CircularProgressIndicator(
-              value: loadingProgress.expectedTotalBytes != null
-                  ? loadingProgress.cumulativeBytesLoaded /
-                        loadingProgress.expectedTotalBytes!
-                  : null,
-            ),
-          );
-        },
       ),
     );
   }
