@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:flutter_quill/flutter_quill.dart';
 import 'package:music_community_mvp/core/shim_google_fonts.dart';
 import 'comments_controller.dart';
 
@@ -20,31 +21,51 @@ class StoryEditorView extends StatefulWidget {
 
 class _StoryEditorViewState extends State<StoryEditorView> {
   final CommentsController controller = Get.find<CommentsController>();
-  final TextEditingController textController = TextEditingController();
-
-  // FocusNode to handle keyboard immediately
+  late QuillController _quillController;
   final FocusNode _focusNode = FocusNode();
+  final ScrollController _scrollController = ScrollController();
 
   bool isUploading = false;
+  bool _initError = false;
 
   @override
   void initState() {
     super.initState();
-    // Pre-fill content if editing
-    if (widget.initialContent != null) {
-      textController.text = widget.initialContent!;
-    }
+    _initQuillController();
 
-    // Auto focus
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _focusNode.requestFocus();
+      if (mounted) {
+        _focusNode.requestFocus();
+      }
     });
+  }
+
+  void _initQuillController() {
+    try {
+      String content = widget.initialContent ?? "";
+      if (content.isEmpty) {
+        _quillController = QuillController.basic();
+      } else {
+        if (!content.endsWith('\n')) {
+          content += '\n';
+        }
+        _quillController = QuillController(
+          document: Document()..insert(0, content),
+          selection: const TextSelection.collapsed(offset: 0),
+        );
+      }
+    } catch (e) {
+      print("Quill Init Error: $e");
+      _initError = true;
+      _quillController = QuillController.basic();
+    }
   }
 
   @override
   void dispose() {
-    textController.dispose();
+    _quillController.dispose();
     _focusNode.dispose();
+    _scrollController.dispose();
     super.dispose();
   }
 
@@ -57,7 +78,6 @@ class _StoryEditorViewState extends State<StoryEditorView> {
         setState(() => isUploading = true);
 
         final bytes = await image.readAsBytes();
-        // Simple extension extraction
         final name = image.name;
         final ext = name.contains('.') ? name.split('.').last : 'jpg';
 
@@ -66,51 +86,63 @@ class _StoryEditorViewState extends State<StoryEditorView> {
         setState(() => isUploading = false);
 
         if (url != null) {
-          _insertTextAtCursor("\n![图片]($url)\n");
+          final index = _quillController.selection.baseOffset;
+          final length = _quillController.selection.extentOffset - index;
+          _quillController.replaceText(
+            index,
+            length,
+            BlockEmbed.image(url),
+            null,
+          );
+          _quillController.moveCursorToPosition(index + 1);
         }
       }
     } catch (e) {
-      setState(() => isUploading = false);
+      if (mounted) setState(() => isUploading = false);
       Get.snackbar("Error", "Could not pick image");
     }
   }
 
-  void _insertTextAtCursor(String text) {
-    if (textController.selection.baseOffset < 0) {
-      // No selection, append to end
-      textController.text += text;
-      return;
-    }
-
-    final textSelection = textController.selection;
-    final newText = textController.text.replaceRange(
-      textSelection.start,
-      textSelection.end,
-      text,
-    );
-    final myTextLength = text.length;
-    textController.text = newText;
-    textController.selection = textSelection.copyWith(
-      baseOffset: textSelection.start + myTextLength,
-      extentOffset: textSelection.start + myTextLength,
-    );
-  }
-
   void _handlePost() {
-    if (textController.text.trim().isNotEmpty) {
-      if (widget.editingCommentId != null) {
-        controller.updateComment(widget.editingCommentId!, textController.text);
-      } else {
-        controller.postComment(textController.text);
+    final delta = _quillController.document.toDelta();
+    final buffer = StringBuffer();
+    for (final op in delta.toList()) {
+      if (op.data is String) {
+        String text = op.data as String;
+        if (op.attributes != null) {
+          if (op.attributes!.containsKey('bold')) {
+            text = "**$text**";
+          } else if (op.attributes!.containsKey('italic')) {
+            text = "*$text*";
+          }
+          if (op.attributes!.containsKey('header')) {
+            text = "## $text";
+          }
+        }
+        buffer.write(text);
+      } else if (op.data is Map) {
+        final map = op.data as Map;
+        if (map.containsKey('image')) {
+          buffer.write("\n![image](${map['image']})\n");
+        }
       }
-      Get.back(); // Close editor
+    }
+    final markdown = buffer.toString();
+
+    if (markdown.trim().isNotEmpty) {
+      if (widget.editingCommentId != null) {
+        controller.updateComment(widget.editingCommentId!, markdown);
+      } else {
+        controller.postComment(markdown);
+      }
+      Get.back();
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white, // Paper-like white
+      backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
@@ -127,25 +159,17 @@ class _StoryEditorViewState extends State<StoryEditorView> {
           ),
         ),
         actions: [
-          // Insert Image Button
-          Padding(
-            padding: const EdgeInsets.only(right: 8.0),
-            child: IconButton(
-              onPressed: isUploading ? null : _pickImage,
-              icon: isUploading
-                  ? const SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: Colors.black54,
-                      ),
-                    )
-                  : const Icon(Icons.image_outlined, color: Colors.black87),
-              tooltip: "插入图片",
-            ),
+          IconButton(
+            onPressed: isUploading ? null : _pickImage,
+            icon: isUploading
+                ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Icon(Icons.image_outlined, color: Colors.black87),
+            tooltip: "插入图片",
           ),
-
           Obx(
             () => Padding(
               padding: const EdgeInsets.only(right: 16.0),
@@ -182,39 +206,123 @@ class _StoryEditorViewState extends State<StoryEditorView> {
           ),
         ],
       ),
-      body: Container(
-        width: double.infinity,
-        height: double.infinity,
-        padding: const EdgeInsets.symmetric(horizontal: 24),
-        child: Column(
-          children: [
-            const Divider(),
-            Expanded(
-              child: TextField(
-                controller: textController,
+      body: Column(
+        children: [
+          const Divider(height: 1),
+
+          if (_initError)
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(8),
+              color: Colors.amber[100],
+              child: const Text("初始化编辑器时发生错误，已重置为空白状态。"),
+            ),
+
+          QuillSimpleToolbar(
+            controller: _quillController,
+            config: const QuillSimpleToolbarConfig(
+              showFontFamily: false,
+              showFontSize: false,
+              showSearchButton: false,
+              showSubscript: false,
+              showSuperscript: false,
+            ),
+          ),
+
+          if (isUploading)
+            const LinearProgressIndicator(
+              minHeight: 2,
+              backgroundColor: Colors.transparent,
+            ),
+
+          Expanded(
+            child: Container(
+              color: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+              child: QuillEditor(
+                controller: _quillController,
                 focusNode: _focusNode,
-                maxLines: null, // Unlimited lines
-                expands: true,
-                textAlignVertical: TextAlignVertical.top,
-                style: GoogleFonts.outfit(
-                  fontSize: 18,
-                  height: 1.8, // Comfortable line height for reading/writing
-                  color: const Color(0xFF2A2A2A),
-                ),
-                decoration: InputDecoration(
-                  hintText:
-                      "这里不仅是评论区，更是你的精神角落...\n\n支持 Markdown 排版，点击上方图片按钮插入图片。",
-                  hintStyle: GoogleFonts.outfit(
-                    color: Colors.grey[300],
-                    fontSize: 18,
-                    height: 1.8,
-                  ),
-                  border: InputBorder.none,
+                scrollController: _scrollController,
+                config: QuillEditorConfig(
+                  // Removed const
+                  placeholder: "写下你的故事...",
+                  autoFocus: true,
+                  expands: false,
+                  scrollable: true,
+                  padding: EdgeInsets.zero,
+                  showCursor: true,
+                  minHeight: 300,
+                  embedBuilders: [ImageEmbedBuilder()],
                 ),
               ),
             ),
-          ],
-        ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class ImageEmbedBuilder extends EmbedBuilder {
+  @override
+  String get key => 'image';
+
+  @override
+  Widget build(BuildContext context, EmbedContext embedContext) {
+    String imageUrl = "";
+    if (embedContext.node.value.data is String) {
+      imageUrl = embedContext.node.value.data as String;
+    }
+
+    if (imageUrl.isEmpty) {
+      return const SizedBox();
+    }
+
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 8),
+      child: Image.network(
+        imageUrl,
+        fit: BoxFit.contain,
+        errorBuilder: (context, error, stackTrace) {
+          return Container(
+            height: 200,
+            width: double.infinity,
+            color: Colors.grey[200],
+            alignment: Alignment.center,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.broken_image, color: Colors.grey, size: 48),
+                const SizedBox(height: 8),
+                Text(
+                  "图片加载失败",
+                  style: GoogleFonts.outfit(color: Colors.grey[600]),
+                ),
+                Text(
+                  "$error",
+                  style: const TextStyle(fontSize: 10, color: Colors.grey),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+          );
+        },
+        loadingBuilder: (context, child, loadingProgress) {
+          if (loadingProgress == null) return child;
+          return Container(
+            height: 200,
+            width: double.infinity,
+            color: Colors.grey[100],
+            alignment: Alignment.center,
+            child: CircularProgressIndicator(
+              value: loadingProgress.expectedTotalBytes != null
+                  ? loadingProgress.cumulativeBytesLoaded /
+                        loadingProgress.expectedTotalBytes!
+                  : null,
+            ),
+          );
+        },
       ),
     );
   }

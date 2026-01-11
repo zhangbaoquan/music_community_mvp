@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:flutter_localizations/flutter_localizations.dart'; // Add this
+import 'package:flutter_quill/flutter_quill.dart'; // import for FlutterQuillLocalizations
 import 'package:music_community_mvp/core/shim_google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'features/auth/auth_controller.dart';
@@ -24,6 +26,14 @@ class MusicCommunityApp extends StatelessWidget {
         scaffoldBackgroundColor: Colors.white,
         textTheme: GoogleFonts.outfitTextTheme(),
       ),
+      // Localizations are REQUIRED for flutter_quill to work in Release mode
+      localizationsDelegates: const [
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+        FlutterQuillLocalizations.delegate,
+      ],
+      supportedLocales: const [Locale('en', 'US'), Locale('zh', 'CN')],
       // Start with a dedicated Splash/Loading logic
       home: const AppStartupScreen(),
     );
