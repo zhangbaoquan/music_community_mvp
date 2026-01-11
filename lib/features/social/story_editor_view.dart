@@ -189,11 +189,11 @@ class _StoryEditorViewState extends State<StoryEditorView> {
         if (op.attributes != null) {
           if (op.attributes!.containsKey('bold')) {
             if (text.trim().isNotEmpty) {
-              text = "**$text**";
+              text = "**${text.trim()}**";
             }
           } else if (op.attributes!.containsKey('italic')) {
             if (text.trim().isNotEmpty) {
-              text = "*$text*";
+              text = "*${text.trim()}*";
             }
           }
           if (op.attributes!.containsKey('header')) {

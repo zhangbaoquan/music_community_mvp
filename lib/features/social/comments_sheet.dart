@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:music_community_mvp/core/shim_google_fonts.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
+import 'package:markdown/markdown.dart' as md; // Add this import
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'comments_controller.dart';
 import 'comment_model.dart';
@@ -207,6 +208,7 @@ class CommentsSheet extends StatelessWidget {
                         style: GoogleFonts.outfit(
                           color: Colors.grey,
                           fontSize: 12,
+                          fontWeight: FontWeight.w400,
                         ),
                       ),
                       style: TextButton.styleFrom(
@@ -358,11 +360,37 @@ class CommentsSheet extends StatelessWidget {
 
                 // Markdown Text
                 MarkdownBody(
-                  data: comment.content,
+                  // Aggressive Sanitization with replaceAllMapped:
+                  // 1. Capture content inside **...** and strip surrounding whitespace
+                  // 2. Fix CJK Punctuation Edge Case:
+                  //    Start marks like `《` inside bold followed by `**` + non-punctuation (e.g. Chinese char)
+                  //    causes CommonMark to treat `**` as invalid closer.
+                  //    Workaround: Inject a space after `**` if content ends with specific punctuation.
+                  data: comment.content.replaceAllMapped(
+                    RegExp(r'\*\*\s*([^\*]+?)\s*\*\*'),
+                    (match) {
+                      String content = match.group(1)?.trim() ?? "";
+                      if (content.isEmpty) return "";
+
+                      // Check if content ends with CJK closing punctuation that causes issues
+                      // when followed immediately by text.
+                      bool needsSpacer = RegExp(
+                        r'[》”’】）]',
+                      ).hasMatch(content[content.length - 1]);
+
+                      return '**$content**${needsSpacer ? " " : ""}';
+                    },
+                  ),
+
+                  // Use GitHub Web extension set for best compatibility
+                  extensionSet: md.ExtensionSet.gitHubWeb,
+
                   styleSheet: MarkdownStyleSheet(
                     p: GoogleFonts.outfit(
                       fontSize: 15,
-                      color: const Color(0xFF2A2A2A),
+                      color: const Color(
+                        0xFF2A2A2A,
+                      ), // User Preference Preserved
                       height: 1.6,
                     ),
                     // Customize headers etc if needed
