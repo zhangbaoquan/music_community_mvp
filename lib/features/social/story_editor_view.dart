@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter_quill/flutter_quill.dart';
+import 'package:flutter_quill/quill_delta.dart';
 import 'package:music_community_mvp/core/shim_google_fonts.dart';
 import 'comments_controller.dart';
 
@@ -46,11 +47,17 @@ class _StoryEditorViewState extends State<StoryEditorView> {
       if (content.isEmpty) {
         _quillController = QuillController.basic();
       } else {
-        if (!content.endsWith('\n')) {
-          content += '\n';
+        // Parse Markdown to Delta
+        final delta = _parseMarkdownToDelta(content);
+
+        // Ensure ends with newline
+        if (delta.last.data is String &&
+            !(delta.last.data as String).endsWith('\n')) {
+          delta.insert('\n');
         }
+
         _quillController = QuillController(
-          document: Document()..insert(0, content),
+          document: Document.fromDelta(delta),
           selection: const TextSelection.collapsed(offset: 0),
         );
       }
@@ -59,6 +66,72 @@ class _StoryEditorViewState extends State<StoryEditorView> {
       _initError = true;
       _quillController = QuillController.basic();
     }
+  }
+
+  // Simple Markdown Parser (Regex-based)
+  // Supports: Bold (**), Italic (*), and Images (![])
+  Delta _parseMarkdownToDelta(String markdown) {
+    final delta = Delta();
+    final lines = markdown.split('\n');
+
+    for (int i = 0; i < lines.length; i++) {
+      final line = lines[i];
+
+      // Checklist: Image?
+      // Pattern: ![Alt](url)
+      final imageRegExp = RegExp(r'!\[(.*?)\]\((.*?)\)');
+      final imageMatch = imageRegExp.firstMatch(line);
+
+      if (imageMatch != null) {
+        final imageUrl = imageMatch.group(2);
+        if (imageUrl != null) {
+          delta.insert({'image': imageUrl});
+          delta.insert('\n'); // Image needs its own block usually
+          continue;
+        }
+      }
+
+      // Process Text Line
+      // We will scan the line for **bold** and *italic*
+      // This is a greedy, simple parser.
+
+      int currentIndex = 0;
+
+      // Find all potential matches
+      // Group 1: **bold** (inner: Group 2)
+      // Group 3: *italic* (inner: Group 4)
+      final styleRegExp = RegExp(r'(\*\*(.*?)\*\*)|(\*(.*?)\*)');
+      final matches = styleRegExp.allMatches(line);
+
+      for (final match in matches) {
+        // Text before match
+        if (match.start > currentIndex) {
+          delta.insert(line.substring(currentIndex, match.start));
+        }
+
+        // Bold
+        if (match.group(1) != null) {
+          delta.insert(match.group(2)!, {'bold': true});
+        }
+        // Italic
+        else if (match.group(3) != null) {
+          delta.insert(match.group(4)!, {'italic': true});
+        }
+
+        currentIndex = match.end;
+      }
+
+      // Remaining text
+      if (currentIndex < line.length) {
+        delta.insert(line.substring(currentIndex));
+      }
+
+      // Add newline unless it's strictly the end and we want to control it,
+      // but typically lines imply newlines.
+      delta.insert('\n');
+    }
+
+    return delta;
   }
 
   @override
@@ -109,11 +182,19 @@ class _StoryEditorViewState extends State<StoryEditorView> {
     for (final op in delta.toList()) {
       if (op.data is String) {
         String text = op.data as String;
+
+        // Simplify: don't double-escape if already valid?
+        // But here we are converting FROM Delta (rich text) TO Markdown string.
+
         if (op.attributes != null) {
           if (op.attributes!.containsKey('bold')) {
-            text = "**$text**";
+            if (text.trim().isNotEmpty) {
+              text = "**$text**";
+            }
           } else if (op.attributes!.containsKey('italic')) {
-            text = "*$text*";
+            if (text.trim().isNotEmpty) {
+              text = "*$text*";
+            }
           }
           if (op.attributes!.containsKey('header')) {
             text = "## $text";
@@ -244,7 +325,6 @@ class _StoryEditorViewState extends State<StoryEditorView> {
                 focusNode: _focusNode,
                 scrollController: _scrollController,
                 config: QuillEditorConfig(
-                  // Removed const
                   placeholder: "写下你的故事...",
                   autoFocus: true,
                   expands: false,
