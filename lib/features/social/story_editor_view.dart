@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
+import 'package:get/get.dart' hide Node; // Fix Node conflict
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 import 'package:flutter_quill/quill_delta.dart';
-import 'package:flutter_quill_extensions/flutter_quill_extensions.dart'; // Import Extensions
 import 'package:music_community_mvp/core/shim_google_fonts.dart';
 import 'comments_controller.dart';
 
@@ -29,17 +28,53 @@ class _StoryEditorViewState extends State<StoryEditorView> {
 
   bool isUploading = false;
   bool _initError = false;
+  Node? _selectedImageNode;
 
   @override
   void initState() {
     super.initState();
     _initQuillController();
 
+    // Listen for selection changes
+    _quillController.addListener(_onSelectionChanged);
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         _focusNode.requestFocus();
       }
     });
+  }
+
+  void _onSelectionChanged() {
+    final selection = _quillController.selection;
+
+    // Auto-detect image selection if cursor is on an image
+    if (selection.isCollapsed) {
+      final child = _quillController.document.queryChild(selection.baseOffset);
+      Node? node = child.node;
+
+      // Drill down if it's a Line (Container) to find the leaf (Embed/Text)
+      if (node is Line) {
+        final leafResult = node.queryChild(child.offset, false);
+        node = leafResult.node;
+      }
+
+      if (node != null && node is Embed && node.value.type == 'image') {
+        if (_selectedImageNode != node) {
+          if (mounted) setState(() => _selectedImageNode = node);
+        }
+        return;
+      }
+    }
+
+    // Deselect if moved away
+    if (_selectedImageNode != null) {
+      final nodeOffset = _selectedImageNode!.documentOffset;
+      if (selection.baseOffset < nodeOffset ||
+          selection.baseOffset > nodeOffset + 1) {
+        if (mounted) setState(() => _selectedImageNode = null);
+      }
+    }
   }
 
   void _initQuillController() {
@@ -388,15 +423,22 @@ class _StoryEditorViewState extends State<StoryEditorView> {
               child: const Text("初始化编辑器时发生错误，已重置为空白状态。"),
             ),
 
-          QuillSimpleToolbar(
-            controller: _quillController,
-            config: const QuillSimpleToolbarConfig(
-              showFontFamily: false,
-              showFontSize: false,
-              showSearchButton: false,
-              showSubscript: false,
-              showSuperscript: false,
-            ),
+          Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              QuillSimpleToolbar(
+                controller: _quillController,
+                config: const QuillSimpleToolbarConfig(
+                  showFontFamily: false,
+                  showFontSize: false,
+                  showSearchButton: false,
+                  showSubscript: false,
+                  showSuperscript: false,
+                ),
+              ),
+              if (_selectedImageNode != null)
+                _buildImageToolbar(), // Show image toolbar below
+            ],
           ),
 
           if (isUploading)
@@ -421,8 +463,13 @@ class _StoryEditorViewState extends State<StoryEditorView> {
                   padding: EdgeInsets.zero,
                   showCursor: true,
                   minHeight: 300,
-                  // Use Extensions for Resizing/Alignment Support
-                  embedBuilders: [...FlutterQuillEmbeds.editorBuilders()],
+                  // Use Custom Builder for full UI control
+                  embedBuilders: [
+                    StandardImageEmbedBuilder(
+                      selectedNode: _selectedImageNode,
+                      tempWidth: _tempImageWidth,
+                    ),
+                  ],
                 ),
               ),
             ),
@@ -430,5 +477,278 @@ class _StoryEditorViewState extends State<StoryEditorView> {
         ],
       ),
     );
+  }
+
+  // Temp state for smooth slider dragging
+  double? _tempImageWidth;
+
+  Widget _buildImageToolbar() {
+    if (_selectedImageNode == null) return const SizedBox.shrink();
+
+    final style = _selectedImageNode!.style;
+    final widthAttr = style.attributes['width'];
+    double? currentWidth;
+    if (widthAttr != null && widthAttr.value != null) {
+      currentWidth = double.tryParse(widthAttr.value.toString());
+    }
+    // Default to screen width if null (meaning auto/full)
+    final maxWidth = MediaQuery.of(context).size.width - 48; // minus padding
+
+    // Use temp width if dragging, otherwise use model width
+    double sliderValue = _tempImageWidth ?? currentWidth ?? maxWidth;
+
+    if (sliderValue > maxWidth) sliderValue = maxWidth;
+    if (sliderValue < 50.0) sliderValue = 50.0;
+
+    return Container(
+      color: Colors.grey[50],
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: Row(
+        children: [
+          const Icon(
+            Icons.photo_size_select_large,
+            size: 20,
+            color: Colors.grey,
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: SliderTheme(
+              data: SliderTheme.of(context).copyWith(
+                thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 6),
+                overlayShape: const RoundSliderOverlayShape(overlayRadius: 14),
+                trackHeight: 2,
+              ),
+              child: Slider(
+                value: sliderValue,
+                min: 50.0,
+                max: maxWidth,
+                activeColor: Colors.black87,
+                inactiveColor: Colors.grey[300],
+                onChangeStart: (val) {
+                  setState(() {
+                    _tempImageWidth = val;
+                  });
+                },
+                onChanged: (val) {
+                  setState(() {
+                    _tempImageWidth = val;
+                  });
+                },
+                onChangeEnd: (val) {
+                  // Commit changes only on release
+                  String? newWidth = val.toString();
+                  final maxWidth = MediaQuery.of(context).size.width - 48;
+                  if (val >= maxWidth - 10) newWidth = null;
+
+                  // Use AttributeScope.inline to ensure persistence (or try explicit style scope)
+                  // Note: 'ignore' scope is often transient.
+                  _quillController.formatText(
+                    _selectedImageNode!.documentOffset,
+                    1,
+                    Attribute('width', AttributeScope.inline, newWidth),
+                  );
+
+                  // Ensure node is legally updated
+                  _refreshSelectedNode();
+
+                  setState(() {
+                    _tempImageWidth = null;
+                  });
+                },
+              ),
+            ),
+          ),
+          const SizedBox(width: 16),
+          _buildToolbarBtn(Icons.format_align_left, 'left'),
+          _buildToolbarBtn(Icons.format_align_center, 'center'),
+          _buildToolbarBtn(Icons.format_align_right, 'right'),
+          const SizedBox(width: 16),
+          IconButton(
+            icon: const Icon(Icons.delete_outline, color: Colors.red, size: 20),
+            onPressed: () {
+              showDialog(
+                context: context,
+                builder: (ctx) => AlertDialog(
+                  title: const Text("确认移除"),
+                  content: const Text("确定要移除这张图片吗？"),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(ctx),
+                      child: const Text("取消"),
+                    ),
+                    TextButton(
+                      onPressed: () {
+                        Navigator.pop(ctx);
+                        _quillController.replaceText(
+                          _selectedImageNode!.documentOffset,
+                          1,
+                          '',
+                          null,
+                        );
+                        setState(() => _selectedImageNode = null);
+                      },
+                      child: const Text(
+                        "确认",
+                        style: TextStyle(color: Colors.red),
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _refreshSelectedNode() {
+    if (_selectedImageNode == null) return;
+
+    // We need to re-find the embed node at the exact same location
+    // Note: Use document.queryChild(offset)
+    final offset = _selectedImageNode!.documentOffset;
+    final child = _quillController.document.queryChild(offset);
+    Node? newNode = child.node;
+
+    if (newNode is Line) {
+      final leaf = newNode.queryChild(child.offset, false);
+      newNode = leaf.node;
+    }
+
+    if (newNode != null && newNode is Embed) {
+      _selectedImageNode = newNode;
+    }
+  }
+
+  Widget _buildToolbarBtn(IconData icon, String align) {
+    final currentAlign = _selectedImageNode!.style.attributes['align']?.value;
+    final isSelected =
+        currentAlign == align || (currentAlign == null && align == 'center');
+    return IconButton(
+      icon: Icon(
+        icon,
+        color: isSelected ? Colors.black : Colors.grey[400],
+        size: 20,
+      ),
+      onPressed: () {
+        _quillController.formatText(
+          _selectedImageNode!.documentOffset,
+          1,
+          Attribute('align', AttributeScope.block, align),
+        );
+        _refreshSelectedNode();
+        setState(() {});
+      },
+    );
+  }
+}
+
+class StandardImageEmbedBuilder extends EmbedBuilder {
+  final Node? selectedNode;
+  final double? tempWidth;
+
+  StandardImageEmbedBuilder({this.selectedNode, this.tempWidth});
+
+  @override
+  String get key => 'image';
+
+  @override
+  Widget build(BuildContext context, EmbedContext embedContext) {
+    String imageUrl = "";
+    if (embedContext.node.value.data is String) {
+      imageUrl = embedContext.node.value.data as String;
+    }
+
+    if (imageUrl.isEmpty) {
+      return const SizedBox();
+    }
+
+    // Parse current width/height from attributes if available
+    double? width;
+    double? height;
+    final style = embedContext.node.style;
+
+    // Check attributes
+    final attrs = style.attributes;
+    if (attrs.containsKey('width')) {
+      final w = attrs['width']?.value;
+      if (w != null) width = double.tryParse(w.toString());
+    }
+
+    final isSelected = selectedNode == embedContext.node;
+
+    // Override width if selected and dragging
+    if (isSelected && tempWidth != null) {
+      width = tempWidth;
+    }
+
+    return GestureDetector(
+      onTap: () {
+        final offset = embedContext.node.documentOffset;
+        embedContext.controller.updateSelection(
+          TextSelection.collapsed(offset: offset),
+          ChangeSource.local,
+        );
+      },
+      child: Container(
+        margin: const EdgeInsets.symmetric(vertical: 8),
+        alignment: _getAlignment(style),
+        child: IntrinsicWidth(
+          child: Container(
+            decoration: isSelected
+                ? BoxDecoration(
+                    border: Border.all(
+                      color: Theme.of(context).primaryColor,
+                      width: 3,
+                    ),
+                  )
+                : null,
+            child: Image.network(
+              imageUrl,
+              width: width,
+              height: height,
+              fit: BoxFit.contain,
+              errorBuilder: (context, error, stackTrace) => Container(
+                height: 150,
+                width: width ?? 300,
+                color: Colors.grey[200],
+                alignment: Alignment.center,
+                child: const Icon(
+                  Icons.broken_image,
+                  color: Colors.grey,
+                  size: 48,
+                ),
+              ),
+              loadingBuilder: (context, child, loadingProgress) {
+                if (loadingProgress == null) return child;
+                return Container(
+                  height: 150,
+                  width: width ?? 300,
+                  color: Colors.grey[100],
+                  alignment: Alignment.center,
+                  child: CircularProgressIndicator(
+                    value: loadingProgress.expectedTotalBytes != null
+                        ? loadingProgress.cumulativeBytesLoaded /
+                              loadingProgress.expectedTotalBytes!
+                        : null,
+                  ),
+                );
+              },
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  AlignmentGeometry _getAlignment(Style style) {
+    if (style.attributes.containsKey('align')) {
+      final val = style.attributes['align']?.value;
+      if (val == 'center') return Alignment.center;
+      if (val == 'right') return Alignment.centerRight;
+      if (val == 'left') return Alignment.centerLeft;
+    }
+    return Alignment.center;
   }
 }
