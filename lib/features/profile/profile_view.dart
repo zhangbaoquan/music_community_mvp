@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:music_community_mvp/core/shim_google_fonts.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import '../music/music_controller.dart';
+import '../music/upload_music_view.dart';
+import '../player/player_controller.dart';
 import 'profile_controller.dart';
 
 class ProfileView extends StatelessWidget {
@@ -127,9 +131,219 @@ class ProfileView extends StatelessWidget {
                 ),
               ],
             ),
+
+            const SizedBox(height: 48),
+
+            // Phase 4: My Original Music
+            _buildMyMusicSection(),
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildMyMusicSection() {
+    // Ensure MusicController is available
+    final musicController = Get.put(MusicController());
+    // Trigger fetch for current user
+    final currentUser = Supabase.instance.client.auth.currentUser;
+    if (currentUser != null) {
+      musicController.fetchUserSongs(currentUser.id);
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              "我的原创 (My Originals)",
+              style: GoogleFonts.outfit(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                color: const Color(0xFF1A1A1A),
+              ),
+            ),
+            ElevatedButton.icon(
+              onPressed: () => Get.to(() => const UploadMusicView()),
+              icon: const Icon(Icons.upload_file, size: 18),
+              label: const Text("上传歌曲"),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.black87,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 12,
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 24),
+
+        Obx(() {
+          if (musicController.isLoading.value) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          final songs = musicController.rxUserSongs;
+          if (songs.isEmpty) {
+            return Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(40),
+              decoration: BoxDecoration(
+                color: Colors.grey[50],
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: Colors.grey[200]!,
+                  style: BorderStyle.solid,
+                ),
+              ),
+              child: Column(
+                children: [
+                  Icon(
+                    Icons.music_note_outlined,
+                    size: 48,
+                    color: Colors.grey[400],
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    "还没有上传过原创歌曲",
+                    style: TextStyle(color: Colors.grey[500], fontSize: 16),
+                  ),
+                  const SizedBox(height: 8),
+                  TextButton(
+                    onPressed: () => Get.to(() => const UploadMusicView()),
+                    child: const Text("去发布第一首"),
+                  ),
+                ],
+              ),
+            );
+          }
+
+          return GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2, // Adjust for responsiveness?
+              crossAxisSpacing: 20,
+              mainAxisSpacing: 20,
+              childAspectRatio: 2.5, // Wide card for song
+            ),
+            itemCount: songs.length,
+            itemBuilder: (context, index) {
+              final song = songs[index];
+              return Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: Colors.grey[100]!),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.04),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  children: [
+                    // Cover
+                    Container(
+                      width: 60,
+                      height: 60,
+                      decoration: BoxDecoration(
+                        color: Colors.grey[200],
+                        borderRadius: BorderRadius.circular(8),
+                        image: song.coverUrl != null
+                            ? DecorationImage(
+                                image: NetworkImage(song.coverUrl!),
+                                fit: BoxFit.cover,
+                              )
+                            : null,
+                      ),
+                      child: song.coverUrl == null
+                          ? const Icon(Icons.music_note, color: Colors.grey)
+                          : null,
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            song.title,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            song.artist ?? "Unknown",
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              color: Colors.grey[500],
+                              fontSize: 12,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          // Mini Chips
+                          if (song.moodTags != null &&
+                              song.moodTags!.isNotEmpty)
+                            Wrap(
+                              spacing: 4,
+                              children: song.moodTags!
+                                  .take(2)
+                                  .map(
+                                    (tag) => Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 6,
+                                        vertical: 2,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: Colors.blue[50], // Theme color
+                                        borderRadius: BorderRadius.circular(4),
+                                      ),
+                                      child: Text(
+                                        tag,
+                                        style: TextStyle(
+                                          fontSize: 10,
+                                          color: Colors.blue[800],
+                                        ),
+                                      ),
+                                    ),
+                                  )
+                                  .toList(),
+                            ),
+                        ],
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(
+                        Icons.play_circle_fill,
+                        color: Colors.blue,
+                        size: 36,
+                      ),
+                      onPressed: () {
+                        Get.find<PlayerController>().playSong(song);
+                      },
+                    ),
+                  ],
+                ),
+              );
+            },
+          );
+        }),
+      ],
     );
   }
 

@@ -1,5 +1,6 @@
 import 'package:get/get.dart';
 import 'package:just_audio/just_audio.dart';
+import '../../data/models/song.dart';
 
 class PlayerController extends GetxController {
   final AudioPlayer _player = AudioPlayer();
@@ -108,6 +109,22 @@ class PlayerController extends GetxController {
           colorText: Get.theme.colorScheme.onErrorContainer,
         );
       }
+    }
+  }
+
+  Future<void> playSong(Song song) async {
+    try {
+      await _player.stop();
+      await _player.setUrl(song.url);
+
+      currentMood.value = song.moodTags?.firstOrNull ?? 'User Upload';
+      currentTitle.value = song.title;
+      currentArtist.value = song.artist ?? 'Pianist';
+
+      _player.play();
+    } catch (e) {
+      print("Error playing song ${song.title}: $e");
+      Get.snackbar("Error", "无法播放歌曲: ${e.toString()}");
     }
   }
 
