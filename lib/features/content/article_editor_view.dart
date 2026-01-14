@@ -89,7 +89,7 @@ class _ArticleEditorViewState extends State<ArticleEditorView> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Write Article'),
+        title: const Text('写文章'),
         actions: [
           Obx(() {
             return TextButton(
@@ -100,7 +100,7 @@ class _ArticleEditorViewState extends State<ArticleEditorView> {
                       height: 20,
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
-                  : const Text('Publish', style: TextStyle(fontSize: 16)),
+                  : const Text('发布', style: TextStyle(fontSize: 16)),
             );
           }),
         ],
@@ -141,7 +141,7 @@ class _ArticleEditorViewState extends State<ArticleEditorView> {
                                   ),
                                   SizedBox(height: 8),
                                   Text(
-                                    'Add Cover Image',
+                                    '添加封面图',
                                     style: TextStyle(color: Colors.grey),
                                   ),
                                 ],
@@ -160,7 +160,7 @@ class _ArticleEditorViewState extends State<ArticleEditorView> {
                       fontWeight: FontWeight.bold,
                     ),
                     decoration: const InputDecoration(
-                      hintText: 'Enter Title...',
+                      hintText: '输入标题...',
                       border: InputBorder.none,
                     ),
                     maxLines: null,
@@ -176,7 +176,7 @@ class _ArticleEditorViewState extends State<ArticleEditorView> {
                       fontStyle: FontStyle.italic,
                     ),
                     decoration: const InputDecoration(
-                      hintText: 'Short summary or subtitle (optional)...',
+                      hintText: '简短摘要或副标题 (可选)...',
                       border: InputBorder.none,
                     ),
                     maxLines: null,
@@ -184,18 +184,12 @@ class _ArticleEditorViewState extends State<ArticleEditorView> {
                   const Divider(height: 40),
 
                   // 4. Rich Text Editor
-                  // Limited height or expanded?
-                  // Let's use a fixed height or let it expand.
-                  // Since we are in SingleChildScrollView, we must disable scroll in editor or use a different layout.
-                  // Better layout: Column -> [Metadata] -> Expanded -> [Editor].
-                  // But we want the editor to be part of the scrollable page usually.
-                  // For Quill 3.x/4.x/5.x, putting it in a scrollview requires configuring `scrollable: false`.
                   QuillEditor(
                     controller: _quillController,
                     focusNode: FocusNode(),
                     scrollController: ScrollController(),
                     config: const QuillEditorConfig(
-                      placeholder: 'Start writing your story...',
+                      placeholder: '开始撰写你的故事...',
                       autoFocus: false,
                       expands: false,
                       padding: EdgeInsets.zero,

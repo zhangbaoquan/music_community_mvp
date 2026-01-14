@@ -107,14 +107,14 @@ class _ArticleDetailViewState extends State<ArticleDetailView> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            widget.article.authorName ?? 'Unknown',
+                            widget.article.authorName ?? '未知作者',
                             style: const TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
                           Text(
-                            'Published ${timeago.format(widget.article.createdAt)}',
+                            '发布于 ${timeago.format(widget.article.createdAt, locale: 'zh')}',
                             style: TextStyle(
                               fontSize: 12,
                               color: Colors.grey[500],

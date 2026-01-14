@@ -34,10 +34,7 @@ class ArticleListView extends StatelessWidget {
               children: [
                 Icon(Icons.article_outlined, size: 60, color: Colors.grey[300]),
                 const SizedBox(height: 16),
-                Text(
-                  'No articles yet.',
-                  style: TextStyle(color: Colors.grey[500]),
-                ),
+                Text('暂无文章', style: TextStyle(color: Colors.grey[500])),
               ],
             ),
           );
@@ -122,7 +119,7 @@ class _ArticleCard extends StatelessWidget {
                       ),
                       const SizedBox(width: 8),
                       Text(
-                        article.authorName ?? 'Unknown',
+                        article.authorName ?? '未知作者',
                         style: TextStyle(
                           fontSize: 12,
                           color: Colors.grey[600],
@@ -131,7 +128,8 @@ class _ArticleCard extends StatelessWidget {
                       ),
                       const Spacer(),
                       Text(
-                        timeago.format(article.createdAt),
+                        // timeago.setLocaleMessages('zh', ...) is done in main.dart
+                        timeago.format(article.createdAt, locale: 'zh'),
                         style: TextStyle(fontSize: 12, color: Colors.grey[400]),
                       ),
                     ],

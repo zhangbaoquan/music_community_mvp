@@ -82,8 +82,8 @@ class ContentTabView extends StatelessWidget {
                 fontSize: 14,
               ),
               tabs: const [
-                Tab(text: "心情广场 (Moods)"),
-                Tab(text: "专栏文章 (Articles)"),
+                Tab(text: "心情广场"),
+                Tab(text: "专栏文章"),
               ],
             ),
           ),

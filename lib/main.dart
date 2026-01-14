@@ -6,9 +6,15 @@ import 'package:music_community_mvp/core/shim_google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'features/auth/auth_controller.dart';
 
+import 'package:timeago/timeago.dart' as timeago; // Import timeago
+
 void main() {
   // Ensure binding, but DO NOT await async calls that Block startup
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Register Chinese messages for timeago
+  timeago.setLocaleMessages('zh', timeago.ZhCnMessages());
+
   runApp(const MusicCommunityApp());
 }
 
@@ -26,6 +32,7 @@ class MusicCommunityApp extends StatelessWidget {
         scaffoldBackgroundColor: Colors.white,
         textTheme: GoogleFonts.outfitTextTheme(),
       ),
+      locale: const Locale('zh', 'CN'), // Enforce Chinese locale
       // Localizations are REQUIRED for flutter_quill to work in Release mode
       localizationsDelegates: const [
         GlobalMaterialLocalizations.delegate,
