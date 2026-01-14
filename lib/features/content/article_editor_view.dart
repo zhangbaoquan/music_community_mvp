@@ -81,7 +81,24 @@ class _ArticleEditorViewState extends State<ArticleEditorView> {
     );
 
     if (success) {
-      Get.back();
+      Get.snackbar(
+        '发布成功',
+        '您的文章已发布！',
+        backgroundColor: Colors.green.withOpacity(0.1),
+        colorText: Colors.green,
+        duration: const Duration(seconds: 2),
+      );
+      // Wait for snackbar to be visible briefly before closing
+      await Future.delayed(const Duration(milliseconds: 500));
+      // Close the snackbar AND the page
+      Get.back(closeOverlays: true);
+    } else {
+      Get.snackbar(
+        '发布失败',
+        '请稍后重试或检查网络',
+        backgroundColor: Colors.red.withOpacity(0.1),
+        colorText: Colors.red,
+      );
     }
   }
 

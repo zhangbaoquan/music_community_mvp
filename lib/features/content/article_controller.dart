@@ -92,13 +92,13 @@ class ArticleController extends GetxController {
 
       await _supabase.from('articles').insert(article.toMap());
 
-      // 3. Refresh list
+      // 3. Refresh list (fire and forget, or await if needed)
       fetchArticles();
 
-      Get.snackbar('Success', 'Article published!');
       return true;
     } catch (e) {
-      Get.snackbar('Error', 'Failed to publish article: $e');
+      print('Publish Error: $e'); // Log for debugging
+      // Get.snackbar('Error', 'Failed to publish article: $e'); // Move UI to View
       return false;
     } finally {
       isUploading.value = false;
