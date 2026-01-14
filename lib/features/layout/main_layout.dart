@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:music_community_mvp/core/shim_google_fonts.dart';
 import '../player/player_bar.dart';
-import '../home/mood_station_view.dart'; // import mood station
+import '../home/home_view.dart'; // import HomeView
 import '../player/player_controller.dart'; // import controller
 import '../diary/diary_view.dart';
 import '../profile/profile_view.dart'; // import profile view
@@ -26,8 +26,8 @@ class MainLayout extends StatelessWidget {
   ); // Inject PlayerController
 
   final List<Widget> _pages = [
-    // Tab 0: Mood Station (New Home)
-    const MoodStationView(),
+    // Tab 0: Home (Moods + Articles)
+    HomeView(),
 
     // Tab 1: Mental Corner (Diary)
     const DiaryView(),

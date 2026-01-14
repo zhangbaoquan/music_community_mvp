@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:music_community_mvp/core/shim_google_fonts.dart';
 
 import '../player/player_controller.dart'; // import
+import '../diary/diary_view.dart';
 
 class MoodStationView extends StatelessWidget {
   const MoodStationView({super.key});
@@ -87,6 +88,21 @@ class MoodStationView extends StatelessWidget {
                 );
               },
             ),
+
+            const SizedBox(height: 48),
+
+            // Diary Feed Section
+            Text(
+              "最新心事",
+              style: GoogleFonts.outfit(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                color: const Color(0xFF1A1A1A),
+              ),
+            ),
+            const SizedBox(height: 16),
+
+            const SizedBox(height: 600, child: DiaryView()),
           ],
         ),
       ),
@@ -99,12 +115,12 @@ class MoodStationView extends StatelessWidget {
     required Color color,
     required Color iconColor,
     required String description,
-    required VoidCallback onTap, // Add callback
+    required VoidCallback onTap,
   }) {
     return Material(
       color: Colors.transparent,
       child: InkWell(
-        onTap: onTap, // Use callback
+        onTap: onTap,
         borderRadius: BorderRadius.circular(24),
         child: Container(
           decoration: BoxDecoration(
