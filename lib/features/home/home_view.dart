@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import '../player/player_view.dart';
+// import '../player/player_view.dart';
 import 'mood_station_view.dart';
 import '../content/article_list_view.dart';
 
@@ -14,21 +14,11 @@ class HomeView extends GetResponsiveView {
       return Scaffold(
         body: Center(
           child: Container(
-            constraints: const BoxConstraints(maxWidth: 1000),
+            constraints: const BoxConstraints(
+              maxWidth: 800,
+            ), // Reduced max width for centered content
             padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 20),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Left Panel: Player
-                const Expanded(
-                  flex: 4,
-                  child: SingleChildScrollView(child: PlayerView()),
-                ),
-                const SizedBox(width: 40),
-                // Right Panel: Content Area (Tabs)
-                const Expanded(flex: 6, child: ContentTabView()),
-              ],
-            ),
+            child: const ContentTabView(),
           ),
         ),
       );
@@ -39,16 +29,7 @@ class HomeView extends GetResponsiveView {
       body: SafeArea(
         child: SingleChildScrollView(
           padding: EdgeInsets.all(20),
-          child: Column(
-            children: [
-              PlayerView(),
-              SizedBox(height: 32),
-              SizedBox(
-                height: 600, // Increased height for tabs
-                child: ContentTabView(),
-              ),
-            ],
-          ),
+          child: ContentTabView(),
         ),
       ),
     );

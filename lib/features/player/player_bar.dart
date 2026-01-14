@@ -105,21 +105,33 @@ class PlayerBar extends StatelessWidget {
       child: Row(
         children: [
           // Mini Album Art
-          Container(
-            height: 48,
-            width: 48,
-            decoration: BoxDecoration(
-              color: Colors.grey[800], // Dark placeholder background
-              borderRadius: BorderRadius.circular(8),
-              // Remove NetworkImage to avoid Unsplash blocking
-              gradient: const LinearGradient(
-                colors: [Color(0xFF1A1A1A), Color(0xFF333333)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
+          Obx(() {
+            final coverUrl = controller.currentCoverUrl.value;
+            return Container(
+              height: 48,
+              width: 48,
+              decoration: BoxDecoration(
+                color: Colors.grey[800],
+                borderRadius: BorderRadius.circular(8),
+                image: coverUrl.isNotEmpty
+                    ? DecorationImage(
+                        image: NetworkImage(coverUrl),
+                        fit: BoxFit.cover,
+                      )
+                    : null,
+                gradient: coverUrl.isEmpty
+                    ? const LinearGradient(
+                        colors: [Color(0xFF1A1A1A), Color(0xFF333333)],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      )
+                    : null,
               ),
-            ),
-            child: const Icon(Icons.music_note, color: Colors.white, size: 24),
-          ),
+              child: coverUrl.isEmpty
+                  ? const Icon(Icons.music_note, color: Colors.white, size: 24)
+                  : null,
+            );
+          }),
           const SizedBox(width: 12),
           // Text Info
           Expanded(
@@ -213,34 +225,62 @@ class PlayerBar extends StatelessWidget {
           ),
         ),
 
-        // Mini Progress Bar
+        // Progress Bar with Time
         SizedBox(
-          width: 400,
-          height: 16,
+          width: 500, // Increased width to accommodate time labels
+          height: 20,
           child: Obx(() {
-            final position = controller.currentPosition.value.inSeconds
-                .toDouble();
-            final total = controller.totalDuration.value.inSeconds.toDouble();
-            final max = total > 0 ? total : 1.0;
-            final value = position > max ? max : position;
+            final position = controller.currentPosition.value;
+            final total = controller.totalDuration.value;
+            final posSeconds = position.inSeconds.toDouble();
+            final totalSeconds = total.inSeconds.toDouble();
+            final max = totalSeconds > 0 ? totalSeconds : 1.0;
+            final value = posSeconds > max ? max : posSeconds;
 
-            return SliderTheme(
-              data: SliderThemeData(
-                trackHeight: 2,
-                thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 4),
-                overlayShape: SliderComponentShape.noOverlay,
-                activeTrackColor: const Color(0xFF1A1A1A),
-                inactiveTrackColor: Colors.grey[200],
-                thumbColor: const Color(0xFF1A1A1A),
-              ),
-              child: Slider(
-                value: value,
-                min: 0.0,
-                max: max,
-                onChanged: (val) {
-                  controller.seek(Duration(seconds: val.toInt()));
-                },
-              ),
+            return Row(
+              children: [
+                // Current Time
+                Text(
+                  _formatDuration(position),
+                  style: GoogleFonts.ibmPlexMono(
+                    fontSize: 12,
+                    color: Colors.grey[600],
+                  ),
+                ),
+                const SizedBox(width: 8),
+                // Slider
+                Expanded(
+                  child: SliderTheme(
+                    data: SliderThemeData(
+                      trackHeight: 2,
+                      thumbShape: const RoundSliderThumbShape(
+                        enabledThumbRadius: 4,
+                      ),
+                      overlayShape: SliderComponentShape.noOverlay,
+                      activeTrackColor: const Color(0xFF1A1A1A),
+                      inactiveTrackColor: Colors.grey[200],
+                      thumbColor: const Color(0xFF1A1A1A),
+                    ),
+                    child: Slider(
+                      value: value,
+                      min: 0.0,
+                      max: max,
+                      onChanged: (val) {
+                        controller.seek(Duration(seconds: val.toInt()));
+                      },
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                // Total Time
+                Text(
+                  _formatDuration(total),
+                  style: GoogleFonts.ibmPlexMono(
+                    fontSize: 12,
+                    color: Colors.grey[600],
+                  ),
+                ),
+              ],
             );
           }),
         ),
@@ -306,5 +346,12 @@ class PlayerBar extends StatelessWidget {
         backgroundColor: Colors.transparent,
       );
     }
+  }
+
+  String _formatDuration(Duration duration) {
+    String twoDigits(int n) => n.toString().padLeft(2, '0');
+    final minutes = twoDigits(duration.inMinutes.remainder(60));
+    final seconds = twoDigits(duration.inSeconds.remainder(60));
+    return "$minutes:$seconds";
   }
 }

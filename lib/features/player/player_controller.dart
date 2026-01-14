@@ -11,6 +11,7 @@ class PlayerController extends GetxController {
   final currentMood = ''.obs; // The ID for the current song (e.g. 'Happy')
   final currentTitle = ''.obs;
   final currentArtist = ''.obs;
+  final currentCoverUrl = ''.obs; // Add cover URL observable
   final currentPosition = Duration.zero.obs;
   final totalDuration = Duration.zero.obs;
   final bufferedPosition = Duration.zero.obs;
@@ -98,6 +99,7 @@ class PlayerController extends GetxController {
         currentMood.value = mood; // Update current mood ID
         currentTitle.value = track['title']!;
         currentArtist.value = track['artist']!;
+        currentCoverUrl.value = ''; // No specific cover for mood tracks yet
         _player.play();
       } catch (e) {
         print("Error playing $mood: $e");
@@ -120,6 +122,7 @@ class PlayerController extends GetxController {
       currentMood.value = song.moodTags?.firstOrNull ?? 'User Upload';
       currentTitle.value = song.title;
       currentArtist.value = song.artist ?? 'Pianist';
+      currentCoverUrl.value = song.coverUrl ?? ''; // Use song cover
 
       _player.play();
     } catch (e) {
