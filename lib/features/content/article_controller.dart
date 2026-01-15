@@ -1,7 +1,9 @@
 import 'package:file_picker/file_picker.dart';
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../data/models/article.dart';
+import 'package:music_community_mvp/data/models/article_comment.dart';
 
 class ArticleController extends GetxController {
   final _supabase = Supabase.instance.client;
@@ -27,7 +29,7 @@ class ArticleController extends GetxController {
       final response = await _supabase
           .from('articles')
           .select(
-            '*, profiles(username, avatar_url), likes:article_likes(count), collections:article_collections(count)',
+            '*, profiles(username, avatar_url), likes:article_likes(count), collections:article_collections(count), comments:article_comments(count)',
           )
           .eq('is_published', true)
           .order('created_at', ascending: false);
@@ -80,12 +82,9 @@ class ArticleController extends GetxController {
   }
 
   /// Toggle Like
-  Future<void> toggleLike(Article article) async {
+  Future<bool> toggleLike(Article article) async {
     final userId = _supabase.auth.currentUser?.id;
-    if (userId == null) {
-      Get.snackbar('提示', '请先登录');
-      return;
-    }
+    if (userId == null) return false;
 
     try {
       if (article.isLiked) {
@@ -106,18 +105,17 @@ class ArticleController extends GetxController {
         article.likesCount++;
       }
       articles.refresh(); // Update UI
+      return true;
     } catch (e) {
-      Get.snackbar('Error', 'Failed to toggle like: $e');
+      print('Error toggling like: $e');
+      return false;
     }
   }
 
   /// Toggle Collection
-  Future<void> toggleCollection(Article article) async {
+  Future<bool> toggleCollection(Article article) async {
     final userId = _supabase.auth.currentUser?.id;
-    if (userId == null) {
-      Get.snackbar('提示', '请先登录');
-      return;
-    }
+    if (userId == null) return false;
 
     try {
       if (article.isCollected) {
@@ -141,8 +139,138 @@ class ArticleController extends GetxController {
         article.collectionsCount++;
       }
       articles.refresh(); // Update UI
+      return true;
     } catch (e) {
-      Get.snackbar('Error', 'Failed to toggle collection: $e');
+      print('Error toggling collection: $e');
+      return false;
+    }
+  }
+
+  // -------------------------
+  // Comments Logic
+  // -------------------------
+
+  RxList<ArticleComment> currentComments = <ArticleComment>[].obs;
+  RxInt totalCommentsCount = 0.obs;
+  RxBool isCommentsLoading = false.obs;
+  Rxn<ArticleComment> selectedThread = Rxn<ArticleComment>();
+
+  Future<void> fetchComments(String articleId) async {
+    try {
+      isCommentsLoading.value = true;
+      List<dynamic> data;
+      try {
+        // Try optimized fetch with join
+        final response = await _supabase
+            .from('article_comments')
+            .select('*, profiles(username, avatar_url)')
+            .eq('article_id', articleId)
+            .order('created_at', ascending: true);
+        data = response as List<dynamic>;
+      } catch (e) {
+        // Fallback: Fetch comments then fetch profiles manually
+        print('Join failed, using fallback: $e');
+        final response = await _supabase
+            .from('article_comments')
+            .select('*')
+            .eq('article_id', articleId)
+            .order('created_at', ascending: true);
+        data = response as List<dynamic>;
+
+        // Fetch user profiles
+        final userIds = data
+            .map((e) => e['user_id'] as String)
+            .toSet()
+            .toList();
+        if (userIds.isNotEmpty) {
+          final profilesResponse = await _supabase
+              .from('profiles')
+              .select('id, username, avatar_url')
+              .filter('id', 'in', userIds);
+          final profilesMap = {for (var p in profilesResponse) p['id']: p};
+
+          for (var item in data) {
+            final pid = item['user_id'];
+            if (profilesMap.containsKey(pid)) {
+              item['profiles'] = profilesMap[pid];
+            }
+          }
+        }
+      }
+
+      final allComments = data.map((e) => ArticleComment.fromMap(e)).toList();
+
+      // Build Tree
+      final Map<String, ArticleComment> commentMap = {
+        for (var c in allComments) c.id: c,
+      };
+
+      final List<ArticleComment> rootComments = [];
+
+      for (var c in allComments) {
+        if (c.parentId == null) {
+          rootComments.add(c);
+        } else {
+          final parent = commentMap[c.parentId];
+          if (parent != null) {
+            parent.replies.add(c);
+          } else {
+            rootComments.add(c);
+          }
+        }
+      }
+
+      rootComments.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+
+      currentComments.value = rootComments;
+      totalCommentsCount.value = allComments.length;
+    } catch (e) {
+      print('Error fetching comments: $e');
+    } finally {
+      isCommentsLoading.value = false;
+    }
+  }
+
+  Future<bool> addComment(
+    String articleId,
+    String content, {
+    String? parentId,
+  }) async {
+    final user = _supabase.auth.currentUser;
+    if (user == null) {
+      Get.snackbar('错误', '请先登录');
+      return false;
+    }
+
+    try {
+      await _supabase.from('article_comments').insert({
+        'article_id': articleId,
+        'user_id': user.id,
+        'content': content,
+        'parent_id': parentId,
+      });
+
+      // Refresh comments and article count
+      await fetchComments(articleId);
+
+      // Update article comment count locally
+      final articleIndex = articles.indexWhere((a) => a.id == articleId);
+      if (articleIndex != -1) {
+        articles[articleIndex].commentsCount++;
+        articles.refresh();
+      }
+
+      Get.snackbar(
+        '成功',
+        '评论已发布',
+        snackPosition: SnackPosition.BOTTOM,
+        margin: const EdgeInsets.all(16),
+      );
+      return true;
+    } catch (e) {
+      print('Error posting comment: $e');
+      Get.snackbar('错误', '评论发布失败: $e', snackPosition: SnackPosition.BOTTOM);
+      return false;
     }
   }
 

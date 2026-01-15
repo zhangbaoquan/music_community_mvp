@@ -176,6 +176,15 @@ class _ArticleCard extends StatelessWidget {
                       ),
                       const SizedBox(width: 20),
                       _SocialIcon(
+                        icon: Icons.chat_bubble_outline,
+                        color: Colors.grey[400],
+                        count: article.commentsCount,
+                        onTap: () {
+                          Get.to(() => ArticleDetailView(article: article));
+                        },
+                      ),
+                      const SizedBox(width: 20),
+                      _SocialIcon(
                         icon: article.isCollected
                             ? Icons.bookmark
                             : Icons.bookmark_border,

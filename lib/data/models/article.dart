@@ -25,6 +25,7 @@ class Article {
     this.authorAvatar,
     this.likesCount = 0,
     this.collectionsCount = 0,
+    this.commentsCount = 0,
     this.isLiked = false,
     this.isCollected = false,
   });
@@ -47,6 +48,7 @@ class Article {
       // Note: 'likes' and 'collections' might be Lists if fetched via select(..., likes:article_likes(count))
       likesCount: _parseCount(map['likes']),
       collectionsCount: _parseCount(map['collections']),
+      commentsCount: _parseCount(map['comments']),
       // For 'isLiked', we might fetch it separately or via a smart join.
       // For MVP simple implementation, we might fetch user-specific status in a separate list or assume data is massaged.
       // But commonly: select(..., my_likes:article_likes!inner(user_id)) if filtered by user.
@@ -72,6 +74,7 @@ class Article {
   // Social Stats (Mutable for UI updates)
   int likesCount;
   int collectionsCount;
+  int commentsCount;
   bool isLiked;
   bool isCollected; // 'Bookmarked'
 
