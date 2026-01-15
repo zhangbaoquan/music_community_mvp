@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_quill/flutter_quill.dart';
+import 'package:get/get.dart';
 import 'package:music_community_mvp/data/models/article.dart';
+import 'article_controller.dart';
 
 import 'package:timeago/timeago.dart' as timeago;
 
@@ -142,15 +144,11 @@ class _ArticleDetailViewState extends State<ArticleDetailView> {
                           fontSize: 16,
                           fontStyle: FontStyle.italic,
                           color: Colors.grey,
-                          height: 1.5,
                         ),
                       ),
                     ),
 
-                  if (widget.article.summary != null &&
-                      widget.article.summary!.isNotEmpty)
-                    const SizedBox(height: 32),
-
+                  const Divider(height: 1), // Divider before content
                   // Quill Content
                   QuillEditor(
                     controller: _quillController,
@@ -159,7 +157,7 @@ class _ArticleDetailViewState extends State<ArticleDetailView> {
                     config: const QuillEditorConfig(
                       autoFocus: false,
                       expands: false,
-                      padding: EdgeInsets.zero,
+                      padding: EdgeInsets.only(top: 24), // Add padding here
                     ),
                   ),
 
@@ -168,6 +166,130 @@ class _ArticleDetailViewState extends State<ArticleDetailView> {
               ),
             ),
           ),
+        ],
+      ),
+      bottomNavigationBar: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              offset: const Offset(0, -4),
+              blurRadius: 16,
+            ),
+          ],
+        ),
+        child: SafeArea(
+          child: Row(
+            children: [
+              // 1. Comment Input (Left, Expanded)
+              Expanded(
+                child: Container(
+                  height: 40,
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  decoration: BoxDecoration(
+                    color: Colors.grey[100],
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.edit, size: 16, color: Colors.grey[400]),
+                      const SizedBox(width: 8),
+                      Text(
+                        '写下你的想法...',
+                        style: TextStyle(color: Colors.grey[400], fontSize: 14),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+
+              const SizedBox(width: 24),
+
+              // 2. Action Buttons (Right)
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _BottomActionBtn(
+                    icon: widget.article.isLiked
+                        ? Icons.favorite
+                        : Icons.favorite_border,
+                    label: widget.article.likesCount.toString(),
+                    isActive: widget.article.isLiked,
+                    activeColor: Colors.red,
+                    onTap: () async {
+                      await Get.find<ArticleController>().toggleLike(
+                        widget.article,
+                      );
+                      setState(() {});
+                    },
+                  ),
+                  const SizedBox(width: 16), // Gap between buttons
+                  _BottomActionBtn(
+                    icon: widget.article.isCollected
+                        ? Icons.bookmark
+                        : Icons.bookmark_border,
+                    label: widget.article.collectionsCount.toString(),
+                    isActive: widget.article.isCollected,
+                    activeColor: Colors.orange,
+                    onTap: () async {
+                      await Get.find<ArticleController>().toggleCollection(
+                        widget.article,
+                      );
+                      setState(() {});
+                    },
+                  ),
+                  // Future: Tip Button
+                  // Future: Share Button
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _BottomActionBtn extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final bool isActive;
+  final Color activeColor;
+  final VoidCallback onTap;
+
+  const _BottomActionBtn({
+    required this.icon,
+    required this.label,
+    required this.isActive,
+    required this.activeColor,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            icon,
+            color: isActive ? activeColor : Colors.grey[600],
+            size: 24,
+          ),
+          if (label != '0') ...[
+            // const SizedBox(height: 2), // Optional
+            Text(
+              label,
+              style: TextStyle(
+                color: isActive ? activeColor : Colors.grey[600],
+                fontWeight: FontWeight.w500,
+                fontSize: 10,
+              ),
+            ),
+          ],
         ],
       ),
     );

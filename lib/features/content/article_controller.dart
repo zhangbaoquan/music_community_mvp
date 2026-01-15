@@ -17,22 +17,132 @@ class ArticleController extends GetxController {
     fetchArticles();
   }
 
-  /// Fetch all published articles with author profile info
+  /// Fetch all published articles with author profile info & social stats
   Future<void> fetchArticles() async {
     try {
       isLoading.value = true;
+      final userId = _supabase.auth.currentUser?.id;
+
+      // 1. Fetch Articles with Counts
       final response = await _supabase
           .from('articles')
-          .select('*, profiles(username, avatar_url)')
+          .select(
+            '*, profiles(username, avatar_url), likes:article_likes(count), collections:article_collections(count)',
+          )
           .eq('is_published', true)
           .order('created_at', ascending: false);
 
       final data = response as List<dynamic>;
-      articles.value = data.map((e) => Article.fromMap(e)).toList();
+      final loadedArticles = data.map((e) => Article.fromMap(e)).toList();
+
+      // 2. Fetch User's Interaction Status (if logged in)
+      if (userId != null) {
+        // Prepare list of article IDs to query
+        final articleIds = loadedArticles.map((a) => a.id).toList();
+
+        if (articleIds.isNotEmpty) {
+          // Check likes
+          final myLikes = await _supabase
+              .from('article_likes')
+              .select('article_id')
+              .eq('user_id', userId)
+              .inFilter('article_id', articleIds);
+
+          final likedIds = (myLikes as List)
+              .map((e) => e['article_id'])
+              .toSet();
+
+          // Check collections
+          final myCollections = await _supabase
+              .from('article_collections')
+              .select('article_id')
+              .eq('user_id', userId)
+              .inFilter('article_id', articleIds);
+
+          final collectedIds = (myCollections as List)
+              .map((e) => e['article_id'])
+              .toSet();
+
+          // Merge status
+          for (var article in loadedArticles) {
+            article.isLiked = likedIds.contains(article.id);
+            article.isCollected = collectedIds.contains(article.id);
+          }
+        }
+      }
+
+      articles.value = loadedArticles;
     } catch (e) {
       Get.snackbar('Error', 'Failed to load articles: $e');
     } finally {
       isLoading.value = false;
+    }
+  }
+
+  /// Toggle Like
+  Future<void> toggleLike(Article article) async {
+    final userId = _supabase.auth.currentUser?.id;
+    if (userId == null) {
+      Get.snackbar('提示', '请先登录');
+      return;
+    }
+
+    try {
+      if (article.isLiked) {
+        // Unlike
+        await _supabase.from('article_likes').delete().match({
+          'user_id': userId,
+          'article_id': article.id,
+        });
+        article.isLiked = false;
+        article.likesCount = (article.likesCount - 1).clamp(0, 999999);
+      } else {
+        // Like
+        await _supabase.from('article_likes').insert({
+          'user_id': userId,
+          'article_id': article.id,
+        });
+        article.isLiked = true;
+        article.likesCount++;
+      }
+      articles.refresh(); // Update UI
+    } catch (e) {
+      Get.snackbar('Error', 'Failed to toggle like: $e');
+    }
+  }
+
+  /// Toggle Collection
+  Future<void> toggleCollection(Article article) async {
+    final userId = _supabase.auth.currentUser?.id;
+    if (userId == null) {
+      Get.snackbar('提示', '请先登录');
+      return;
+    }
+
+    try {
+      if (article.isCollected) {
+        // Remove Collection
+        await _supabase.from('article_collections').delete().match({
+          'user_id': userId,
+          'article_id': article.id,
+        });
+        article.isCollected = false;
+        article.collectionsCount = (article.collectionsCount - 1).clamp(
+          0,
+          999999,
+        );
+      } else {
+        // Add Collection
+        await _supabase.from('article_collections').insert({
+          'user_id': userId,
+          'article_id': article.id,
+        });
+        article.isCollected = true;
+        article.collectionsCount++;
+      }
+      articles.refresh(); // Update UI
+    } catch (e) {
+      Get.snackbar('Error', 'Failed to toggle collection: $e');
     }
   }
 

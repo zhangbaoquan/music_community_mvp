@@ -143,6 +143,7 @@ class _ArticleCard extends StatelessWidget {
                       height: 1.3,
                     ),
                   ),
+
                   if (article.summary != null &&
                       article.summary!.isNotEmpty) ...[
                     const SizedBox(height: 8),
@@ -157,11 +158,82 @@ class _ArticleCard extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                     ),
                   ],
+
+                  const SizedBox(height: 16),
+
+                  // Social Interactions
+                  Row(
+                    children: [
+                      _SocialIcon(
+                        icon: article.isLiked
+                            ? Icons.favorite
+                            : Icons.favorite_border,
+                        color: article.isLiked ? Colors.red : Colors.grey[400],
+                        count: article.likesCount,
+                        onTap: () {
+                          Get.find<ArticleController>().toggleLike(article);
+                        },
+                      ),
+                      const SizedBox(width: 20),
+                      _SocialIcon(
+                        icon: article.isCollected
+                            ? Icons.bookmark
+                            : Icons.bookmark_border,
+                        color: article.isCollected
+                            ? Colors.orange
+                            : Colors.grey[400],
+                        count: article.collectionsCount,
+                        onTap: () {
+                          Get.find<ArticleController>().toggleCollection(
+                            article,
+                          );
+                        },
+                      ),
+                      const Spacer(),
+                      // Move time to here? No, keep author at top is fine.
+                      // Or maybe optional: Share icon
+                    ],
+                  ),
                 ],
               ),
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _SocialIcon extends StatelessWidget {
+  final IconData icon;
+  final Color? color;
+  final int count;
+  final VoidCallback onTap;
+
+  const _SocialIcon({
+    required this.icon,
+    required this.color,
+    required this.count,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Row(
+        children: [
+          Icon(icon, size: 20, color: color),
+          const SizedBox(width: 4),
+          Text(
+            count > 0 ? '$count' : ' ', // Hide 0 or show? ' ' keeps layout
+            style: TextStyle(
+              fontSize: 13,
+              color: color ?? Colors.grey[400],
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
       ),
     );
   }
