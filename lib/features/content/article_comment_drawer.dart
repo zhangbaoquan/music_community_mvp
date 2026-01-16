@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:timeago/timeago.dart' as timeago;
 import 'package:music_community_mvp/data/models/article_comment.dart';
+import 'package:emoji_picker_flutter/emoji_picker_flutter.dart';
 import 'article_controller.dart';
 
 class ArticleCommentDrawer extends StatefulWidget {
@@ -19,6 +20,7 @@ class _ArticleCommentDrawerState extends State<ArticleCommentDrawer> {
   // We also track a local reply target within the thread.
   ArticleComment? _replyTo;
   bool _isThreadExpanded = false;
+  bool _showEmojiPicker = false;
 
   @override
   Widget build(BuildContext context) {
@@ -244,135 +246,178 @@ class _ArticleCommentDrawerState extends State<ArticleCommentDrawer> {
     ArticleController controller,
     ArticleComment? threadRoot,
   ) {
-    return Container(
-      padding: EdgeInsets.fromLTRB(
-        16,
-        12,
-        16,
-        12 + MediaQuery.of(context).padding.bottom,
-      ),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            offset: const Offset(0, -4),
-            blurRadius: 16,
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          padding: EdgeInsets.fromLTRB(
+            16,
+            12,
+            16,
+            12 + (_showEmojiPicker ? 0 : MediaQuery.of(context).padding.bottom),
           ),
-        ],
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // Reply Context
-          if (_replyTo != null || (threadRoot != null && _replyTo == null))
-            Padding(
-              padding: const EdgeInsets.only(bottom: 8.0),
-              child: Row(
-                children: [
-                  Text(
-                    _replyTo != null
-                        ? '回复 @${_replyTo!.userName ?? "未知用户"}'
-                        : '回复 @${threadRoot!.userName ?? "楼主"}',
-                    style: TextStyle(color: Colors.blue[600], fontSize: 12),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.05),
+                offset: const Offset(0, -4),
+                blurRadius: 16,
+              ),
+            ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Reply Context
+              if (_replyTo != null || (threadRoot != null && _replyTo == null))
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 8.0),
+                  child: Row(
+                    children: [
+                      Text(
+                        _replyTo != null
+                            ? '回复 @${_replyTo!.userName ?? "未知用户"}'
+                            : '回复 @${threadRoot!.userName ?? "楼主"}',
+                        style: TextStyle(color: Colors.blue[600], fontSize: 12),
+                      ),
+                      const Spacer(),
+                      GestureDetector(
+                        onTap: () {
+                          setState(() {
+                            _replyTo = null;
+                          });
+                        },
+                        child: const Icon(
+                          Icons.close,
+                          size: 14,
+                          color: Colors.grey,
+                        ),
+                      ),
+                    ],
                   ),
-                  const Spacer(),
+                ),
+
+              // Input Row
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Expanded(
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF5F5F5),
+                        borderRadius: BorderRadius.circular(24),
+                      ),
+                      child: TextField(
+                        controller: _textController,
+                        minLines: 1,
+                        maxLines: 4,
+                        maxLength: 500,
+                        onTap: () {
+                          // Hide emoji picker when typing
+                          if (_showEmojiPicker) {
+                            setState(() {
+                              _showEmojiPicker = false;
+                            });
+                          }
+                        },
+                        decoration: const InputDecoration(
+                          hintText: "写下你的想法...",
+                          border: InputBorder.none,
+                          counterText: "",
+                          isDense: true,
+                          contentPadding: EdgeInsets.symmetric(vertical: 10),
+                        ),
+                        style: const TextStyle(fontSize: 14),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+
+                  // Emoji Button
                   GestureDetector(
                     onTap: () {
+                      FocusScope.of(context).unfocus(); // Close keyboard
                       setState(() {
-                        _replyTo = null;
+                        _showEmojiPicker = !_showEmojiPicker;
                       });
                     },
-                    child: const Icon(
-                      Icons.close,
-                      size: 14,
-                      color: Colors.grey,
+                    child: Container(
+                      padding: const EdgeInsets.all(10),
+                      child: Icon(
+                        _showEmojiPicker
+                            ? Icons.keyboard
+                            : Icons.emoji_emotions_outlined,
+                        color: Colors.grey[600],
+                        size: 24,
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(width: 4),
+
+                  // Send Button
+                  GestureDetector(
+                    onTap: () async {
+                      final content = _textController.text.trim();
+                      if (content.isNotEmpty) {
+                        // Determine parentId
+                        String? finalParentId;
+                        if (_replyTo != null) {
+                          finalParentId = _replyTo!.id;
+                        } else if (threadRoot != null) {
+                          finalParentId = threadRoot.id;
+                        }
+
+                        final success = await controller.addComment(
+                          widget.articleId,
+                          content,
+                          parentId: finalParentId,
+                        );
+                        if (success) {
+                          _textController.clear();
+                          setState(() {
+                            _replyTo = null;
+                            _showEmojiPicker = false; // Hide after send
+                          });
+                        }
+                      }
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: const BoxDecoration(
+                        color: Colors.black,
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.arrow_upward,
+                        color: Colors.white,
+                        size: 20,
+                      ),
                     ),
                   ),
                 ],
               ),
-            ),
-
-          // Input Row
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Expanded(
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFF5F5F5),
-                    borderRadius: BorderRadius.circular(24),
-                  ),
-                  child: TextField(
-                    controller: _textController,
-                    minLines: 1,
-                    maxLines: 4,
-                    maxLength: 500,
-                    decoration: const InputDecoration(
-                      hintText: "写下你的想法...",
-                      border: InputBorder.none,
-                      counterText: "",
-                      isDense: true,
-                      contentPadding: EdgeInsets.symmetric(vertical: 10),
-                    ),
-                    style: const TextStyle(fontSize: 14),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 12),
-              GestureDetector(
-                onTap: () async {
-                  final content = _textController.text.trim();
-                  if (content.isNotEmpty) {
-                    // Determine parentId
-                    String? finalParentId;
-                    if (_replyTo != null) {
-                      finalParentId = _replyTo!.id;
-                    } else if (threadRoot != null) {
-                      finalParentId = threadRoot.id;
-                    }
-
-                    final success = await controller.addComment(
-                      widget.articleId,
-                      content,
-                      parentId: finalParentId,
-                    );
-                    if (success) {
-                      _textController.clear();
-                      setState(() {
-                        // Keep logic: if we replied to specific person, verify if we should keep selection?
-                        // User wants "result shown". logic adds to DB -> fetchComments -> updates state.
-                        // But _replyTo might need to be cleared to avoid "replying to X" sticky state,
-                        // unless we want to allow multiple replies. User usually expects clear.
-                        // BUT we want to ensure visual feedback.
-                        // The "Highlight" comes from _replyTo check in _buildCommentItem.
-                        // If we clear _replyTo, we lost the highlight?
-                        // User said: "First let sub-comment have highlight status, then directly expand display"
-                        // Maybe we should temporarily keep _replyTo or set a "justRepliedTo" state?
-                        // For now, let's clear _replyTo as is standard, but the COMMENT itself should appear.
-                        _replyTo = null;
-                      });
-                    }
-                  }
-                },
-                child: Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: const BoxDecoration(
-                    color: Colors.black,
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(
-                    Icons.arrow_upward,
-                    color: Colors.white,
-                    size: 20,
-                  ),
-                ),
-              ),
             ],
           ),
-        ],
-      ),
+        ),
+
+        // Emoji Picker
+        if (_showEmojiPicker)
+          SizedBox(
+            height: 250,
+            child: EmojiPicker(
+              onEmojiSelected: (category, emoji) {
+                _textController.text = _textController.text + emoji.emoji;
+                _textController.selection = TextSelection.fromPosition(
+                  TextPosition(offset: _textController.text.length),
+                );
+              },
+              config: const Config(),
+            ),
+          ),
+      ],
     );
   }
 
