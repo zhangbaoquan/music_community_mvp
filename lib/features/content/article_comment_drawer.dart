@@ -18,6 +18,7 @@ class _ArticleCommentDrawerState extends State<ArticleCommentDrawer> {
   // We use the controller's selectedThread to determine view mode.
   // We also track a local reply target within the thread.
   ArticleComment? _replyTo;
+  bool _isThreadExpanded = false;
 
   @override
   Widget build(BuildContext context) {
@@ -121,14 +122,43 @@ class _ArticleCommentDrawerState extends State<ArticleCommentDrawer> {
   }
 
   Widget _buildThreadView(ArticleComment root) {
-    // Thread view shows Root + Replies
+    // Thread view shows Root + Flattened Replies
+    // 1. Flatten all descendants
+    final List<ArticleComment> allReplies = [];
+    void flatten(List<ArticleComment> list) {
+      for (var c in list) {
+        allReplies.add(c);
+        flatten(c.replies);
+      }
+    }
+
+    flatten(root.replies);
+
+    // 2. Sort by CreatedAt (Ascending usually for comments? or Descending?
+    // Usually chronological for chat-like view. Let's do Ascending so users follow conversation.)
+    allReplies.sort((a, b) => a.createdAt.compareTo(b.createdAt));
+
+    // 3. Handle Pagination (Collapse if > 5)
+    final totalReplies = allReplies.length;
+    final List<ArticleComment> displayedReplies;
+    if (totalReplies > 5 && !_isThreadExpanded) {
+      displayedReplies = allReplies.take(5).toList();
+    } else {
+      displayedReplies = allReplies;
+    }
+
     return ListView(
       padding: EdgeInsets.zero,
       children: [
-        // Root Comment (highlighted?)
-        Container(
-          color: const Color(0xFFFAFAFA),
-          child: _buildCommentItem(root, isRoot: true),
+        // Root Comment
+        _buildCommentItem(
+          root,
+          isRoot: true, // Treat as root for styling
+          isThreadRoot: true,
+          backgroundColor: const Color(0xFFFAFAFA),
+          // In thread view, we don't need to show "X replies" tag on the root either
+          // providing we see them below. But let's keep it for root as summary.
+          // Actually user said "tab is unnecessary", possibly meaning the count on sub-items.
         ),
         const Divider(height: 1),
         const Padding(
@@ -142,25 +172,70 @@ class _ArticleCommentDrawerState extends State<ArticleCommentDrawer> {
             ),
           ),
         ),
-        // Replies
-        if (root.replies.isEmpty)
+        // Empty State
+        if (allReplies.isEmpty)
           const Padding(
             padding: EdgeInsets.all(20.0),
             child: Center(
               child: Text('暂无回复', style: TextStyle(color: Colors.grey)),
             ),
           ),
-        ...root.replies.map(
+
+        // Render Displayed Replies
+        ...displayedReplies.map(
           (reply) => _buildCommentItem(
             reply,
             onTap: () {
-              // Reply to this reply
               setState(() {
                 _replyTo = reply;
               });
             },
+            showReplies: false, // Flattened, so we don't recurse here
+            isThreadRoot: false,
+            // We can indent slightly to show it's a sub-comment, but not deeply
+            indent: 20.0,
+            hideReplyCountCallback:
+                true, // Hide "X replies" tag in flattened list
           ),
         ),
+
+        // "Show More" Button
+        if (totalReplies > 5 && !_isThreadExpanded)
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 12.0),
+            child: Center(
+              child: TextButton(
+                onPressed: () {
+                  setState(() {
+                    _isThreadExpanded = true;
+                  });
+                },
+                child: Text(
+                  '展开更多回复 (${totalReplies - 5})',
+                  style: TextStyle(color: Colors.blue[600], fontSize: 13),
+                ),
+              ),
+            ),
+          ),
+
+        // "Collapse" Button (Optional, but good UX)
+        if (totalReplies > 5 && _isThreadExpanded)
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 12.0),
+            child: Center(
+              child: TextButton(
+                onPressed: () {
+                  setState(() {
+                    _isThreadExpanded = false;
+                  });
+                },
+                child: Text(
+                  '收起回复',
+                  style: TextStyle(color: Colors.grey[600], fontSize: 13),
+                ),
+              ),
+            ),
+          ),
       ],
     );
   }
@@ -180,7 +255,7 @@ class _ArticleCommentDrawerState extends State<ArticleCommentDrawer> {
         color: Colors.white,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             offset: const Offset(0, -4),
             blurRadius: 16,
           ),
@@ -198,18 +273,12 @@ class _ArticleCommentDrawerState extends State<ArticleCommentDrawer> {
                   Text(
                     _replyTo != null
                         ? '回复 @${_replyTo!.userName ?? "未知用户"}'
-                        : '回复 @${threadRoot!.userName ?? "楼主"}', // Default to thread root if in thread mode
+                        : '回复 @${threadRoot!.userName ?? "楼主"}',
                     style: TextStyle(color: Colors.blue[600], fontSize: 12),
                   ),
                   const Spacer(),
                   GestureDetector(
                     onTap: () {
-                      // If in thread mode, cancelling reply just means clearing _replyTo,
-                      // but we still implicitly reply to the thread (root).
-                      // Actually, if _replyTo is null, parentId should match the threadRoot id?
-                      // No, existing logic for replies is: parent_id = root.id.
-                      // Wait, database schema allows arbitrary nesting, but UI is 2-level.
-                      // Let's assume replies in a thread have parent_id = threadRoot.id
                       setState(() {
                         _replyTo = null;
                       });
@@ -260,12 +329,6 @@ class _ArticleCommentDrawerState extends State<ArticleCommentDrawer> {
                     String? finalParentId;
                     if (_replyTo != null) {
                       finalParentId = _replyTo!.id;
-                      // If checking nesting limit, we might want to ensure we don't nest too deep.
-                      // For now, let's just allow nesting or map to root?
-                      // User wanted "Sub-comments".
-                      // If I rely on existing build logic `parentMap`, it works for any nesting.
-                      // But visual layout was 2 levels.
-                      // Let's use the explicit parent.
                     } else if (threadRoot != null) {
                       finalParentId = threadRoot.id;
                     }
@@ -278,8 +341,17 @@ class _ArticleCommentDrawerState extends State<ArticleCommentDrawer> {
                     if (success) {
                       _textController.clear();
                       setState(() {
+                        // Keep logic: if we replied to specific person, verify if we should keep selection?
+                        // User wants "result shown". logic adds to DB -> fetchComments -> updates state.
+                        // But _replyTo might need to be cleared to avoid "replying to X" sticky state,
+                        // unless we want to allow multiple replies. User usually expects clear.
+                        // BUT we want to ensure visual feedback.
+                        // The "Highlight" comes from _replyTo check in _buildCommentItem.
+                        // If we clear _replyTo, we lost the highlight?
+                        // User said: "First let sub-comment have highlight status, then directly expand display"
+                        // Maybe we should temporarily keep _replyTo or set a "justRepliedTo" state?
+                        // For now, let's clear _replyTo as is standard, but the COMMENT itself should appear.
                         _replyTo = null;
-                        // Focus is kept on thread? Yes.
                       });
                     }
                   }
@@ -307,80 +379,167 @@ class _ArticleCommentDrawerState extends State<ArticleCommentDrawer> {
   Widget _buildCommentItem(
     ArticleComment comment, {
     VoidCallback? onTap,
-    bool isRoot = false,
+    bool isRoot = false, // True if top-level in Full List
+    bool isThreadRoot = false, // True if it is the main subject of Thread View
+    bool showReplies =
+        false, // If true, render children recursively (Deprecated in ThreadView, used in List?)
+    Color? backgroundColor,
+    double indent = 0.0,
+    bool hideReplyCountCallback = false,
   }) {
-    return InkWell(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-        decoration: const BoxDecoration(
-          border: Border(bottom: BorderSide(color: Color(0xFFF8F8F8))),
-        ),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            CircleAvatar(
-              radius: 16,
-              backgroundImage: comment.userAvatar != null
-                  ? NetworkImage(comment.userAvatar!)
-                  : null,
-              child: comment.userAvatar == null
-                  ? const Icon(Icons.person, size: 16)
-                  : null,
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Text(
-                        comment.userName ?? '未知用户',
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 13,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        timeago.format(comment.createdAt, locale: 'zh'),
-                        style: TextStyle(fontSize: 11, color: Colors.grey[400]),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    comment.content,
-                    style: const TextStyle(
-                      fontSize: 14,
-                      color: Color(0xFF2A2A2A),
-                      height: 1.4,
-                    ),
-                  ),
-                  if (!isRoot && comment.replies.isNotEmpty)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 6),
-                      child: Text(
-                        '${comment.replies.length} 条回复',
-                        style: TextStyle(fontSize: 11, color: Colors.blue[600]),
-                      ),
-                    ),
+    // Highlight check: if this comment is the one we are replying to
+    final isReplyingToThis = _replyTo?.id == comment.id && _replyTo != null;
+    final effectiveBgColor = isReplyingToThis
+        ? Colors.blue.withValues(alpha: 0.05)
+        : (backgroundColor ?? Colors.white);
 
-                  if (onTap != null && !isRoot)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 6),
-                      child: Text(
-                        '点击查看详情',
-                        style: TextStyle(fontSize: 10, color: Colors.grey[400]),
-                      ),
-                    ),
-                ],
-              ),
+    // Determine content widget
+    Widget contentWidget;
+
+    if (comment.replyToUserName != null && !isThreadRoot && !isRoot) {
+      contentWidget = RichText(
+        text: TextSpan(
+          style: const TextStyle(
+            fontSize: 14,
+            color: Color(0xFF2A2A2A),
+            height: 1.4,
+          ),
+          children: [
+            TextSpan(
+              text: "回复 ${comment.replyToUserName}: ",
+              style: TextStyle(color: Colors.blue[600]), // or Grey
             ),
+            TextSpan(text: comment.content),
           ],
         ),
-      ),
+      );
+    } else {
+      contentWidget = Text(
+        comment.content,
+        style: const TextStyle(
+          fontSize: 14,
+          color: Color(0xFF2A2A2A),
+          height: 1.4,
+        ),
+      );
+    }
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        InkWell(
+          onTap: onTap,
+          child: Container(
+            padding: const EdgeInsets.symmetric(
+              horizontal: 20,
+              vertical: 16,
+            ).add(EdgeInsets.only(left: indent)), // Apply indent
+            decoration: BoxDecoration(
+              color: effectiveBgColor,
+              border: const Border(
+                bottom: BorderSide(color: Color(0xFFF8F8F8)),
+              ),
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                CircleAvatar(
+                  radius: 16,
+                  backgroundImage: comment.userAvatar != null
+                      ? NetworkImage(comment.userAvatar!)
+                      : null,
+                  child: comment.userAvatar == null
+                      ? const Icon(Icons.person, size: 16)
+                      : null,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Text(
+                            comment.userName ?? '未知用户',
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 13,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            timeago.format(comment.createdAt, locale: 'zh'),
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: Colors.grey[400],
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                      contentWidget,
+
+                      // "Replying to this..." Text REMOVED as per user feedback (arrow pointing to it was "incorrect")
+
+                      // In Full List mode (isRoot=true), we show reply count summary
+                      if (!isThreadRoot &&
+                          !showReplies &&
+                          !hideReplyCountCallback && // Hide if requested (e.g. in flattened view)
+                          comment.totalRepliesCount > 0)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 6),
+                          child: Text(
+                            '${comment.totalRepliesCount} 条回复',
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: Colors.blue[600],
+                            ),
+                          ),
+                        ),
+
+                      if (onTap != null &&
+                          !isRoot &&
+                          !isThreadRoot &&
+                          !showReplies)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 6),
+                          child: Text(
+                            '点击回复', // Changed text to be clearer
+                            style: TextStyle(
+                              fontSize: 10,
+                              color: Colors.grey[400],
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+
+        // Recursive Replies Rendering (Only if showReplies is true, mostly for debugging or special views)
+        if (showReplies && comment.replies.isNotEmpty)
+          Padding(
+            padding: EdgeInsets.only(left: 44.0 + indent),
+            child: Column(
+              children: comment.replies
+                  .map(
+                    (reply) => _buildCommentItem(
+                      reply,
+                      onTap: () {
+                        setState(() {
+                          _replyTo = reply;
+                        });
+                      },
+                      showReplies: true,
+                    ),
+                  )
+                  .toList(),
+            ),
+          ),
+      ],
     );
   }
 }

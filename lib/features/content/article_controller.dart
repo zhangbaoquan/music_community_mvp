@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../data/models/article.dart';
 import 'package:music_community_mvp/data/models/article_comment.dart';
+import 'package:collection/collection.dart';
 
 class ArticleController extends GetxController {
   final _supabase = Supabase.instance.client;
@@ -187,8 +188,8 @@ class ArticleController extends GetxController {
               .from('profiles')
               .select('id, username, avatar_url')
               .filter('id', 'in', userIds);
-          final profilesMap = {for (var p in profilesResponse) p['id']: p};
 
+          final profilesMap = {for (var p in profilesResponse) p['id']: p};
           for (var item in data) {
             final pid = item['user_id'];
             if (profilesMap.containsKey(pid)) {
@@ -198,13 +199,41 @@ class ArticleController extends GetxController {
         }
       }
 
-      final allComments = data.map((e) => ArticleComment.fromMap(e)).toList();
+      // ---------------------------------------------------------
+      // Common Logic: Format Comments (Flatten/Tree)
+      // ---------------------------------------------------------
 
-      // Build Tree
+      // 1. Create a lookup map for raw data to find parent profiles easily
+      final Map<String, dynamic> commentIdToDataMap = {
+        for (var item in data) item['id'] as String: item,
+      };
+
+      // 2. Map raw data to ArticleComment objects, injecting 'replyToUserName'
+      final allComments = data.map((e) {
+        String? replyToName;
+        final parentId = e['parent_id'];
+        if (parentId != null) {
+          final parentData = commentIdToDataMap[parentId];
+          if (parentData != null) {
+            // profiles might be joined
+            final profile = parentData['profiles'];
+            if (profile != null) {
+              replyToName = profile['username'];
+            }
+          }
+        }
+
+        // Inject into map for fromMap to use
+        e['reply_to_username'] = replyToName;
+        return ArticleComment.fromMap(e);
+      }).toList();
+
+      // 3. Create a lookup map for ArticleComment objects to build the tree
       final Map<String, ArticleComment> commentMap = {
         for (var c in allComments) c.id: c,
       };
 
+      // 4. Build the Comment Tree (Root -> Replies)
       final List<ArticleComment> rootComments = [];
 
       for (var c in allComments) {
@@ -215,6 +244,8 @@ class ArticleController extends GetxController {
           if (parent != null) {
             parent.replies.add(c);
           } else {
+            // Fallback: if parent not found, treat as root? Or ignore?
+            // Treating as root ensures it's seen.
             rootComments.add(c);
           }
         }
@@ -224,6 +255,17 @@ class ArticleController extends GetxController {
 
       currentComments.value = rootComments;
       totalCommentsCount.value = allComments.length;
+
+      // If we have a selected thread, we need to update it with the new object
+      // so that new replies are visible in the UI.
+      if (selectedThread.value != null) {
+        final updatedThread = rootComments.firstWhereOrNull(
+          (c) => c.id == selectedThread.value!.id,
+        );
+        if (updatedThread != null) {
+          selectedThread.value = updatedThread;
+        }
+      }
     } catch (e) {
       print('Error fetching comments: $e');
     } finally {

@@ -395,7 +395,7 @@ class _CommentPreviewItem extends StatelessWidget {
                     style: const TextStyle(fontSize: 14, height: 1.4),
                   ),
                   // Reply Count Badge if replies exist
-                  if (comment.replies.isNotEmpty)
+                  if (comment.totalRepliesCount > 0)
                     Padding(
                       padding: const EdgeInsets.only(top: 8.0),
                       child: Container(
@@ -408,7 +408,7 @@ class _CommentPreviewItem extends StatelessWidget {
                           borderRadius: BorderRadius.circular(10),
                         ),
                         child: Text(
-                          '${comment.replies.length} 条回复 >',
+                          '${comment.totalRepliesCount} 条回复 >',
                           style: TextStyle(
                             color: Colors.blue[600],
                             fontSize: 11,
