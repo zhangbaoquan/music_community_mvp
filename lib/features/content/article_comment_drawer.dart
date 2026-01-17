@@ -470,6 +470,7 @@ class _ArticleCommentDrawerState extends State<ArticleCommentDrawer> {
     }
 
     return Column(
+      key: ValueKey('${comment.id}_${comment.likesCount}_${comment.isLiked}'),
       mainAxisSize: MainAxisSize.min,
       children: [
         InkWell(
@@ -517,6 +518,47 @@ class _ArticleCommentDrawerState extends State<ArticleCommentDrawer> {
                             style: TextStyle(
                               fontSize: 11,
                               color: Colors.grey[400],
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          // Like Button
+                          GestureDetector(
+                            onTap: () => Get.find<ArticleController>()
+                                .toggleCommentLike(comment),
+                            behavior:
+                                HitTestBehavior.opaque, // Improve tap area
+                            child: Padding(
+                              padding: const EdgeInsets.fromLTRB(
+                                8,
+                                0,
+                                0,
+                                4,
+                              ), // Add some slop
+                              child: Row(
+                                children: [
+                                  Icon(
+                                    comment.isLiked
+                                        ? Icons.favorite
+                                        : Icons.favorite_border,
+                                    size: 14,
+                                    color: comment.isLiked
+                                        ? Colors.red
+                                        : Colors.grey[400],
+                                  ),
+                                  if (comment.likesCount > 0) ...[
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      '${comment.likesCount}',
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        color: comment.isLiked
+                                            ? Colors.red
+                                            : Colors.grey[400],
+                                      ),
+                                    ),
+                                  ],
+                                ],
+                              ),
                             ),
                           ),
                         ],

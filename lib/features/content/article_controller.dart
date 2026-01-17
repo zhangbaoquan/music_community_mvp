@@ -164,7 +164,9 @@ class ArticleController extends GetxController {
         // Try optimized fetch with join
         final response = await _supabase
             .from('article_comments')
-            .select('*, profiles(username, avatar_url)')
+            .select(
+              '*, profiles(username, avatar_url), likes:article_comment_likes(count)',
+            )
             .eq('article_id', articleId)
             .order('created_at', ascending: true);
         data = response as List<dynamic>;
@@ -173,7 +175,7 @@ class ArticleController extends GetxController {
         print('Join failed, using fallback: $e');
         final response = await _supabase
             .from('article_comments')
-            .select('*')
+            .select('*, likes:article_comment_likes(count)')
             .eq('article_id', articleId)
             .order('created_at', ascending: true);
         data = response as List<dynamic>;
@@ -203,6 +205,26 @@ class ArticleController extends GetxController {
       // Common Logic: Format Comments (Flatten/Tree)
       // ---------------------------------------------------------
 
+      // Fetch My Likes (isLiked status)
+      final user = _supabase.auth.currentUser;
+      Set<String> myLikedCommentIds = {};
+      if (user != null && data.isNotEmpty) {
+        final commentIds = data.map((e) => e['id'] as String).toList();
+        try {
+          final myLikesResponse = await _supabase
+              .from('article_comment_likes')
+              .select('comment_id')
+              .eq('user_id', user.id)
+              .filter('comment_id', 'in', commentIds); // Supabase filter syntax
+
+          for (var like in myLikesResponse) {
+            myLikedCommentIds.add(like['comment_id'] as String);
+          }
+        } catch (e) {
+          print('Error checking my likes: $e');
+        }
+      }
+
       // 1. Create a lookup map for raw data to find parent profiles easily
       final Map<String, dynamic> commentIdToDataMap = {
         for (var item in data) item['id'] as String: item,
@@ -225,6 +247,12 @@ class ArticleController extends GetxController {
 
         // Inject into map for fromMap to use
         e['reply_to_username'] = replyToName;
+        // Inject into map for fromMap to use
+        e['reply_to_username'] = replyToName;
+
+        // Inject is_liked
+        e['is_liked'] = myLikedCommentIds.contains(e['id']);
+
         return ArticleComment.fromMap(e);
       }).toList();
 
@@ -313,6 +341,47 @@ class ArticleController extends GetxController {
       print('Error posting comment: $e');
       Get.snackbar('错误', '评论发布失败: $e', snackPosition: SnackPosition.BOTTOM);
       return false;
+    }
+  }
+
+  // Toggle Comment Like
+  Future<void> toggleCommentLike(ArticleComment comment) async {
+    final user = _supabase.auth.currentUser;
+    if (user == null) {
+      Get.snackbar('提示', '请先登录');
+      return;
+    }
+
+    final isLiked = comment.isLiked;
+    // Optimistic Update
+    comment.isLiked = !isLiked;
+    comment.likesCount += (isLiked ? -1 : 1);
+    currentComments.refresh(); // Trigger Obx
+    if (selectedThread.value != null) {
+      selectedThread.refresh();
+    }
+
+    try {
+      if (isLiked) {
+        // Unlike
+        await _supabase.from('article_comment_likes').delete().match({
+          'user_id': user.id,
+          'comment_id': comment.id,
+        });
+      } else {
+        // Like
+        await _supabase.from('article_comment_likes').insert({
+          'user_id': user.id,
+          'comment_id': comment.id,
+        });
+      }
+    } catch (e) {
+      // Revert
+      comment.isLiked = isLiked;
+      comment.likesCount += (isLiked ? 1 : -1);
+      currentComments.refresh();
+      print('Error toggling like: $e');
+      Get.snackbar('错误', '操作失败，请重试');
     }
   }
 

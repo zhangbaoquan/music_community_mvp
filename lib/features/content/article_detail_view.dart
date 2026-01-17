@@ -385,6 +385,40 @@ class _CommentPreviewItem extends StatelessWidget {
                         timeago.format(comment.createdAt, locale: 'zh'),
                         style: TextStyle(color: Colors.grey[400], fontSize: 11),
                       ),
+                      const SizedBox(width: 16),
+                      // Like Button
+                      GestureDetector(
+                        onTap: () =>
+                            Get.find<ArticleController>().toggleCommentLike(
+                              comment,
+                            ), // Re-use controller logic
+                        behavior: HitTestBehavior.opaque,
+                        child: Row(
+                          children: [
+                            Icon(
+                              comment.isLiked
+                                  ? Icons.favorite
+                                  : Icons.favorite_border,
+                              size: 14,
+                              color: comment.isLiked
+                                  ? Colors.red
+                                  : Colors.grey[400],
+                            ),
+                            if (comment.likesCount > 0) ...[
+                              const SizedBox(width: 4),
+                              Text(
+                                '${comment.likesCount}',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  color: comment.isLiked
+                                      ? Colors.red
+                                      : Colors.grey[400],
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
                     ],
                   ),
                   const SizedBox(height: 4),
