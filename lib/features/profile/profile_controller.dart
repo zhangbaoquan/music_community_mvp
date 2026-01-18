@@ -117,8 +117,29 @@ class ProfileController extends GetxController {
         'follower_id': currentUser.id,
         'following_id': targetUserId,
       });
-      // Update local stats if we are following someone (my following count goes up)
+      // Update local stats
       followingCount.value++;
+
+      // Trigger Notification
+      // We use the static method or find the service
+      // Using generic insert if service not available, but we can import it
+      try {
+        // Ideally use dependency injection, but here we can just do a direct insert
+        // or use the service if it's easy to import.
+        // Let's use the DB directly here to avoid circular dependencies if any,
+        // OR better: use the Service static method if we defined one.
+        // We defined a static method `sendNotification`.
+        // We need to import it.
+      } catch (_) {}
+
+      // Send Notification
+      // We will perform the insert directly here or use a helper to avoid looking up service
+      await _supabase.from('notifications').insert({
+        'user_id': targetUserId,
+        'actor_id': currentUser.id,
+        'type': 'follow',
+      });
+
       return true;
     } catch (e) {
       print('Follow Error: $e');

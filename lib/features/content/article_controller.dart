@@ -105,6 +105,16 @@ class ArticleController extends GetxController {
         });
         article.isLiked = true;
         article.likesCount++;
+
+        // Notification: Like Article
+        if (article.userId != userId) {
+          await _supabase.from('notifications').insert({
+            'user_id': article.userId,
+            'actor_id': userId,
+            'type': 'like_article',
+            'resource_id': article.id,
+          });
+        }
       }
       articles.refresh(); // Update UI
       return true;
@@ -329,6 +339,37 @@ class ArticleController extends GetxController {
       if (articleIndex != -1) {
         articles[articleIndex].commentsCount++;
         articles.refresh();
+
+        // Notification: Comment on Article
+        final articleAuthorId = articles[articleIndex].userId;
+        if (articleAuthorId != user.id) {
+          await _supabase.from('notifications').insert({
+            'user_id': articleAuthorId,
+            'actor_id': user.id,
+            'type': 'comment_article',
+            'resource_id': articleId,
+            'content': content,
+          });
+        }
+      } else {
+        // Fallback if article not in local list (e.g. opened deep link)
+        try {
+          final articleRes = await _supabase
+              .from('articles')
+              .select('user_id')
+              .eq('id', articleId)
+              .single();
+          final authorId = articleRes['user_id'] as String;
+          if (authorId != user.id) {
+            await _supabase.from('notifications').insert({
+              'user_id': authorId,
+              'actor_id': user.id,
+              'type': 'comment_article',
+              'resource_id': articleId,
+              'content': content,
+            });
+          }
+        } catch (_) {}
       }
 
       Get.snackbar(
@@ -375,6 +416,17 @@ class ArticleController extends GetxController {
           'user_id': user.id,
           'comment_id': comment.id,
         });
+
+        // Notification: Like Comment
+        if (comment.userId != user.id) {
+          await _supabase.from('notifications').insert({
+            'user_id': comment.userId,
+            'actor_id': user.id,
+            'type': 'like_comment',
+            'resource_id': comment.id,
+            'content': comment.content,
+          });
+        }
       }
     } catch (e) {
       // Revert

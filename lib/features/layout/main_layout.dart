@@ -2,11 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:music_community_mvp/core/shim_google_fonts.dart';
 import '../player/player_bar.dart';
-import '../home/home_view.dart'; // import HomeView
-import '../player/player_controller.dart'; // import controller
+import '../home/home_view.dart';
+import '../player/player_controller.dart';
 import '../diary/diary_view.dart';
-import '../profile/profile_view.dart'; // import profile view
+import '../profile/profile_view.dart';
 import '../auth/auth_controller.dart';
+
+import '../notifications/notification_service.dart';
+import '../notifications/notification_view.dart';
 
 class NavigationController extends GetxController {
   final RxInt selectedIndex = 0.obs;
@@ -21,9 +24,10 @@ class MainLayout extends StatelessWidget {
 
   final NavigationController navCtrl = Get.put(NavigationController());
   final AuthController authCtrl = Get.find();
-  final PlayerController playerCtrl = Get.put(
-    PlayerController(),
-  ); // Inject PlayerController
+  final PlayerController playerCtrl = Get.put(PlayerController());
+  final NotificationService notificationService = Get.put(
+    NotificationService(),
+  );
 
   final List<Widget> _pages = [
     // Tab 0: Home (Moods + Articles)
@@ -34,6 +38,9 @@ class MainLayout extends StatelessWidget {
 
     // Tab 2: Profile
     const ProfileView(),
+
+    // Tab 3: Notifications
+    const NotificationView(),
   ];
 
   @override
@@ -104,6 +111,33 @@ class MainLayout extends StatelessWidget {
           _navItem(icon: Icons.book, label: '心事角落', index: 1),
           _navItem(icon: Icons.person, label: '个人中心', index: 2),
 
+          // Notification Item with Badge
+          Obx(() {
+            final unread = notificationService.unreadCount.value;
+            return Stack(
+              clipBehavior: Clip.none,
+              children: [
+                _navItem(icon: Icons.notifications, label: '通知消息', index: 3),
+                if (unread > 0)
+                  Positioned(
+                    right: 12,
+                    top: 12,
+                    child: Container(
+                      padding: const EdgeInsets.all(4),
+                      decoration: const BoxDecoration(
+                        color: Colors.red,
+                        shape: BoxShape.circle,
+                      ),
+                      constraints: const BoxConstraints(
+                        minWidth: 8,
+                        minHeight: 8,
+                      ),
+                    ),
+                  ),
+              ],
+            );
+          }),
+
           const Spacer(),
 
           // Sign Out
@@ -127,13 +161,24 @@ class MainLayout extends StatelessWidget {
         selectedItemColor: const Color(0xFF1A1A1A),
         unselectedItemColor: Colors.grey[400],
         type: BottomNavigationBarType.fixed,
-        items: const [
-          BottomNavigationBarItem(
+        items: [
+          const BottomNavigationBarItem(
             icon: Icon(Icons.radio_button_checked),
             label: '电台',
           ),
-          BottomNavigationBarItem(icon: Icon(Icons.book), label: '日记'),
-          BottomNavigationBarItem(icon: Icon(Icons.person), label: '我的'),
+          const BottomNavigationBarItem(icon: Icon(Icons.book), label: '日记'),
+          const BottomNavigationBarItem(icon: Icon(Icons.person), label: '我的'),
+          BottomNavigationBarItem(
+            icon: Obx(() {
+              final unread = notificationService.unreadCount.value;
+              return Badge(
+                isLabelVisible: unread > 0,
+                label: Text('$unread'),
+                child: const Icon(Icons.notifications),
+              );
+            }),
+            label: '消息',
+          ),
         ],
       ),
     );
