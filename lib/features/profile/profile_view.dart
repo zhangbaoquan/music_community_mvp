@@ -125,50 +125,66 @@ class ProfileView extends StatelessWidget {
                   Positioned(
                     top: 0,
                     right: 0,
-                    child: IconButton(
-                      onPressed: () => Get.dialog(const EditProfileDialog()),
-                      icon: const Icon(Icons.edit_square, color: Colors.grey),
-                      tooltip: "编辑资料",
+                    child: Container(
+                      height: 32,
+                      decoration: BoxDecoration(
+                        color: Colors.grey[200],
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: TextButton.icon(
+                        onPressed: () => Get.dialog(const EditProfileDialog()),
+                        icon: const Icon(
+                          Icons.edit,
+                          size: 14,
+                          color: Colors.black54,
+                        ),
+                        label: const Text(
+                          "编辑资料",
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.black87,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        style: TextButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(horizontal: 12),
+                          minimumSize: Size.zero,
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        ),
+                      ),
                     ),
                   ),
                 ],
               ),
             ),
 
-            const SizedBox(height: 32),
+            const SizedBox(height: 24),
 
-            // Stats Row
-            Row(
-              children: [
-                Expanded(
-                  child: Obx(
-                    () => _buildStatCard(
-                      label: "日记篇数",
-                      value: "${controller.diaryCount.value}",
-                      icon: Icons.book,
-                      color: Colors.orange,
+            // Social & Stats Row (Clean Design)
+            Container(
+              padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                // borderRadius: BorderRadius.circular(16),
+                // border: Border.all(color: Colors.grey[100]!),
+              ),
+              child: Obx(
+                () => Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: [
+                    _buildStatItem("关注", "${controller.followingCount.value}"),
+                    _buildStatItem("粉丝", "${controller.followersCount.value}"),
+                    _buildStatItem(
+                      "访客",
+                      "${controller.visitorsCount.value}",
+                      isHighlight: true,
                     ),
-                  ),
+                    _buildVerticalDivider(),
+                    _buildStatItem("日记", "${controller.diaryCount.value}"),
+                    _buildStatItem("心情", "${controller.moodIndex.value}"),
+                  ],
                 ),
-                const SizedBox(width: 24),
-                Expanded(
-                  child: _buildStatCard(
-                    label: "听歌时长",
-                    value: "128", // Mock data for now
-                    icon: Icons.music_note,
-                    color: Colors.purple,
-                  ),
-                ),
-                const SizedBox(width: 24),
-                Expanded(
-                  child: _buildStatCard(
-                    label: "心情指数",
-                    value: "85", // Mock data
-                    icon: Icons.favorite,
-                    color: Colors.pink,
-                  ),
-                ),
-              ],
+              ),
             ),
 
             const SizedBox(height: 48),
@@ -597,50 +613,38 @@ class ProfileView extends StatelessWidget {
     );
   }
 
-  Widget _buildStatCard({
-    required String label,
-    required String value,
-    required IconData icon,
-    required MaterialColor color,
+  Widget _buildStatItem(
+    String label,
+    String value, {
+    bool isHighlight = false,
   }) {
-    return Container(
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Colors.grey[100]!),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.02),
-            blurRadius: 20,
-            offset: const Offset(0, 10),
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          value,
+          style: GoogleFonts.outfit(
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+            color: isHighlight
+                ? const Color(0xFFFF6B6B)
+                : const Color(0xFF1A1A1A),
           ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(color: color[50], shape: BoxShape.circle),
-            child: Icon(icon, color: color, size: 24),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 12,
+            color: Colors.grey[500],
+            fontWeight: FontWeight.w500,
           ),
-          const SizedBox(height: 16),
-          Text(
-            value,
-            style: GoogleFonts.outfit(
-              fontSize: 32,
-              fontWeight: FontWeight.bold,
-              color: const Color(0xFF1A1A1A),
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            label,
-            style: GoogleFonts.outfit(fontSize: 14, color: Colors.grey[500]),
-          ),
-        ],
-      ),
+        ),
+      ],
     );
+  }
+
+  Widget _buildVerticalDivider() {
+    return Container(height: 24, width: 1, color: Colors.grey[200]);
   }
 }

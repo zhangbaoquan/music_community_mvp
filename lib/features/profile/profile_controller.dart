@@ -10,6 +10,15 @@ class ProfileController extends GetxController {
   final avatarUrl = ''.obs;
   final signature = ''.obs;
   final diaryCount = 0.obs;
+
+  // Social Stats (Mock/Placeholder for now)
+  final followingCount = 0.obs;
+  final followersCount = 0.obs;
+  final visitorsCount = 0.obs;
+  final moodIndex = 85.obs; // Mock value for existing stat
+
+  final email = ''.obs;
+
   final joinDate = ''.obs;
 
   @override
@@ -35,6 +44,13 @@ class ProfileController extends GetxController {
         username.value = response['username'] as String? ?? '';
         avatarUrl.value = response['avatar_url'] as String? ?? '';
         signature.value = response['signature'] as String? ?? '';
+
+        // Mock data for social stats (TODO: Implement real fetching)
+        followingCount.value = 70;
+        followersCount.value = 12;
+        visitorsCount.value = 6;
+        diaryCount.value =
+            3; // Keep using mock or fetch real count if available
 
         // Fetch stats
         final statsResponse = await _supabase
