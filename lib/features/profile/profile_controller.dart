@@ -11,14 +11,13 @@ class ProfileController extends GetxController {
   final signature = ''.obs;
   final diaryCount = 0.obs;
 
-  // Social Stats (Mock/Placeholder for now)
+  // Social Stats
   final followingCount = 0.obs;
   final followersCount = 0.obs;
   final visitorsCount = 0.obs;
   final moodIndex = 85.obs; // Mock value for existing stat
 
   final email = ''.obs;
-
   final joinDate = ''.obs;
 
   @override
@@ -31,7 +30,7 @@ class ProfileController extends GetxController {
     final user = _supabase.auth.currentUser;
     if (user != null) {
       userEmail.value = user.email ?? 'files@example.com';
-      joinDate.value = user.createdAt.split('T')[0]; // Simple date format
+      joinDate.value = user.createdAt.split('T')[0];
 
       try {
         // Fetch Profile Data
@@ -45,14 +44,7 @@ class ProfileController extends GetxController {
         avatarUrl.value = response['avatar_url'] as String? ?? '';
         signature.value = response['signature'] as String? ?? '';
 
-        // Mock data for social stats (TODO: Implement real fetching)
-        followingCount.value = 70;
-        followersCount.value = 12;
-        visitorsCount.value = 6;
-        diaryCount.value =
-            3; // Keep using mock or fetch real count if available
-
-        // Fetch stats
+        // Fetch Diaries Count
         final statsResponse = await _supabase
             .from('mood_diaries')
             .select('id')
@@ -60,9 +52,100 @@ class ProfileController extends GetxController {
 
         final List data = statsResponse;
         diaryCount.value = data.length;
+
+        // Fetch Social Stats
+        await fetchUserStats(user.id);
       } catch (e) {
         print('Error loading profile: $e');
       }
+    }
+  }
+
+  Future<void> fetchUserStats(String userId) async {
+    try {
+      // Fetch Followers (how many people follow me)
+      final followersRes = await _supabase
+          .from('follows')
+          .select('follower_id')
+          .eq('following_id', userId)
+          .count(CountOption.exact);
+
+      // Fetch Following (how many people I follow)
+      final followingRes = await _supabase
+          .from('follows')
+          .select('following_id')
+          .eq('follower_id', userId)
+          .count(CountOption.exact);
+
+      followersCount.value = followersRes.count;
+      followingCount.value = followingRes.count;
+
+      // TODO: Implement visitors count if we have a table for it
+      // visitorsCount.value = ...
+    } catch (e) {
+      print('Error fetching user stats: $e');
+    }
+  }
+
+  /// Check if the current user is following the target user
+  Future<bool> checkIsFollowing(String targetUserId) async {
+    final currentUser = _supabase.auth.currentUser;
+    if (currentUser == null) return false;
+
+    try {
+      final res = await _supabase
+          .from('follows')
+          .select()
+          .eq('follower_id', currentUser.id)
+          .eq('following_id', targetUserId)
+          .maybeSingle();
+
+      return res != null;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  /// Follow a user
+  Future<bool> followUser(String targetUserId) async {
+    final currentUser = _supabase.auth.currentUser;
+    if (currentUser == null) return false;
+    if (currentUser.id == targetUserId) return false; // Cannot follow self
+
+    try {
+      await _supabase.from('follows').insert({
+        'follower_id': currentUser.id,
+        'following_id': targetUserId,
+      });
+      // Update local stats if we are following someone (my following count goes up)
+      followingCount.value++;
+      return true;
+    } catch (e) {
+      print('Follow Error: $e');
+      Get.snackbar('错误', '关注失败: $e');
+      return false;
+    }
+  }
+
+  /// Unfollow a user
+  Future<bool> unfollowUser(String targetUserId) async {
+    final currentUser = _supabase.auth.currentUser;
+    if (currentUser == null) return false;
+
+    try {
+      await _supabase
+          .from('follows')
+          .delete()
+          .eq('follower_id', currentUser.id)
+          .eq('following_id', targetUserId);
+
+      // Update local stats
+      if (followingCount.value > 0) followingCount.value--;
+      return true;
+    } catch (e) {
+      print('Unfollow Error: $e');
+      Get.snackbar('错误', '取消关注失败: $e');
+      return false;
     }
   }
 

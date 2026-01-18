@@ -6,6 +6,8 @@ import 'article_controller.dart';
 import 'package:music_community_mvp/data/models/article_comment.dart';
 import 'article_comment_drawer.dart';
 
+import 'package:music_community_mvp/features/profile/profile_controller.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:timeago/timeago.dart' as timeago;
 
 class ArticleDetailView extends StatefulWidget {
@@ -21,6 +23,10 @@ class _ArticleDetailViewState extends State<ArticleDetailView> {
   late QuillController _quillController;
   final ScrollController _scrollController = ScrollController();
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+
+  // Follow State
+  final _isFollowing = false.obs;
+  final _isFollowLoading = false.obs;
 
   @override
   void initState() {
@@ -41,6 +47,80 @@ class _ArticleDetailViewState extends State<ArticleDetailView> {
     }
     // Fetch comments
     Get.find<ArticleController>().fetchComments(widget.article.id);
+
+    // Check Follow Status
+    _checkFollowStatus();
+  }
+
+  Future<void> _checkFollowStatus() async {
+    final profileCtrl = Get.put(ProfileController()); // Ensure IT exists
+    // Don't check if it's me
+    final currentUserId = Supabase.instance.client.auth.currentUser?.id;
+    if (currentUserId != null && widget.article.userId != currentUserId) {
+      _isFollowing.value = await profileCtrl.checkIsFollowing(
+        widget.article.userId,
+      );
+    }
+  }
+
+  Widget _buildFollowButton() {
+    final currentUserId = Supabase.instance.client.auth.currentUser?.id;
+    // Don't show button for self
+    if (currentUserId == widget.article.userId) return const SizedBox();
+
+    return Obx(() {
+      if (_isFollowLoading.value) {
+        return const SizedBox(
+          width: 14,
+          height: 14,
+          child: CircularProgressIndicator(strokeWidth: 2),
+        );
+      }
+
+      final isFollowing = _isFollowing.value;
+      return GestureDetector(
+        onTap: () async {
+          _isFollowLoading.value = true;
+          final profileCtrl = Get.find<ProfileController>();
+          bool success;
+          if (isFollowing) {
+            success = await profileCtrl.unfollowUser(widget.article.userId);
+          } else {
+            success = await profileCtrl.followUser(widget.article.userId);
+          }
+
+          if (success) {
+            _isFollowing.value = !isFollowing;
+          }
+          _isFollowLoading.value = false;
+        },
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+          decoration: BoxDecoration(
+            color: isFollowing ? Colors.grey[200] : Colors.black,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Row(
+            children: [
+              Icon(
+                isFollowing ? Icons.check : Icons.add,
+                size: 10,
+                color: isFollowing ? Colors.black54 : Colors.white,
+              ),
+              const SizedBox(width: 4),
+              Text(
+                isFollowing ? '已关注' : '关注',
+                style: TextStyle(
+                  fontSize: 10,
+                  color: isFollowing ? Colors.black54 : Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    });
   }
 
   @override
@@ -115,12 +195,18 @@ class _ArticleDetailViewState extends State<ArticleDetailView> {
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            widget.article.authorName ?? '未知作者',
-                            style: const TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.bold,
-                            ),
+                          Row(
+                            children: [
+                              Text(
+                                widget.article.authorName ?? '未知作者',
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              _buildFollowButton(),
+                            ],
                           ),
                           Text(
                             '发布于 ${timeago.format(widget.article.createdAt, locale: 'zh')}',
