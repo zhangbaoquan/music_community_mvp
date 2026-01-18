@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:music_community_mvp/core/shim_google_fonts.dart';
+import 'package:music_community_mvp/features/search/search_view.dart';
 import '../player/player_bar.dart';
 import '../home/home_view.dart';
 import '../player/player_controller.dart';
@@ -50,6 +51,40 @@ class MainLayout extends StatelessWidget {
         final isMobile = constraints.maxWidth < 600;
 
         return Scaffold(
+          appBar: isMobile
+              ? AppBar(
+                  backgroundColor: Colors.white,
+                  elevation: 0,
+                  iconTheme: const IconThemeData(color: Colors.black),
+                  title: Row(
+                    children: [
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: Image.asset(
+                          'assets/images/logo.png',
+                          width: 24,
+                          height: 24,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      const Text(
+                        '亲亲音乐',
+                        style: TextStyle(
+                          color: Colors.black,
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                  actions: [
+                    IconButton(
+                      icon: const Icon(Icons.search),
+                      onPressed: () => Get.to(() => const SearchView()),
+                    ),
+                  ],
+                )
+              : null,
           drawer: isMobile
               ? Drawer(child: _buildSideNav(isDrawer: true))
               : null, // Optional drawer for mobile
@@ -118,6 +153,13 @@ class MainLayout extends StatelessWidget {
           // Navigation Items
           _navItem(icon: Icons.radio_button_checked, label: '心情电台', index: 0),
           _navItem(icon: Icons.book, label: '心事角落', index: 1),
+          // Search Entry
+          _navItem(
+            icon: Icons.search,
+            label: '搜索发现',
+            index: 90, // Special index
+            onTap: () => Get.to(() => const SearchView()),
+          ),
           _navItem(icon: Icons.person, label: '个人中心', index: 2),
 
           // Notification Item with Badge
