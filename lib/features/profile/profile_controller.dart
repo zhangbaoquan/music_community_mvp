@@ -80,8 +80,16 @@ class ProfileController extends GetxController {
       followersCount.value = followersRes.count;
       followingCount.value = followingRes.count;
 
-      // TODO: Implement visitors count if we have a table for it
-      // visitorsCount.value = ...
+      // Fetch Visitors Count
+      final visitorsRes = await _supabase
+          .from('profile_visits')
+          .select('visitor_id')
+          .eq('visited_id', userId)
+          .count(CountOption.exact);
+
+      followersCount.value = followersRes.count;
+      followingCount.value = followingRes.count;
+      visitorsCount.value = visitorsRes.count;
     } catch (e) {
       print('Error fetching user stats: $e');
     }
@@ -301,6 +309,68 @@ class ProfileController extends GetxController {
     } catch (e) {
       print('Error fetching public profile: $e');
       return null;
+    }
+  }
+
+  // --- Phase 6.4: Visitor System ---
+
+  /// Record a visit to a user's profile
+  Future<void> recordVisit(String visitedId) async {
+    final user = _supabase.auth.currentUser;
+    // 1. Must be logged in
+    if (user == null) return;
+    // 2. Don't record visiting yourself
+    if (user.id == visitedId) return;
+
+    try {
+      // Upsert visit record
+      // Unique constraint on (visitor_id, visited_id) will handle conflict
+      // We just update 'visited_at' to now()
+      await _supabase.from('profile_visits').upsert({
+        'visitor_id': user.id,
+        'visited_id': visitedId,
+        'visited_at': DateTime.now().toIso8601String(),
+      }, onConflict: 'visitor_id, visited_id');
+    } catch (e) {
+      print('Error recording visit: $e');
+      // Fail silently, not critical
+    }
+  }
+
+  /// Fetch visitors for the current user (or any user if policy allows)
+  Future<List<Map<String, dynamic>>> fetchVisitors() async {
+    final user = _supabase.auth.currentUser;
+    if (user == null) return [];
+
+    try {
+      final res = await _supabase
+          .from('profile_visits')
+          .select(
+            'visitor_id, visited_at, profiles!profile_visits_visitor_id_fkey(username, avatar_url, signature)',
+          )
+          .eq('visited_id', user.id)
+          .order('visited_at', ascending: false);
+
+      return List<Map<String, dynamic>>.from(res);
+    } catch (e) {
+      print('Error fetching visitors: $e');
+      return [];
+    }
+  }
+
+  /// Get total visitor count if needed for stats
+  Future<int> fetchVisitorCount() async {
+    final user = _supabase.auth.currentUser;
+    if (user == null) return 0;
+    try {
+      final res = await _supabase
+          .from('profile_visits')
+          .select('visitor_id')
+          .eq('visited_id', user.id)
+          .count(CountOption.exact);
+      return res.count;
+    } catch (e) {
+      return 0;
     }
   }
 }

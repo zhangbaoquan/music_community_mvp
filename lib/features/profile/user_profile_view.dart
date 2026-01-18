@@ -53,6 +53,11 @@ class _UserProfileViewState extends State<UserProfileView> {
     _musicCtrl.fetchUserSongs(widget.userId);
     _articleCtrl.fetchUserArticles(widget.userId);
 
+    // Record Visit (Phase 6.4)
+    if (!_isMe) {
+      _profileCtrl.recordVisit(widget.userId);
+    }
+
     if (mounted) {
       setState(() {
         _profileData = data;

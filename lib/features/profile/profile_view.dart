@@ -10,6 +10,7 @@ import 'edit_profile_dialog.dart';
 import '../content/article_controller.dart';
 import '../content/article_editor_view.dart';
 import 'follow_list_view.dart';
+import 'visitor_list_view.dart';
 
 class ProfileView extends StatelessWidget {
   const ProfileView({super.key});
@@ -201,10 +202,13 @@ class ProfileView extends StatelessWidget {
                         "${controller.followersCount.value}",
                       ),
                     ),
-                    _buildStatItem(
-                      "访客",
-                      "${controller.visitorsCount.value}",
-                      isHighlight: true,
+                    InkWell(
+                      onTap: () => Get.to(() => const VisitorListView()),
+                      child: _buildStatItem(
+                        "访客",
+                        "${controller.visitorsCount.value}",
+                        isHighlight: true,
+                      ),
                     ),
                     _buildVerticalDivider(),
                     _buildStatItem("日记", "${controller.diaryCount.value}"),
