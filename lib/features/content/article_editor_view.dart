@@ -3,11 +3,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:music_community_mvp/data/models/article.dart';
 import 'article_controller.dart';
 import 'dart:convert';
 
 class ArticleEditorView extends StatefulWidget {
-  const ArticleEditorView({super.key});
+  final Article? article;
+  const ArticleEditorView({super.key, this.article});
 
   @override
   State<ArticleEditorView> createState() => _ArticleEditorViewState();
@@ -15,22 +17,36 @@ class ArticleEditorView extends StatefulWidget {
 
 class _ArticleEditorViewState extends State<ArticleEditorView> {
   final _controller = Get.find<ArticleController>();
-  final _titleController = TextEditingController();
-  final _summaryController = TextEditingController();
-  final _quillController = QuillController.basic();
-
-  // PlatformFile?
-  // _coverFile; // For Web/Desktop compatibility using FilePicker if needed, or stick to ImagePicker
-  // Actually, ArticleController expects PlatformFile for web compat in the plan?
-  // Let's check ArticleController. It expects PlatformFile?
-  // Yes: publishArticle({..., PlatformFile? coverFile})
-
-  // We'll use FilePicker for consistency with Music Upload, or ImagePicker and convert.
-  // Let's use FilePicker for cover to be safe on web? Or ImagePicker.
-  // Music Upload used FilePicker for audio and ImagePicker for cover.
-  // Let's use ImagePicker XFile and convert to PlatformFile bytes.
+  late TextEditingController _titleController;
+  late TextEditingController _summaryController;
+  late QuillController _quillController;
 
   XFile? _pickedCover;
+
+  @override
+  void initState() {
+    super.initState();
+    _titleController = TextEditingController(text: widget.article?.title ?? '');
+    _summaryController = TextEditingController(
+      text: widget.article?.summary ?? '',
+    );
+
+    // Initialize Quill Controller
+    if (widget.article != null && widget.article!.content != null) {
+      try {
+        final doc = Document.fromJson(widget.article!.content!);
+        _quillController = QuillController(
+          document: doc,
+          selection: const TextSelection.collapsed(offset: 0),
+        );
+      } catch (e) {
+        print("Error parsing article content: $e");
+        _quillController = QuillController.basic();
+      }
+    } else {
+      _quillController = QuillController.basic();
+    }
+  }
 
   @override
   void dispose() {
@@ -70,20 +86,32 @@ class _ArticleEditorViewState extends State<ArticleEditorView> {
     final contentJson = jsonEncode(
       _quillController.document.toDelta().toJson(),
     );
+    final contentList = jsonDecode(contentJson);
 
-    final success = await _controller.publishArticle(
-      title: _titleController.text,
-      summary: _summaryController.text,
-      contentJson: jsonDecode(
-        contentJson,
-      ), // Controller expects List/Map, typically List<dynamic> from Delta
-      coverFile: coverPlatformFile,
-    );
+    bool success;
+    if (widget.article != null) {
+      // Update
+      success = await _controller.updateArticle(
+        articleId: widget.article!.id,
+        title: _titleController.text,
+        summary: _summaryController.text,
+        contentJson: contentList,
+        coverFile: coverPlatformFile,
+      );
+    } else {
+      // Create
+      success = await _controller.publishArticle(
+        title: _titleController.text,
+        summary: _summaryController.text,
+        contentJson: contentList,
+        coverFile: coverPlatformFile,
+      );
+    }
 
     if (success) {
       Get.snackbar(
         '发布成功',
-        '您的文章已发布！',
+        widget.article != null ? '您的文章已更新！' : '您的文章已发布！',
         backgroundColor: Colors.green.withOpacity(0.1),
         colorText: Colors.green,
         duration: const Duration(seconds: 2),
@@ -106,7 +134,7 @@ class _ArticleEditorViewState extends State<ArticleEditorView> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('写文章'),
+        title: Text(widget.article != null ? '编辑文章' : '写文章'),
         actions: [
           Obx(() {
             return TextButton(
@@ -117,7 +145,10 @@ class _ArticleEditorViewState extends State<ArticleEditorView> {
                       height: 20,
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
-                  : const Text('发布', style: TextStyle(fontSize: 16)),
+                  : Text(
+                      widget.article != null ? '更新' : '发布',
+                      style: const TextStyle(fontSize: 16),
+                    ),
             );
           }),
         ],
@@ -144,9 +175,18 @@ class _ArticleEditorViewState extends State<ArticleEditorView> {
                                 image: NetworkImage(_pickedCover!.path),
                                 fit: BoxFit.cover,
                               )
-                            : null,
+                            : (widget.article?.coverUrl != null
+                                  ? DecorationImage(
+                                      image: NetworkImage(
+                                        widget.article!.coverUrl!,
+                                      ),
+                                      fit: BoxFit.cover,
+                                    )
+                                  : null),
                       ),
-                      child: _pickedCover == null
+                      child:
+                          (_pickedCover == null &&
+                              widget.article?.coverUrl == null)
                           ? const Center(
                               child: Column(
                                 mainAxisAlignment: MainAxisAlignment.center,

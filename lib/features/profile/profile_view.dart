@@ -7,6 +7,8 @@ import '../music/upload_music_view.dart';
 import '../player/player_controller.dart';
 import 'profile_controller.dart';
 import 'edit_profile_dialog.dart';
+import '../content/article_controller.dart';
+import '../content/article_editor_view.dart';
 
 class ProfileView extends StatelessWidget {
   const ProfileView({super.key});
@@ -173,9 +175,220 @@ class ProfileView extends StatelessWidget {
 
             // Phase 4: My Original Music
             _buildMyMusicSection(),
+
+            const SizedBox(height: 48),
+
+            // Phase 5: My Articles
+            _buildMyArticlesSection(),
+
+            const SizedBox(height: 60),
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildMyArticlesSection() {
+    final articleController = Get.put(ArticleController());
+    final currentUser = Supabase.instance.client.auth.currentUser;
+    if (currentUser != null) {
+      articleController.fetchUserArticles(currentUser.id);
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              "我的文章 (My Articles)",
+              style: GoogleFonts.outfit(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                color: const Color(0xFF1A1A1A),
+              ),
+            ),
+            ElevatedButton.icon(
+              onPressed: () => Get.to(() => const ArticleEditorView()),
+              icon: const Icon(Icons.edit_note, size: 18),
+              label: const Text("写文章"),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.black87,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 12,
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 24),
+
+        Obx(() {
+          final articles = articleController.userArticles;
+          if (articles.isEmpty) {
+            return Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(40),
+              decoration: BoxDecoration(
+                color: Colors.grey[50],
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: Colors.grey[200]!,
+                  style: BorderStyle.solid,
+                ),
+              ),
+              child: Column(
+                children: [
+                  Icon(
+                    Icons.article_outlined,
+                    size: 48,
+                    color: Colors.grey[400],
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    "还没有发布过文章",
+                    style: TextStyle(color: Colors.grey[500], fontSize: 16),
+                  ),
+                  const SizedBox(height: 8),
+                  TextButton(
+                    onPressed: () => Get.to(() => const ArticleEditorView()),
+                    child: const Text("去写第一篇"),
+                  ),
+                ],
+              ),
+            );
+          }
+
+          return ListView.separated(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: articles.length,
+            separatorBuilder: (context, index) => const SizedBox(height: 16),
+            itemBuilder: (context, index) {
+              final article = articles[index];
+              return Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: Colors.grey[100]!),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.02),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Cover optional
+                    if (article.coverUrl != null)
+                      Container(
+                        width: 80,
+                        height: 80,
+                        margin: const EdgeInsets.only(right: 16),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(12),
+                          image: DecorationImage(
+                            image: NetworkImage(article.coverUrl!),
+                            fit: BoxFit.cover,
+                          ),
+                        ),
+                      ),
+
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            article.title,
+                            style: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              height: 1.3,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          if (article.summary != null &&
+                              article.summary!.isNotEmpty)
+                            Text(
+                              article.summary!,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                color: Colors.grey[600],
+                                fontSize: 13,
+                              ),
+                            ),
+                          const SizedBox(height: 12),
+                          Row(
+                            children: [
+                              Text(
+                                "Published on ${article.createdAt.toString().split(' ').first}",
+                                style: TextStyle(
+                                  color: Colors.grey[400],
+                                  fontSize: 12,
+                                ),
+                              ),
+                              const Spacer(),
+                              // Actions
+                              IconButton(
+                                icon: const Icon(
+                                  Icons.edit,
+                                  size: 20,
+                                  color: Colors.blueGrey,
+                                ),
+                                onPressed: () => Get.to(
+                                  () => ArticleEditorView(article: article),
+                                ),
+                                tooltip: "编辑",
+                              ),
+                              IconButton(
+                                icon: const Icon(
+                                  Icons.delete_outline,
+                                  size: 20,
+                                  color: Colors.redAccent,
+                                ),
+                                onPressed: () {
+                                  Get.defaultDialog(
+                                    title: "确认删除",
+                                    middleText: "确定要删除这篇文章吗？操作不可恢复。",
+                                    textConfirm: "删除",
+                                    textCancel: "取消",
+                                    confirmTextColor: Colors.white,
+                                    buttonColor: Colors.red,
+                                    onConfirm: () async {
+                                      final success = await articleController
+                                          .deleteArticle(article.id);
+                                      if (success) {
+                                        Get.back(); // Close dialog
+                                        Get.snackbar("删除成功", "文章已删除");
+                                      }
+                                    },
+                                  );
+                                },
+                                tooltip: "删除",
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            },
+          );
+        }),
+      ],
     );
   }
 
