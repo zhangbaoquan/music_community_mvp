@@ -62,8 +62,8 @@ class AuthController extends GetxController {
         data: {'username': username}, // metadata for profiles table trigger
       );
       Get.snackbar(
-        'Success',
-        'Account created! Please sign in.',
+        '成功',
+        '账号已经创建! 请登录.',
         backgroundColor: Colors.green,
         colorText: Colors.white,
       );
