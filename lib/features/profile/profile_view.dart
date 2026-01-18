@@ -9,6 +9,7 @@ import 'profile_controller.dart';
 import 'edit_profile_dialog.dart';
 import '../content/article_controller.dart';
 import '../content/article_editor_view.dart';
+import 'follow_list_view.dart';
 
 class ProfileView extends StatelessWidget {
   const ProfileView({super.key});
@@ -172,8 +173,34 @@ class ProfileView extends StatelessWidget {
                 () => Row(
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: [
-                    _buildStatItem("关注", "${controller.followingCount.value}"),
-                    _buildStatItem("粉丝", "${controller.followersCount.value}"),
+                    InkWell(
+                      onTap: () => Get.to(
+                        () => FollowListView(
+                          userId: controller.userEmail.value.isNotEmpty
+                              ? Supabase.instance.client.auth.currentUser!.id
+                              : '', // Better way to get ID
+                          title: "我的关注",
+                          type: "following",
+                        ),
+                      ),
+                      child: _buildStatItem(
+                        "关注",
+                        "${controller.followingCount.value}",
+                      ),
+                    ),
+                    InkWell(
+                      onTap: () => Get.to(
+                        () => FollowListView(
+                          userId: Supabase.instance.client.auth.currentUser!.id,
+                          title: "我的粉丝",
+                          type: "followers",
+                        ),
+                      ),
+                      child: _buildStatItem(
+                        "粉丝",
+                        "${controller.followersCount.value}",
+                      ),
+                    ),
                     _buildStatItem(
                       "访客",
                       "${controller.visitorsCount.value}",

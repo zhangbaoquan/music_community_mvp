@@ -227,4 +227,80 @@ class ProfileController extends GetxController {
     await _supabase.auth.signOut();
     // AuthController listener will handle redirection
   }
+
+  // --- Phase 6.3: User Discovery ---
+
+  Future<List<Map<String, dynamic>>> fetchFollowersList(String userId) async {
+    try {
+      final res = await _supabase
+          .from('follows')
+          .select(
+            'follower_id, profiles!follows_follower_id_fkey(username, avatar_url, signature)',
+          ) // Ensure foreign key is used
+          .eq('following_id', userId);
+
+      // Res is List<Map<String, dynamic>>
+      // Structure: [{'follower_id': '...', 'profiles': {'username': '...', ...}}]
+      return List<Map<String, dynamic>>.from(res);
+    } catch (e) {
+      print('Error fetching followers: $e');
+      return [];
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> fetchFollowingList(String userId) async {
+    try {
+      final res = await _supabase
+          .from('follows')
+          .select(
+            'following_id, profiles!follows_following_id_fkey(username, avatar_url, signature)',
+          )
+          .eq('follower_id', userId);
+
+      return List<Map<String, dynamic>>.from(res);
+    } catch (e) {
+      print('Error fetching following: $e');
+      return [];
+    }
+  }
+
+  /// Fetch public profile data for a stranger
+  Future<Map<String, dynamic>?> getPublicProfile(String userId) async {
+    try {
+      final profileRes = await _supabase
+          .from('profiles')
+          .select('username, avatar_url, signature')
+          .eq('id', userId)
+          .single();
+
+      // Fetch counts manually since we don't have triggers/computed columns yet
+      final followerCount = await _supabase
+          .from('follows')
+          .select('follower_id')
+          .eq('following_id', userId)
+          .count();
+
+      final followingCount = await _supabase
+          .from('follows')
+          .select('following_id')
+          .eq('follower_id', userId)
+          .count();
+
+      final diaryCount = await _supabase
+          .from('mood_diaries')
+          .select('id')
+          .eq('user_id', userId)
+          .count();
+
+      return {
+        ...profileRes,
+        'followers_count': followerCount.count,
+        'following_count': followingCount.count,
+        'diary_count': diaryCount.count,
+      };
+    } catch (e) {
+      print('Error fetching public profile: $e');
+      return null;
+    }
+  }
 }
