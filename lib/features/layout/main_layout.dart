@@ -93,6 +93,15 @@ class MainLayout extends StatelessWidget {
             padding: const EdgeInsets.only(left: 12, bottom: 40),
             child: Row(
               children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: Image.asset(
+                    'assets/images/logo.png',
+                    width: 56,
+                    height: 56,
+                  ),
+                ),
+                const SizedBox(width: 12),
                 Text(
                   '亲亲音乐',
                   style: GoogleFonts.outfit(
