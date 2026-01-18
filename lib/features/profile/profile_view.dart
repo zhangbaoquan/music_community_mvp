@@ -202,7 +202,7 @@ class ProfileView extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
-              "我的文章 (My Articles)",
+              "我的文章",
               style: GoogleFonts.outfit(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
@@ -332,7 +332,7 @@ class ProfileView extends StatelessWidget {
                           Row(
                             children: [
                               Text(
-                                "Published on ${article.createdAt.toString().split(' ').first}",
+                                "发布于 ${article.createdAt.toString().split(' ').first}",
                                 style: TextStyle(
                                   color: Colors.grey[400],
                                   fontSize: 12,
@@ -408,7 +408,7 @@ class ProfileView extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
-              "我的原创 (My Originals)",
+              "我的原创",
               style: GoogleFonts.outfit(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
