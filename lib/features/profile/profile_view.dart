@@ -6,6 +6,7 @@ import '../music/music_controller.dart';
 import '../music/upload_music_view.dart';
 import '../player/player_controller.dart';
 import 'profile_controller.dart';
+import 'edit_profile_dialog.dart';
 
 class ProfileView extends StatelessWidget {
   const ProfileView({super.key});
@@ -32,6 +33,7 @@ class ProfileView extends StatelessWidget {
             const SizedBox(height: 40),
 
             // User Card
+            // User Card
             Container(
               padding: const EdgeInsets.all(32),
               decoration: BoxDecoration(
@@ -39,57 +41,92 @@ class ProfileView extends StatelessWidget {
                 borderRadius: BorderRadius.circular(24),
                 border: Border.all(color: Colors.grey[200]!),
               ),
-              child: Row(
+              child: Stack(
                 children: [
-                  // Avatar Placeholder
-                  Container(
-                    width: 80,
-                    height: 80,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF1A1A1A),
-                      shape: BoxShape.circle,
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.1),
-                          blurRadius: 20,
-                          offset: const Offset(0, 10),
+                  Row(
+                    children: [
+                      // Avatar Placeholder
+                      Obx(
+                        () => Container(
+                          width: 80,
+                          height: 80,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF1A1A1A),
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.1),
+                                blurRadius: 20,
+                                offset: const Offset(0, 10),
+                              ),
+                            ],
+                            image: controller.avatarUrl.value.isNotEmpty
+                                ? DecorationImage(
+                                    image: NetworkImage(
+                                      controller.avatarUrl.value,
+                                    ),
+                                    fit: BoxFit.cover,
+                                  )
+                                : null,
+                          ),
+                          child: controller.avatarUrl.value.isEmpty
+                              ? const Icon(
+                                  Icons.person,
+                                  color: Colors.white,
+                                  size: 40,
+                                )
+                              : null,
                         ),
-                      ],
-                    ),
-                    child: const Icon(
-                      Icons.person,
-                      color: Colors.white,
-                      size: 40,
-                    ),
-                  ),
-                  const SizedBox(width: 24),
+                      ),
+                      const SizedBox(width: 24),
 
-                  // Info
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Obx(
-                          () => Text(
-                            controller.userEmail.value,
-                            style: GoogleFonts.outfit(
-                              fontSize: 24,
-                              fontWeight: FontWeight.w600,
-                              color: const Color(0xFF1A1A1A),
+                      // Info
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Obx(
+                              () => Text(
+                                controller.username.value.isNotEmpty
+                                    ? controller.username.value
+                                    : '未设置昵称',
+                                style: GoogleFonts.outfit(
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.w600,
+                                  color: const Color(0xFF1A1A1A),
+                                ),
+                              ),
                             ),
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Obx(
-                          () => Text(
-                            "加入时间 ${controller.joinDate.value}",
-                            style: GoogleFonts.outfit(
-                              fontSize: 14,
-                              color: Colors.grey[500],
+                            const SizedBox(height: 8),
+                            Obx(
+                              () => Text(
+                                controller.signature.value.isNotEmpty
+                                    ? controller.signature.value
+                                    : "还没有个性签名...",
+                                style: GoogleFonts.outfit(
+                                  fontSize: 14,
+                                  color: Colors.grey[500],
+                                  fontStyle:
+                                      controller.signature.value.isNotEmpty
+                                      ? FontStyle.normal
+                                      : FontStyle.italic,
+                                ),
+                              ),
                             ),
-                          ),
+                          ],
                         ),
-                      ],
+                      ),
+                    ],
+                  ),
+
+                  // Edit Button
+                  Positioned(
+                    top: 0,
+                    right: 0,
+                    child: IconButton(
+                      onPressed: () => Get.dialog(const EditProfileDialog()),
+                      icon: const Icon(Icons.edit_square, color: Colors.grey),
+                      tooltip: "编辑资料",
                     ),
                   ),
                 ],
