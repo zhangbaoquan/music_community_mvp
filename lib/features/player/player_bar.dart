@@ -21,7 +21,7 @@ class PlayerBar extends StatelessWidget {
           color: Colors.white,
           child: isMobile
               ? _buildMobileLayout(controller)
-              : _buildDesktopLayout(controller),
+              : _buildDesktopLayout(context, controller),
         );
       },
     );
@@ -87,14 +87,17 @@ class PlayerBar extends StatelessWidget {
     );
   }
 
-  Widget _buildDesktopLayout(PlayerController controller) {
+  Widget _buildDesktopLayout(
+    BuildContext context,
+    PlayerController controller,
+  ) {
     return Row(
       children: [
         _buildSongInfo(controller),
         const Spacer(flex: 1),
         _buildControls(controller),
         const Spacer(flex: 1),
-        _buildExtraControls(controller),
+        _buildExtraControls(context, controller),
       ],
     );
   }
@@ -288,7 +291,10 @@ class PlayerBar extends StatelessWidget {
     );
   }
 
-  Widget _buildExtraControls(PlayerController controller) {
+  Widget _buildExtraControls(
+    BuildContext context,
+    PlayerController controller,
+  ) {
     return SizedBox(
       width: 200,
       child: Row(
@@ -302,7 +308,34 @@ class PlayerBar extends StatelessWidget {
           const SizedBox(width: 16),
           Icon(Icons.playlist_play_rounded, color: Colors.grey[600]),
           const SizedBox(width: 16),
-          Icon(Icons.volume_up_rounded, color: Colors.grey[600]),
+          // Volume Slider
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.volume_up_rounded, color: Colors.grey[600], size: 20),
+              SizedBox(
+                width: 80,
+                child: Obx(
+                  () => SliderTheme(
+                    data: SliderTheme.of(context).copyWith(
+                      thumbShape: const RoundSliderThumbShape(
+                        enabledThumbRadius: 5,
+                      ),
+                      trackHeight: 2,
+                      activeTrackColor: Colors.grey[600],
+                      inactiveTrackColor: Colors.grey[300],
+                      thumbColor: Colors.black87,
+                      overlayShape: SliderComponentShape.noOverlay,
+                    ),
+                    child: Slider(
+                      value: controller.volume.value,
+                      onChanged: (val) => controller.setVolume(val),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
         ],
       ),
     );

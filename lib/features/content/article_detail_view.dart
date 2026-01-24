@@ -62,7 +62,7 @@ class _ArticleDetailViewState extends State<ArticleDetailView> {
       "ArticleDetailView: _playBgm called. SongID: ${widget.article.bgmSongId}",
     );
     if (widget.article.bgmSongId != null) {
-      final playerCtrl = Get.find<PlayerController>(); // Ensure this is alive
+      Get.find<PlayerController>(); // Early init check
       // We might not have the full song details here if not joined.
       // We need to fetch the full song or ensure the previous join got it.
       _fetchAndPlaySong(widget.article.bgmSongId!);
