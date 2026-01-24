@@ -28,6 +28,16 @@ class DiaryController extends GetxController {
   final _supabase = Supabase.instance.client;
   var entries = <DiaryEntry>[].obs;
   var isLoading = false.obs;
+  final currentMoodFilter = ''.obs;
+
+  void setMoodFilter(String mood) {
+    if (currentMoodFilter.value == mood) {
+      currentMoodFilter.value = ''; // Toggle off
+    } else {
+      currentMoodFilter.value = mood;
+    }
+    fetchEntries();
+  }
 
   @override
   void onInit() {
@@ -41,11 +51,13 @@ class DiaryController extends GetxController {
       final userId = _supabase.auth.currentUser?.id;
       if (userId == null) return;
 
-      final response = await _supabase
-          .from('mood_diaries')
-          .select()
-          .eq('user_id', userId)
-          .order('created_at', ascending: false);
+      var query = _supabase.from('mood_diaries').select().eq('user_id', userId);
+
+      if (currentMoodFilter.value.isNotEmpty) {
+        query = query.eq('mood_type', currentMoodFilter.value);
+      }
+
+      final response = await query.order('created_at', ascending: false);
 
       final List<dynamic> data = response;
       entries.value = data.map((json) => DiaryEntry.fromJson(json)).toList();

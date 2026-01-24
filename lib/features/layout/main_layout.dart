@@ -182,7 +182,7 @@ class MainLayout extends StatelessWidget {
           ),
 
           // Navigation Items
-          _navItem(icon: Icons.radio_button_checked, label: '心情电台', index: 0),
+          _navItem(icon: Icons.radio_button_checked, label: '心情驿站', index: 0),
           _navItem(icon: Icons.book, label: '心事角落', index: 1),
           // Search Entry
           _navItem(
@@ -256,7 +256,7 @@ class MainLayout extends StatelessWidget {
         items: [
           const BottomNavigationBarItem(
             icon: Icon(Icons.radio_button_checked),
-            label: '电台',
+            label: '驿站',
           ),
           const BottomNavigationBarItem(icon: Icon(Icons.book), label: '日记'),
           const BottomNavigationBarItem(icon: Icon(Icons.person), label: '我的'),

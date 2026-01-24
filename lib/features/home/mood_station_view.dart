@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:music_community_mvp/core/shim_google_fonts.dart';
 
-import '../player/player_controller.dart'; // import
+import '../diary/diary_controller.dart';
 import '../diary/diary_view.dart';
 
 class MoodStationView extends StatelessWidget {
@@ -10,7 +10,8 @@ class MoodStationView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final playerCtrl = Get.find<PlayerController>(); // Find controller
+    // Find or Put DiaryController to control the filtering
+    final diaryCtrl = Get.put(DiaryController());
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -30,7 +31,7 @@ class MoodStationView extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             Text(
-              "选择一个心情，聆听专属旋律。",
+              "选择一个心情，查看相关心事。",
               style: GoogleFonts.outfit(fontSize: 18, color: Colors.grey[500]),
             ),
 
@@ -58,7 +59,7 @@ class MoodStationView extends StatelessWidget {
                       color: Colors.orange[50]!,
                       iconColor: Colors.orange,
                       description: "元气满满 & 充满活力",
-                      onTap: () => playerCtrl.playMood("Happy"),
+                      onTap: () => diaryCtrl.setMoodFilter("开心"),
                     ),
                     _buildMoodCard(
                       label: "忧郁",
@@ -66,7 +67,7 @@ class MoodStationView extends StatelessWidget {
                       color: Colors.blueGrey[50]!,
                       iconColor: Colors.blueGrey,
                       description: "悲伤 & 沉思",
-                      onTap: () => playerCtrl.playMood("Melancholy"),
+                      onTap: () => diaryCtrl.setMoodFilter("忧郁"),
                     ),
                     _buildMoodCard(
                       label: "平静",
@@ -74,7 +75,7 @@ class MoodStationView extends StatelessWidget {
                       color: Colors.green[50]!,
                       iconColor: Colors.green,
                       description: "放松 & 治愈",
-                      onTap: () => playerCtrl.playMood("Peaceful"),
+                      onTap: () => diaryCtrl.setMoodFilter("平静"),
                     ),
                     _buildMoodCard(
                       label: "专注",
@@ -82,7 +83,7 @@ class MoodStationView extends StatelessWidget {
                       color: Colors.brown[50]!,
                       iconColor: Colors.brown,
                       description: "深度工作 & 学习",
-                      onTap: () => playerCtrl.playMood("Focused"),
+                      onTap: () => diaryCtrl.setMoodFilter("专注"),
                     ),
                   ],
                 );
