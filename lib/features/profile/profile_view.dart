@@ -455,7 +455,7 @@ class ProfileView extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
-              "我的原创",
+              "我的音乐",
               style: GoogleFonts.outfit(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
@@ -465,7 +465,7 @@ class ProfileView extends StatelessWidget {
             ElevatedButton.icon(
               onPressed: () => Get.to(() => const UploadMusicView()),
               icon: const Icon(Icons.upload_file, size: 18),
-              label: const Text("上传歌曲"),
+              label: const Text("上传乐曲"),
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.black87,
                 foregroundColor: Colors.white,

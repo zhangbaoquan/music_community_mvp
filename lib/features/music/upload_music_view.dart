@@ -20,6 +20,8 @@ class _UploadMusicViewState extends State<UploadMusicView> {
   PlatformFile? _audioFile;
   XFile? _coverFile;
   final List<String> _selectedMoods = [];
+  String _selectedSource = '原创'; // Default source
+  final List<String> _sourceOptions = ['原创', '购买', '自制'];
 
   final List<String> _availableMoods = [
     '快乐 (Happy)',
@@ -80,7 +82,7 @@ class _UploadMusicViewState extends State<UploadMusicView> {
       title: _titleController.text,
       artist: _artistController.text,
       coverFile: _coverFile,
-      moodTags: _selectedMoods,
+      moodTags: [..._selectedMoods, _selectedSource], // Append source as tag
     );
 
     if (success) {
@@ -90,6 +92,7 @@ class _UploadMusicViewState extends State<UploadMusicView> {
         _titleController.clear();
         _artistController.clear();
         _selectedMoods.clear();
+        _selectedSource = '原创';
       });
     }
   }
@@ -98,7 +101,7 @@ class _UploadMusicViewState extends State<UploadMusicView> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('发布原创音乐'),
+        title: const Text('发布音乐'),
         backgroundColor: Colors.white,
         elevation: 0.5,
         titleTextStyle: const TextStyle(
@@ -248,6 +251,43 @@ class _UploadMusicViewState extends State<UploadMusicView> {
               ],
             ),
 
+            const SizedBox(height: 24),
+
+            const SizedBox(height: 24),
+
+            // 2.5 Music Source (Copyright)
+            const Text(
+              '音乐来源 (必选)',
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+            ),
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 8,
+              children: _sourceOptions.map((source) {
+                return ChoiceChip(
+                  label: Text(source),
+                  selected: _selectedSource == source,
+                  onSelected: (selected) {
+                    if (selected) {
+                      setState(() {
+                        _selectedSource = source;
+                      });
+                    }
+                  },
+                  selectedColor: Theme.of(
+                    context,
+                  ).primaryColor.withOpacity(0.2),
+                  labelStyle: TextStyle(
+                    color: _selectedSource == source
+                        ? Theme.of(context).primaryColor
+                        : Colors.black87,
+                    fontWeight: _selectedSource == source
+                        ? FontWeight.bold
+                        : FontWeight.normal,
+                  ),
+                );
+              }).toList(),
+            ),
             const SizedBox(height: 24),
 
             // 3. Mood Tags

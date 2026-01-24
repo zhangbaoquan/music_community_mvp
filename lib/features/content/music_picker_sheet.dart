@@ -67,7 +67,7 @@ class _MusicPickerSheetState extends State<MusicPickerSheet>
             indicatorColor: Colors.black,
             tabs: const [
               Tab(text: "发现音乐"),
-              Tab(text: "我的原创"),
+              Tab(text: "我的音乐"),
             ],
           ),
           Expanded(
