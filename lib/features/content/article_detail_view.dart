@@ -261,6 +261,8 @@ class _ArticleDetailViewState extends State<ArticleDetailView> {
                   ),
                   const SizedBox(height: 32),
 
+                  // Music Player Card
+                  const _MusicPlayerCard(), // Add control
                   // Summary Quote
                   if (widget.article.summary != null &&
                       widget.article.summary!.isNotEmpty)
@@ -584,6 +586,121 @@ class _CommentPreviewItem extends StatelessWidget {
         ),
       ),
     );
+  }
+}
+
+class _MusicPlayerCard extends StatelessWidget {
+  const _MusicPlayerCard();
+
+  @override
+  Widget build(BuildContext context) {
+    final player = Get.find<PlayerController>();
+
+    return Obx(() {
+      final song = player.currentSong.value;
+      if (song == null) return const SizedBox();
+
+      return Container(
+        margin: const EdgeInsets.only(bottom: 24),
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: Colors.grey[50], // Light background
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.grey[200]!),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                // 1. Cover / Icon
+                Container(
+                  width: 48,
+                  height: 48,
+                  decoration: BoxDecoration(
+                    color: Colors.grey[200],
+                    borderRadius: BorderRadius.circular(8),
+                    image: song.coverUrl != null && song.coverUrl!.isNotEmpty
+                        ? DecorationImage(
+                            image: NetworkImage(song.coverUrl!),
+                            fit: BoxFit.cover,
+                          )
+                        : null,
+                  ),
+                  child: song.coverUrl == null || song.coverUrl!.isEmpty
+                      ? const Icon(Icons.music_note, color: Colors.grey)
+                      : null,
+                ),
+                const SizedBox(width: 12),
+                // 2. Info
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        song.title,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        song.artist ?? '未知艺术家',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          color: Colors.grey,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                // 3. Play/Pause
+                IconButton(
+                  onPressed: player.togglePlay,
+                  icon: Icon(
+                    player.isPlaying.value
+                        ? Icons.pause_circle_filled
+                        : Icons.play_circle_filled,
+                    size: 40,
+                    color: Colors.black87,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            // 4. Volume Slider
+            Row(
+              children: [
+                const Icon(Icons.volume_down, size: 16, color: Colors.grey),
+                Expanded(
+                  child: SliderTheme(
+                    data: SliderTheme.of(context).copyWith(
+                      thumbShape: const RoundSliderThumbShape(
+                        enabledThumbRadius: 6,
+                      ),
+                      trackHeight: 2,
+                      activeTrackColor: Colors.black54,
+                      inactiveTrackColor: Colors.grey[300],
+                      thumbColor: Colors.black,
+                    ),
+                    child: Slider(
+                      value: player.volume.value,
+                      onChanged: (v) => player.setVolume(v),
+                    ),
+                  ),
+                ),
+                const Icon(Icons.volume_up, size: 16, color: Colors.grey),
+              ],
+            ),
+          ],
+        ),
+      );
+    });
   }
 }
 

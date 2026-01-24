@@ -15,6 +15,7 @@ class PlayerController extends GetxController {
   final currentPosition = Duration.zero.obs;
   final totalDuration = Duration.zero.obs;
   final bufferedPosition = Duration.zero.obs;
+  final volume = 1.0.obs; // Volume 0.0 to 1.0
 
   // Computed getter for current Song object (subset of fields)
   // Or just a reactive variable if we want to store the whole object.
@@ -151,6 +152,11 @@ class PlayerController extends GetxController {
 
   void seek(Duration position) {
     _player.seek(position);
+  }
+
+  void setVolume(double value) {
+    volume.value = value;
+    _player.setVolume(value);
   }
 
   @override
