@@ -12,6 +12,10 @@ class Article {
   final String? authorName;
   final String? authorAvatar;
 
+  // BGM Info
+  final String? bgmSongId;
+  final String? bgmTitle;
+
   Article({
     required this.id,
     required this.userId,
@@ -23,6 +27,8 @@ class Article {
     this.isPublished = true,
     this.authorName,
     this.authorAvatar,
+    this.bgmSongId,
+    this.bgmTitle,
     this.likesCount = 0,
     this.collectionsCount = 0,
     this.commentsCount = 0,
@@ -43,6 +49,10 @@ class Article {
       // Handle joined profile data if available
       authorName: map['profiles']?['username'] as String?,
       authorAvatar: map['profiles']?['avatar_url'] as String?,
+
+      bgmSongId: map['bgm_song_id'] as String?,
+      // Note: If we join songs(title), it might be inside 'songs' object
+      bgmTitle: map['songs'] != null ? map['songs']['title'] as String? : null,
 
       // Social Interactions (Aggregated counts or flags)
       // Note: 'likes' and 'collections' might be Lists if fetched via select(..., likes:article_likes(count))
@@ -86,6 +96,7 @@ class Article {
       'cover_url': coverUrl,
       'content': content,
       'is_published': isPublished,
+      'bgm_song_id': bgmSongId,
       // 'created_at': createdAt.toIso8601String(), // Usually handled by DB default
     };
   }

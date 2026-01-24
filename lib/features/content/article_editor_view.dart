@@ -4,6 +4,7 @@ import 'package:flutter_quill/flutter_quill.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:music_community_mvp/data/models/article.dart';
+import 'package:music_community_mvp/features/content/music_picker_sheet.dart';
 import 'article_controller.dart';
 import 'dart:convert';
 
@@ -22,6 +23,8 @@ class _ArticleEditorViewState extends State<ArticleEditorView> {
   late QuillController _quillController;
 
   XFile? _pickedCover;
+  String? _selectedBgmId;
+  String? _selectedBgmTitle;
 
   @override
   void initState() {
@@ -30,6 +33,10 @@ class _ArticleEditorViewState extends State<ArticleEditorView> {
     _summaryController = TextEditingController(
       text: widget.article?.summary ?? '',
     );
+
+    // Initialize BGM
+    _selectedBgmId = widget.article?.bgmSongId;
+    _selectedBgmTitle = widget.article?.bgmTitle;
 
     // Initialize Quill Controller
     if (widget.article != null && widget.article!.content != null) {
@@ -66,6 +73,20 @@ class _ArticleEditorViewState extends State<ArticleEditorView> {
     }
   }
 
+  void _pickBgm() {
+    Get.bottomSheet(
+      MusicPickerSheet(
+        onSelected: (id, title) {
+          setState(() {
+            _selectedBgmId = id;
+            _selectedBgmTitle = title;
+          });
+        },
+      ),
+      isScrollControlled: true,
+    );
+  }
+
   void _submit() async {
     if (_titleController.text.trim().isEmpty) {
       Get.snackbar('Tip', 'Please enter a title');
@@ -97,6 +118,7 @@ class _ArticleEditorViewState extends State<ArticleEditorView> {
         summary: _summaryController.text,
         contentJson: contentList,
         coverFile: coverPlatformFile,
+        bgmSongId: _selectedBgmId,
       );
     } else {
       // Create
@@ -105,6 +127,7 @@ class _ArticleEditorViewState extends State<ArticleEditorView> {
         summary: _summaryController.text,
         contentJson: contentList,
         coverFile: coverPlatformFile,
+        bgmSongId: _selectedBgmId,
       );
     }
 
@@ -238,6 +261,65 @@ class _ArticleEditorViewState extends State<ArticleEditorView> {
                     ),
                     maxLines: null,
                   ),
+
+                  // BGM Selector
+                  const SizedBox(height: 12),
+                  GestureDetector(
+                    onTap: _pickBgm,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 8,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.grey[100],
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(color: Colors.grey[300]!),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            _selectedBgmId == null
+                                ? Icons.music_note_outlined
+                                : Icons.music_note,
+                            size: 16,
+                            color: _selectedBgmId == null
+                                ? Colors.grey
+                                : Colors.blue,
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            _selectedBgmTitle ?? '添加背景音乐',
+                            style: TextStyle(
+                              color: _selectedBgmId == null
+                                  ? Colors.grey
+                                  : Colors.blue,
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          if (_selectedBgmId != null) ...[
+                            const SizedBox(width: 4),
+                            GestureDetector(
+                              onTap: () {
+                                setState(() {
+                                  _selectedBgmId = null;
+                                  _selectedBgmTitle = null;
+                                });
+                              },
+                              child: const Icon(
+                                Icons.close,
+                                size: 14,
+                                color: Colors.grey,
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                  ),
+
                   const Divider(height: 40),
 
                   // 4. Rich Text Editor

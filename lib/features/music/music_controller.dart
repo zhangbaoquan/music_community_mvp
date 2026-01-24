@@ -8,6 +8,7 @@ class MusicController extends GetxController {
   final _supabase = Supabase.instance.client;
 
   final rxUserSongs = <Song>[].obs;
+  final rxSongs = <Song>[].obs; // For discovery/all songs
   final isLoading = false.obs;
   final isUploading = false.obs;
   final uploadProgress = 0.0.obs;
@@ -16,6 +17,26 @@ class MusicController extends GetxController {
   void onInit() {
     super.onInit();
     // fetchUserSongs(); // Can fetch on init or when entering profile
+    // fetchSongs(); // Fetch discovery songs
+  }
+
+  // Fetch all public songs (discovery)
+  Future<void> fetchSongs() async {
+    try {
+      isLoading.value = true;
+      final response = await _supabase
+          .from('songs')
+          .select()
+          .order('created_at', ascending: false)
+          .limit(100);
+
+      final List<dynamic> data = response;
+      rxSongs.value = data.map((e) => Song.fromMap(e)).toList();
+    } catch (e) {
+      Get.snackbar('Error', 'Failed to load songs: $e');
+    } finally {
+      isLoading.value = false;
+    }
   }
 
   Future<void> fetchUserSongs(String userId) async {

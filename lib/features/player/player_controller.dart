@@ -16,6 +16,10 @@ class PlayerController extends GetxController {
   final totalDuration = Duration.zero.obs;
   final bufferedPosition = Duration.zero.obs;
 
+  // Computed getter for current Song object (subset of fields)
+  // Or just a reactive variable if we want to store the whole object.
+  final Rxn<Song> currentSong = Rxn<Song>();
+
   @override
   void onInit() {
     super.onInit();
@@ -119,6 +123,7 @@ class PlayerController extends GetxController {
       await _player.stop();
       await _player.setUrl(song.url);
 
+      currentSong.value = song; // Update the object
       currentMood.value = song.moodTags?.firstOrNull ?? 'User Upload';
       currentTitle.value = song.title;
       currentArtist.value = song.artist ?? 'Pianist';

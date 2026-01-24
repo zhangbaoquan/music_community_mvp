@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 import 'package:get/get.dart';
 import 'package:music_community_mvp/data/models/article.dart';
+import 'package:music_community_mvp/data/models/song.dart';
+import 'package:music_community_mvp/features/player/player_controller.dart';
 import 'article_controller.dart';
 import 'package:music_community_mvp/data/models/article_comment.dart';
 import 'article_comment_drawer.dart';
@@ -50,6 +52,44 @@ class _ArticleDetailViewState extends State<ArticleDetailView> {
 
     // Check Follow Status
     _checkFollowStatus();
+
+    // Setup BGM
+    _playBgm();
+  }
+
+  void _playBgm() {
+    print(
+      "ArticleDetailView: _playBgm called. SongID: ${widget.article.bgmSongId}",
+    );
+    if (widget.article.bgmSongId != null) {
+      final playerCtrl = Get.find<PlayerController>(); // Ensure this is alive
+      // We might not have the full song details here if not joined.
+      // We need to fetch the full song or ensure the previous join got it.
+      _fetchAndPlaySong(widget.article.bgmSongId!);
+    } else {
+      print("ArticleDetailView: No BGM ID found.");
+    }
+  }
+
+  Future<void> _fetchAndPlaySong(String songId) async {
+    try {
+      final res = await Supabase.instance.client
+          .from('songs')
+          .select()
+          .eq('id', songId)
+          .single();
+
+      final song = Song.fromMap(res);
+
+      // Auto-play (maybe check if already playing same song?)
+      final playerCtrl = Get.find<PlayerController>();
+      if (playerCtrl.currentSong.value?.id != song.id) {
+        playerCtrl.playSong(song);
+      }
+    } catch (e) {
+      print("Failed to load BGM: $e");
+      Get.snackbar('背景音乐错误', '加载失败: $e');
+    }
   }
 
   Future<void> _checkFollowStatus() async {
