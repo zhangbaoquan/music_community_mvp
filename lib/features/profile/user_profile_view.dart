@@ -6,6 +6,7 @@ import 'package:music_community_mvp/features/player/player_controller.dart';
 import 'package:music_community_mvp/features/profile/profile_controller.dart';
 import 'package:music_community_mvp/features/content/article_controller.dart';
 import 'package:music_community_mvp/features/content/article_detail_view.dart';
+import 'package:music_community_mvp/features/messages/chat_detail_view.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../profile/follow_list_view.dart';
 
@@ -160,7 +161,28 @@ class _UserProfileViewState extends State<UserProfileView> {
               ],
             ),
           ),
-          if (!_isMe) _FollowButton(targetUserId: widget.userId),
+          if (!_isMe) ...[
+            _FollowButton(targetUserId: widget.userId),
+            const SizedBox(width: 12),
+            OutlinedButton.icon(
+              onPressed: () {
+                Get.to(
+                  () => ChatDetailView(
+                    partnerId: widget.userId,
+                    partnerName: _profileData!['username'] ?? 'Unknown',
+                    partnerAvatar: _profileData!['avatar_url'],
+                  ),
+                );
+              },
+              icon: const Icon(Icons.mail_outline, size: 18),
+              label: const Text("私信"),
+              style: OutlinedButton.styleFrom(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                ),
+              ),
+            ),
+          ],
         ],
       ),
     );

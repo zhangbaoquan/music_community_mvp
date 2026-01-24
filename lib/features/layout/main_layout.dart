@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:music_community_mvp/core/shim_google_fonts.dart';
 import 'package:music_community_mvp/features/search/search_view.dart';
+import 'package:music_community_mvp/features/messages/chat_list_view.dart';
+import 'package:music_community_mvp/features/messages/message_controller.dart';
 import '../player/player_bar.dart';
 import '../home/home_view.dart';
 import '../player/player_controller.dart';
@@ -82,6 +84,35 @@ class MainLayout extends StatelessWidget {
                       icon: const Icon(Icons.search),
                       onPressed: () => Get.to(() => const SearchView()),
                     ),
+                    Stack(
+                      children: [
+                        IconButton(
+                          icon: const Icon(Icons.mail_outline),
+                          onPressed: () => Get.to(() => const ChatListView()),
+                        ),
+                        Obx(() {
+                          final msgCtrl = Get.put(MessageController());
+                          if (msgCtrl.unreadCount.value > 0) {
+                            return Positioned(
+                              right: 8,
+                              top: 8,
+                              child: Container(
+                                padding: const EdgeInsets.all(2),
+                                decoration: const BoxDecoration(
+                                  color: Colors.red,
+                                  shape: BoxShape.circle,
+                                ),
+                                constraints: const BoxConstraints(
+                                  minWidth: 10,
+                                  minHeight: 10,
+                                ),
+                              ),
+                            );
+                          }
+                          return const SizedBox();
+                        }),
+                      ],
+                    ),
                   ],
                 )
               : null,
@@ -160,6 +191,16 @@ class MainLayout extends StatelessWidget {
             index: 90, // Special index
             onTap: () => Get.to(() => const SearchView()),
           ),
+          Obx(() {
+            final msgCtrl = Get.put(MessageController());
+            final count = msgCtrl.unreadCount.value;
+            return _navItem(
+              icon: Icons.mail_outline,
+              label: count > 0 ? '消息 ($count)' : '消息中心',
+              index: 91,
+              onTap: () => Get.to(() => const ChatListView()),
+            );
+          }),
           _navItem(icon: Icons.person, label: '个人中心', index: 2),
 
           // Notification Item with Badge
