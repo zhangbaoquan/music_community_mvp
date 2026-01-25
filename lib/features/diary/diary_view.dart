@@ -151,10 +151,29 @@ class _DiaryViewState extends State<DiaryView> {
 
               if (controller.entries.isEmpty) {
                 return Center(
-                  child: Text(
-                    "还没有日记哦。\n在上方写下第一篇吧！",
-                    textAlign: TextAlign.center,
-                    style: GoogleFonts.outfit(color: Colors.grey[400]),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.edit_note, size: 48, color: Colors.grey[200]),
+                      const SizedBox(height: 16),
+                      Text(
+                        "这里很安静...",
+                        style: GoogleFonts.outfit(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.grey[400],
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        "试着写下第一笔心事吧，\n文字会安抚你的灵魂。",
+                        textAlign: TextAlign.center,
+                        style: GoogleFonts.outfit(
+                          fontSize: 14,
+                          color: Colors.grey[400],
+                        ),
+                      ),
+                    ],
                   ),
                 );
               }

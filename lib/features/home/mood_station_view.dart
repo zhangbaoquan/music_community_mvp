@@ -21,17 +21,10 @@ class MoodStationView extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Header
-            Text(
-              "今天心情如何？",
-              style: GoogleFonts.outfit(
-                fontSize: 48,
-                fontWeight: FontWeight.bold,
-                color: const Color(0xFF1A1A1A),
-              ),
-            ),
+            _buildGreeting(),
             const SizedBox(height: 16),
             Text(
-              "选择一个心情，查看相关心事。",
+              "此刻的心情，是开启故事的钥匙。",
               style: GoogleFonts.outfit(fontSize: 18, color: Colors.grey[500]),
             ),
 
@@ -110,6 +103,44 @@ class MoodStationView extends StatelessWidget {
     );
   }
 
+  Widget _buildGreeting() {
+    final hour = DateTime.now().hour;
+    String greeting;
+    if (hour < 6) {
+      greeting = "夜深了";
+    } else if (hour < 11) {
+      greeting = "早安";
+    } else if (hour < 14) {
+      greeting = "午安";
+    } else if (hour < 18) {
+      greeting = "下午好";
+    } else {
+      greeting = "晚上好";
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          greeting,
+          style: GoogleFonts.outfit(
+            fontSize: 48,
+            fontWeight: FontWeight.bold,
+            color: const Color(0xFF1A1A1A),
+          ),
+        ),
+        Text(
+          "愿你拥有温柔的一天",
+          style: GoogleFonts.outfit(
+            fontSize: 24,
+            fontWeight: FontWeight.w300,
+            color: Colors.grey[400],
+          ),
+        ),
+      ],
+    );
+  }
+
   Widget _buildMoodCard({
     required String label,
     required IconData icon,
@@ -118,63 +149,78 @@ class MoodStationView extends StatelessWidget {
     required String description,
     required VoidCallback onTap,
   }) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(24),
-        child: Container(
-          decoration: BoxDecoration(
-            color: color,
-            borderRadius: BorderRadius.circular(24),
-            border: Border.all(color: Colors.white, width: 2),
-            boxShadow: [
-              BoxShadow(
-                color: iconColor.withOpacity(0.1),
-                blurRadius: 20,
-                offset: const Offset(0, 10),
-              ),
-            ],
-          ),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(16),
+    // Add simple hover effect using InkWell's built-in, but maybe a scale would be nicer.
+    // For MVP fast implementation, let's just keep Material/InkWell but polish the specific visuals?
+    // User requested animations. Let's add a simple TweenAnimationBuilder for scale on tap/idle?
+    // Or just improved static visuals first. "Interactive Mood Cards".
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: 0.95, end: 1.0),
+      duration: const Duration(milliseconds: 500),
+      curve: Curves.easeOut,
+      builder: (context, value, child) {
+        return Transform.scale(
+          scale: value,
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: onTap,
+              borderRadius: BorderRadius.circular(24),
+              hoverColor: color.withOpacity(0.8), // Slight darken on hover
+              child: Container(
                 decoration: BoxDecoration(
-                  color: Colors.white,
-                  shape: BoxShape.circle,
+                  color: color,
+                  borderRadius: BorderRadius.circular(24),
+                  border: Border.all(color: Colors.white, width: 2),
                   boxShadow: [
                     BoxShadow(
-                      color: iconColor.withOpacity(0.2),
-                      blurRadius: 10,
-                      offset: const Offset(0, 5),
+                      color: iconColor.withOpacity(0.1),
+                      blurRadius: 20,
+                      offset: const Offset(0, 10),
                     ),
                   ],
                 ),
-                child: Icon(icon, size: 32, color: iconColor),
-              ),
-              const SizedBox(height: 24),
-              Text(
-                label,
-                style: GoogleFonts.outfit(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: const Color(0xFF1A1A1A),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: iconColor.withOpacity(0.2),
+                            blurRadius: 10,
+                            offset: const Offset(0, 5),
+                          ),
+                        ],
+                      ),
+                      child: Icon(icon, size: 32, color: iconColor),
+                    ),
+                    const SizedBox(height: 24),
+                    Text(
+                      label,
+                      style: GoogleFonts.outfit(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                        color: const Color(0xFF1A1A1A),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      description,
+                      style: GoogleFonts.outfit(
+                        fontSize: 14,
+                        color: Colors.grey[600],
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              const SizedBox(height: 8),
-              Text(
-                description,
-                style: GoogleFonts.outfit(
-                  fontSize: 14,
-                  color: Colors.grey[600],
-                ),
-              ),
-            ],
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 }
