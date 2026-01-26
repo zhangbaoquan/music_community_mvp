@@ -5,6 +5,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../data/models/article.dart';
 import 'package:music_community_mvp/data/models/article_comment.dart';
 import 'package:collection/collection.dart';
+import '../gamification/badge_service.dart';
 
 class ArticleController extends GetxController {
   final _supabase = Supabase.instance.client;
@@ -378,6 +379,10 @@ class ArticleController extends GetxController {
         snackPosition: SnackPosition.BOTTOM,
         margin: const EdgeInsets.all(16),
       );
+
+      // Check Milestones (Phase 14)
+      Get.put(BadgeService()).checkCommentMilestones();
+
       return true;
     } catch (e) {
       print('Error posting comment: $e');
@@ -587,7 +592,11 @@ class ArticleController extends GetxController {
       await _supabase.from('articles').insert(article.toMap()..remove('id'));
 
       // 3. Refresh list (fire and forget, or await if needed)
+      // 3. Refresh list (fire and forget, or await if needed)
       fetchArticles();
+
+      // Check Milestones (Phase 14)
+      Get.put(BadgeService()).checkArticleMilestones();
 
       return true;
     } catch (e) {

@@ -220,6 +220,11 @@ class ProfileView extends StatelessWidget {
 
             const SizedBox(height: 48),
 
+            // Phase 14: My Badges (Gamification)
+            _buildMyBadgesSection(controller),
+
+            const SizedBox(height: 48),
+
             // Phase 4: My Original Music
             _buildMyMusicSection(),
 
@@ -677,5 +682,116 @@ class ProfileView extends StatelessWidget {
 
   Widget _buildVerticalDivider() {
     return Container(height: 24, width: 1, color: Colors.grey[200]);
+  }
+
+  Widget _buildMyBadgesSection(ProfileController controller) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              "我的勋章",
+              style: GoogleFonts.outfit(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                color: const Color(0xFF1A1A1A),
+              ),
+            ),
+            const Icon(Icons.chevron_right, color: Colors.grey),
+          ],
+        ),
+        const SizedBox(height: 16),
+        Obx(() {
+          final badges = controller.earnedBadges;
+          if (badges.isEmpty) {
+            return Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 24),
+              decoration: BoxDecoration(
+                color: Colors.grey[50],
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Center(
+                child: Text(
+                  "继续创作，解锁你的第一枚勋章！",
+                  style: GoogleFonts.outfit(color: Colors.grey[400]),
+                ),
+              ),
+            );
+          }
+
+          return SizedBox(
+            height: 140, // Height for badge card
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              itemCount: badges.length,
+              separatorBuilder: (_, __) => const SizedBox(width: 16),
+              itemBuilder: (context, index) {
+                final badge = badges[index];
+                return Container(
+                  width: 100,
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: Colors.amber.withOpacity(0.3)),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.amber.withOpacity(0.1),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      // Icon
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          gradient: LinearGradient(
+                            colors: [Colors.amber[100]!, Colors.amber[50]!],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                        ),
+                        child: Icon(
+                          Icons
+                              .emoji_events, // Placeholder if no valid icon mapping
+                          color: Colors.amber[700],
+                          size: 32,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        badge.name,
+                        textAlign: TextAlign.center,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: GoogleFonts.outfit(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 12,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        badge.conditionType == 'article_count'
+                            ? '创作达人'
+                            : '活跃互动',
+                        style: TextStyle(fontSize: 10, color: Colors.grey[500]),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
+          );
+        }),
+      ],
+    );
   }
 }

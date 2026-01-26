@@ -1,6 +1,8 @@
 import 'package:get/get.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../data/models/badge.dart';
+import '../gamification/badge_service.dart';
 
 class ProfileController extends GetxController {
   final _supabase = Supabase.instance.client;
@@ -55,10 +57,21 @@ class ProfileController extends GetxController {
 
         // Fetch Social Stats
         await fetchUserStats(user.id);
+
+        // Fetch Badges
+        await fetchBadges(user.id);
       } catch (e) {
         print('Error loading profile: $e');
       }
     }
+  }
+
+  // Badges
+  final earnedBadges = <BadgeModel>[].obs;
+
+  Future<void> fetchBadges(String userId) async {
+    final badgeService = Get.put(BadgeService());
+    earnedBadges.value = await badgeService.getEarnedBadges(userId);
   }
 
   Future<void> fetchUserStats(String userId) async {
