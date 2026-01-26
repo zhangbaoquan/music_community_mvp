@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:music_community_mvp/core/shim_google_fonts.dart';
 import '../../data/models/badge.dart';
-import 'dart:math' as math;
 
 class PremiumBadgeWidget extends StatelessWidget {
   final BadgeModel badge;
