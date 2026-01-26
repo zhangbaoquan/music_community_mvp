@@ -20,6 +20,7 @@ class BadgeService extends GetxService {
       final response = await _supabase.from('badges').select();
       final List<dynamic> data = response;
       allBadges.value = data.map((e) => BadgeModel.fromMap(e)).toList();
+      print("DEBUG: Loaded ${allBadges.length} badges from DB.");
     } catch (e) {
       print("Error loading badges: $e");
     }
@@ -32,7 +33,12 @@ class BadgeService extends GetxService {
 
     // Ensure badges are loaded
     if (allBadges.isEmpty) {
+      print("DEBUG: Badges empty, loading...");
       await _loadBadges();
+      if (allBadges.isEmpty) {
+        print("DEBUG: Badges still empty after load. Aborting check.");
+        return;
+      }
     }
 
     try {
@@ -40,12 +46,12 @@ class BadgeService extends GetxService {
       final count = await _supabase
           .from('articles')
           .count(CountOption.exact)
-          .eq('author_id', user.id);
+          .eq('user_id', user.id);
+
+      print('DEBUG: Article Count for ${user.id}: $count');
 
       // 2. Check against 'article_count' badges
-      // Use logic to check all milestones up to this count?
-      // Or just check relevant ones.
-      _checkAndAward(user.id, 'article_count', count);
+      await _checkAndAward(user.id, 'article_count', count);
     } catch (e) {
       print("Error checking article milestones: $e");
     }
@@ -68,8 +74,10 @@ class BadgeService extends GetxService {
           .count(CountOption.exact)
           .eq('user_id', user.id);
 
+      print('DEBUG: Comment Count for ${user.id}: $count');
+
       // 2. Check against 'comment_count' badges
-      _checkAndAward(user.id, 'comment_count', count);
+      await _checkAndAward(user.id, 'comment_count', count);
     } catch (e) {
       print("Error checking comment milestones: $e");
     }
@@ -88,6 +96,10 @@ class BadgeService extends GetxService {
         )
         .toList();
 
+    print(
+      'DEBUG: Found ${candidates.length} candidates for $conditionType <= $currentCount',
+    );
+
     for (final badge in candidates) {
       // Check if already owned
       final ownedRes = await _supabase
@@ -98,8 +110,11 @@ class BadgeService extends GetxService {
           .maybeSingle();
 
       if (ownedRes == null) {
+        print('DEBUG: Awarding badge: ${badge.name}');
         // Not owned yet, award it!
         await _awardBadge(userId, badge);
+      } else {
+        print('DEBUG: Already owned badge: ${badge.name}');
       }
     }
   }

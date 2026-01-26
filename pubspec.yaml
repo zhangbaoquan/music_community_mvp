@@ -50,6 +50,7 @@ dependencies:
   timeago: ^3.7.1
   emoji_picker_flutter: ^4.4.0
   flutter_chat_bubble: ^2.0.2
+  confetti: ^0.8.0
 
 dev_dependencies:
   flutter_test:
