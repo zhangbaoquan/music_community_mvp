@@ -11,6 +11,9 @@ import '../content/article_controller.dart';
 import '../content/article_editor_view.dart';
 import 'follow_list_view.dart';
 import 'visitor_list_view.dart';
+import '../gamification/badge_detail_view.dart';
+import '../gamification/badge_service.dart';
+import '../gamification/premium_badge_widget.dart';
 
 class ProfileView extends StatelessWidget {
   const ProfileView({super.key});
@@ -699,12 +702,28 @@ class ProfileView extends StatelessWidget {
                 color: const Color(0xFF1A1A1A),
               ),
             ),
-            const Icon(Icons.chevron_right, color: Colors.grey),
+            InkWell(
+              onTap: () => Get.to(() => const BadgeDetailView()),
+              child: Row(
+                children: [
+                  Text(
+                    "查看全部",
+                    style: GoogleFonts.outfit(fontSize: 14, color: Colors.grey),
+                  ),
+                  const SizedBox(width: 4),
+                  const Icon(Icons.chevron_right, size: 16, color: Colors.grey),
+                ],
+              ),
+            ),
           ],
         ),
         const SizedBox(height: 16),
         Obx(() {
-          final badges = controller.earnedBadges;
+          // Use BadgeService directly as ProfileController might not update real-time
+          // Use Get.put to ensure it's initialized (fixes crash if controller hasn't loaded it yet)
+          final badgeService = Get.put(BadgeService());
+          final badges = badgeService.earnedBadges;
+
           if (badges.isEmpty) {
             return Container(
               width: double.infinity,
@@ -730,62 +749,23 @@ class ProfileView extends StatelessWidget {
               separatorBuilder: (_, __) => const SizedBox(width: 16),
               itemBuilder: (context, index) {
                 final badge = badges[index];
-                return Container(
-                  width: 100,
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: Colors.amber.withOpacity(0.3)),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.amber.withOpacity(0.1),
-                        blurRadius: 10,
-                        offset: const Offset(0, 4),
+                return Column(
+                  children: [
+                    PremiumBadgeWidget(
+                      badge: badge,
+                      size: 80,
+                      showLabel: false,
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      badge.name,
+                      style: GoogleFonts.outfit(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: const Color(0xFF1A1A1A),
                       ),
-                    ],
-                  ),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      // Icon
-                      Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          gradient: LinearGradient(
-                            colors: [Colors.amber[100]!, Colors.amber[50]!],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                          ),
-                        ),
-                        child: Icon(
-                          Icons
-                              .emoji_events, // Placeholder if no valid icon mapping
-                          color: Colors.amber[700],
-                          size: 32,
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      Text(
-                        badge.name,
-                        textAlign: TextAlign.center,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: GoogleFonts.outfit(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 12,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        badge.conditionType == 'article_count'
-                            ? '创作达人'
-                            : '活跃互动',
-                        style: TextStyle(fontSize: 10, color: Colors.grey[500]),
-                      ),
-                    ],
-                  ),
+                    ),
+                  ],
                 );
               },
             ),

@@ -7,16 +7,30 @@ class PremiumBadgeWidget extends StatelessWidget {
   final BadgeModel badge;
   final double size;
   final bool showLabel;
+  final bool isLocked;
 
   const PremiumBadgeWidget({
     super.key,
     required this.badge,
     this.size = 120,
     this.showLabel = true,
+    this.isLocked = false,
   });
+
+  IconData _getIconData(String? iconUrl) {
+    if (iconUrl == null) return Icons.star;
+    if (iconUrl.contains('first_voice')) return Icons.mic;
+    if (iconUrl.contains('scribe')) return Icons.edit_note;
+    if (iconUrl.contains('resonator')) return Icons.forum;
+    if (iconUrl.contains('popularity')) return Icons.favorite;
+    if (iconUrl.contains('community')) return Icons.people;
+    return Icons.emoji_events;
+  }
 
   @override
   Widget build(BuildContext context) {
+    final iconData = _getIconData(badge.iconUrl);
+
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -26,45 +40,55 @@ class PremiumBadgeWidget extends StatelessWidget {
           child: Stack(
             alignment: Alignment.center,
             children: [
-              // Outer/Base Hexagon (Darker Gold for side/depth)
+              // Outer/Base Hexagon (Darker Silver for depth)
               Transform.translate(
                 offset: const Offset(0, 4), // Fake depth
                 child: ClipPath(
                   clipper: HexagonClipper(),
                   child: Container(
                     decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: [
-                          const Color(0xFFB8860B), // Dark GoldenRod
-                          const Color(0xFFDAA520), // GoldenRod
-                        ],
-                      ),
+                      gradient: isLocked
+                          ? const LinearGradient(
+                              colors: [Color(0xFFBDBDBD), Color(0xFFE0E0E0)],
+                            ) // Light Grey
+                          : const LinearGradient(
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                              colors: [
+                                Color(0xFFB8860B), // Dark GoldenRod
+                                Color(0xFFDAA520), // GoldenRod
+                              ],
+                            ),
                     ),
                   ),
                 ),
               ),
 
-              // Main Hexagon (Shiny Gold)
+              // Main Hexagon (Shiny Silver/Gold)
               ClipPath(
                 clipper: HexagonClipper(),
                 child: Container(
                   decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [
-                        const Color(0xFFFFD700), // Gold
-                        const Color(0xFFFDB931),
-                        const Color(0xFFFFD700),
-                        const Color(0xFFFDB931),
-                      ],
-                      stops: const [0.0, 0.4, 0.6, 1.0],
-                    ),
+                    gradient: isLocked
+                        ? const LinearGradient(
+                            colors: [Color(0xFFEEEEEE), Color(0xFFF5F5F5)],
+                          ) // Very Light Silver / White
+                        : const LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: [
+                              Color(0xFFFFD700), // Gold
+                              Color(0xFFFDB931),
+                              Color(0xFFFFD700),
+                              Color(0xFFFDB931),
+                            ],
+                            stops: [0.0, 0.4, 0.6, 1.0],
+                          ),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.3),
+                        color: Colors.black.withOpacity(
+                          0.15,
+                        ), // Softer shadow for locked
                         blurRadius: 10,
                         offset: const Offset(0, 5),
                       ),
@@ -74,30 +98,35 @@ class PremiumBadgeWidget extends StatelessWidget {
                     margin: const EdgeInsets.all(4), // Inner Border width
                     decoration: BoxDecoration(
                       // Inner face
-                      gradient: LinearGradient(
-                        begin: Alignment.bottomRight,
-                        end: Alignment.topLeft,
-                        colors: [
-                          const Color(0xFFFFE57C), // Lighter Gold
-                          const Color(0xFFDAA520),
-                        ],
-                      ),
+                      gradient: isLocked
+                          ? const LinearGradient(
+                              colors: [Color(0xFFFFFFFF), Color(0xFFEEEEEE)],
+                            )
+                          : const LinearGradient(
+                              begin: Alignment.bottomRight,
+                              end: Alignment.topLeft,
+                              colors: [
+                                Color(0xFFFFE57C), // Lighter Gold
+                                Color(0xFFDAA520),
+                              ],
+                            ),
                     ),
                     child: Stack(
                       children: [
                         // Shine effect
-                        Positioned(
-                          top: -size / 2,
-                          left: -size / 2,
-                          child: Container(
-                            width: size,
-                            height: size,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: Colors.white.withOpacity(0.2),
+                        if (!isLocked)
+                          Positioned(
+                            top: -size / 2,
+                            left: -size / 2,
+                            child: Container(
+                              width: size,
+                              height: size,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: Colors.white.withOpacity(0.2),
+                              ),
                             ),
                           ),
-                        ),
 
                         // Icon & Content
                         Center(
@@ -108,17 +137,22 @@ class PremiumBadgeWidget extends StatelessWidget {
                                 padding: EdgeInsets.all(size * 0.1),
                                 decoration: BoxDecoration(
                                   shape: BoxShape.circle,
-                                  color: Colors.white.withOpacity(0.2),
+                                  color: isLocked
+                                      ? Colors.grey.withOpacity(0.1)
+                                      : Colors.white.withOpacity(0.2),
                                   border: Border.all(
-                                    color: Colors.white.withOpacity(0.5),
+                                    color: isLocked
+                                        ? Colors.grey.withOpacity(0.3)
+                                        : Colors.white.withOpacity(0.5),
                                     width: 1,
                                   ),
                                 ),
                                 child: Icon(
-                                  Icons
-                                      .emoji_events, // TODO: Map icon_url to real icons
+                                  iconData,
                                   size: size * 0.35,
-                                  color: Colors.white,
+                                  color: isLocked
+                                      ? Colors.grey[400]
+                                      : Colors.white,
                                 ),
                               ),
                             ],
@@ -154,12 +188,7 @@ class HexagonClipper extends CustomClipper<Path> {
     final path = Path();
     final width = size.width;
     final height = size.height;
-    final r = width / 2;
-
-    // Flat Topped Hexagon? Or Pointy?
-    // Usually vertical hexagon (pointy top) looks better for badges.
     // Points: (w/2, 0), (w, h*0.25), (w, h*0.75), (w/2, h), (0, h*0.75), (0, h*0.25)
-
     path.moveTo(width / 2, 0);
     path.lineTo(width, height * 0.25);
     path.lineTo(width, height * 0.75);
@@ -167,7 +196,6 @@ class HexagonClipper extends CustomClipper<Path> {
     path.lineTo(0, height * 0.75);
     path.lineTo(0, height * 0.25);
     path.close();
-
     return path;
   }
 

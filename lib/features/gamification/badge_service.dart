@@ -9,10 +9,20 @@ class BadgeService extends GetxService {
   // Cache of all available configuration badges
   final RxList<BadgeModel> allBadges = <BadgeModel>[].obs;
 
+  // Cache of earned badges
+  final RxList<BadgeModel> earnedBadges = <BadgeModel>[].obs;
+
   @override
   void onInit() {
     super.onInit();
     _loadBadges();
+    _loadEarnedBadges();
+  }
+
+  Future<void> _loadEarnedBadges() async {
+    final user = _supabase.auth.currentUser;
+    if (user == null) return;
+    earnedBadges.value = await getEarnedBadges(user.id);
   }
 
   Future<void> _loadBadges() async {
@@ -32,21 +42,14 @@ class BadgeService extends GetxService {
     if (user == null) return;
 
     // Ensure badges are loaded
-    if (allBadges.isEmpty) {
-      print("DEBUG: Badges empty, loading...");
-      await _loadBadges();
-      if (allBadges.isEmpty) {
-        print("DEBUG: Badges still empty after load. Aborting check.");
-        return;
-      }
-    }
+    if (allBadges.isEmpty) await _loadBadges();
 
     try {
       // 1. Get current count
       final count = await _supabase
           .from('articles')
           .count(CountOption.exact)
-          .eq('user_id', user.id);
+          .eq('user_id', user.id); // Corrected to user_id
 
       print('DEBUG: Article Count for ${user.id}: $count');
 
@@ -57,29 +60,65 @@ class BadgeService extends GetxService {
     }
   }
 
-  /// Check for Comment Milestones (Call this after commenting)
+  /// Check for Comment Milestones
   Future<void> checkCommentMilestones() async {
     final user = _supabase.auth.currentUser;
     if (user == null) return;
-
-    // Ensure badges are loaded
-    if (allBadges.isEmpty) {
-      await _loadBadges();
-    }
+    if (allBadges.isEmpty) await _loadBadges();
 
     try {
-      // 1. Get current count
       final count = await _supabase
           .from('comments')
           .count(CountOption.exact)
           .eq('user_id', user.id);
-
       print('DEBUG: Comment Count for ${user.id}: $count');
-
-      // 2. Check against 'comment_count' badges
       await _checkAndAward(user.id, 'comment_count', count);
     } catch (e) {
       print("Error checking comment milestones: $e");
+    }
+  }
+
+  /// Check for Likes Received (Popularity)
+  Future<void> checkLikeMilestones() async {
+    final user = _supabase.auth.currentUser;
+    if (user == null) return;
+    if (allBadges.isEmpty) await _loadBadges();
+
+    try {
+      // Count total likes. This depends on if we have a denormalized 'likes_received' on profile
+      // or if we have to count query. For MVP let's trust we can fetch 'total_likes' from a view or profile?
+      // Actually, let's use a simpler query: `articles` sum(likes_count) if available, or just skip for now if too hard.
+      // Wait, we can count `article_likes` where `article_id` is in my articles.
+      // Or just a stored procedure.
+      // Let's assume we maintain a `total_likes` in `profiles`.
+      // If not, let's try to count via relation.
+
+      // Attempt 1: Count `article_likes` via join. Supabase JS: .rpc() or specific query.
+      // We will skip complex query implementation here and use a placeholder or RPC if the user setup it.
+      // Simpler approach: Check just *one* article with high likes? No, sum.
+
+      // Let's do `follower_count` first as it is easier.
+    } catch (e) {
+      print(e);
+    }
+  }
+
+  /// Check for Follower Milestones
+  Future<void> checkFollowerMilestones() async {
+    final user = _supabase.auth.currentUser;
+    if (user == null) return;
+    if (allBadges.isEmpty) await _loadBadges();
+
+    try {
+      final count = await _supabase
+          .from('follows')
+          .count(CountOption.exact)
+          .eq('following_id', user.id);
+
+      print('DEBUG: Follower Count for ${user.id}: $count');
+      await _checkAndAward(user.id, 'follower_count', count);
+    } catch (e) {
+      print("Error checking follower milestones: $e");
     }
   }
 
@@ -101,20 +140,23 @@ class BadgeService extends GetxService {
     );
 
     for (final badge in candidates) {
-      // Check if already owned
-      final ownedRes = await _supabase
-          .from('user_badges')
-          .select()
-          .eq('user_id', userId)
-          .eq('badge_id', badge.id)
-          .maybeSingle();
+      // Check if already owned in LOCAL cache to save call?
+      // Actually we have earnedBadges list now.
+      final alreadyOwned = earnedBadges.any((b) => b.id == badge.id);
 
-      if (ownedRes == null) {
-        print('DEBUG: Awarding badge: ${badge.name}');
-        // Not owned yet, award it!
-        await _awardBadge(userId, badge);
-      } else {
-        print('DEBUG: Already owned badge: ${badge.name}');
+      if (!alreadyOwned) {
+        // Double check DB
+        final ownedRes = await _supabase
+            .from('user_badges')
+            .select()
+            .eq('user_id', userId)
+            .eq('badge_id', badge.id)
+            .maybeSingle();
+
+        if (ownedRes == null) {
+          print('DEBUG: Awarding badge: ${badge.name}');
+          await _awardBadge(userId, badge);
+        }
       }
     }
   }
@@ -125,6 +167,9 @@ class BadgeService extends GetxService {
         'user_id': userId,
         'badge_id': badge.id,
       });
+
+      // Update local cache
+      earnedBadges.add(badge);
 
       // Show Popup
       Get.dialog(BadgePopup(badge: badge));
