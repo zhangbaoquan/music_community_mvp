@@ -26,9 +26,55 @@ class PremiumBadgeWidget extends StatelessWidget {
     return Icons.emoji_events;
   }
 
+  // Color Palette Model
+  List<Color> _getBadgeColors(String? iconUrl) {
+    if (iconUrl == null) return _goldPalette;
+    if (iconUrl.contains('first_voice'))
+      return _goldPalette; // Creation -> Gold
+    if (iconUrl.contains('scribe')) return _cyanPalette; // Writing -> Cyan
+    if (iconUrl.contains('resonator'))
+      return _purplePalette; // Social -> Purple
+    if (iconUrl.contains('popularity')) return _pinkPalette; // Likes -> Pink
+    if (iconUrl.contains('community')) return _bluePalette; // Fans -> Blue
+    return _goldPalette;
+  }
+
+  // Pale, Medium, Dark
+  static const _goldPalette = [
+    Color(0xFFFFE57C),
+    Color(0xFFFFD700),
+    Color(0xFFB8860B),
+  ];
+  static const _cyanPalette = [
+    Color(0xFF84FFFF),
+    Color(0xFF00E5FF),
+    Color(0xFF006064),
+  ];
+  static const _purplePalette = [
+    Color(0xFFEA80FC),
+    Color(0xFFD500F9),
+    Color(0xFF4A148C),
+  ];
+  static const _pinkPalette = [
+    Color(0xFFFF80AB),
+    Color(0xFFFF4081),
+    Color(0xFF880E4F),
+  ];
+  static const _bluePalette = [
+    Color(0xFF82B1FF),
+    Color(0xFF2979FF),
+    Color(0xFF0D47A1),
+  ];
+
   @override
   Widget build(BuildContext context) {
     final iconData = _getIconData(badge.iconUrl);
+    final palette = _getBadgeColors(badge.iconUrl);
+
+    // Unpack palette
+    final colorLight = palette[0];
+    final colorMedium = palette[1];
+    final colorDark = palette[2];
 
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -39,7 +85,7 @@ class PremiumBadgeWidget extends StatelessWidget {
           child: Stack(
             alignment: Alignment.center,
             children: [
-              // Outer/Base Hexagon (Darker Silver for depth)
+              // Outer/Base Hexagon (Darker shade for depth)
               Transform.translate(
                 offset: const Offset(0, 4), // Fake depth
                 child: ClipPath(
@@ -49,21 +95,18 @@ class PremiumBadgeWidget extends StatelessWidget {
                       gradient: isLocked
                           ? const LinearGradient(
                               colors: [Color(0xFFBDBDBD), Color(0xFFE0E0E0)],
-                            ) // Light Grey
-                          : const LinearGradient(
+                            )
+                          : LinearGradient(
                               begin: Alignment.topLeft,
                               end: Alignment.bottomRight,
-                              colors: [
-                                Color(0xFFB8860B), // Dark GoldenRod
-                                Color(0xFFDAA520), // GoldenRod
-                              ],
+                              colors: [colorDark, colorMedium],
                             ),
                     ),
                   ),
                 ),
               ),
 
-              // Main Hexagon (Shiny Silver/Gold)
+              // Main Hexagon (Shiny Face)
               ClipPath(
                 clipper: HexagonClipper(),
                 child: Container(
@@ -71,23 +114,21 @@ class PremiumBadgeWidget extends StatelessWidget {
                     gradient: isLocked
                         ? const LinearGradient(
                             colors: [Color(0xFFEEEEEE), Color(0xFFF5F5F5)],
-                          ) // Very Light Silver / White
-                        : const LinearGradient(
+                          )
+                        : LinearGradient(
                             begin: Alignment.topLeft,
                             end: Alignment.bottomRight,
                             colors: [
-                              Color(0xFFFFD700), // Gold
-                              Color(0xFFFDB931),
-                              Color(0xFFFFD700),
-                              Color(0xFFFDB931),
+                              colorMedium,
+                              colorLight,
+                              colorMedium,
+                              colorLight,
                             ],
-                            stops: [0.0, 0.4, 0.6, 1.0],
+                            stops: const [0.0, 0.4, 0.6, 1.0],
                           ),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(
-                          0.15,
-                        ), // Softer shadow for locked
+                        color: Colors.black.withOpacity(0.15),
                         blurRadius: 10,
                         offset: const Offset(0, 5),
                       ),
@@ -101,13 +142,10 @@ class PremiumBadgeWidget extends StatelessWidget {
                           ? const LinearGradient(
                               colors: [Color(0xFFFFFFFF), Color(0xFFEEEEEE)],
                             )
-                          : const LinearGradient(
+                          : LinearGradient(
                               begin: Alignment.bottomRight,
                               end: Alignment.topLeft,
-                              colors: [
-                                Color(0xFFFFE57C), // Lighter Gold
-                                Color(0xFFDAA520),
-                              ],
+                              colors: [colorLight, colorMedium],
                             ),
                     ),
                     child: Stack(

@@ -741,33 +741,43 @@ class ProfileView extends StatelessWidget {
             );
           }
 
-          return SizedBox(
-            height: 140, // Height for badge card
-            child: ListView.separated(
-              scrollDirection: Axis.horizontal,
-              itemCount: badges.length,
-              separatorBuilder: (_, __) => const SizedBox(width: 16),
-              itemBuilder: (context, index) {
-                final badge = badges[index];
-                return Column(
-                  children: [
-                    PremiumBadgeWidget(
-                      badge: badge,
-                      size: 80,
-                      showLabel: false,
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      badge.name,
-                      style: GoogleFonts.outfit(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: const Color(0xFF1A1A1A),
+          return Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.grey[50],
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: Colors.grey[100]!),
+            ),
+            child: SizedBox(
+              height: 110, // Adjusted height for badge card
+              child: ListView.separated(
+                scrollDirection: Axis.horizontal,
+                itemCount: badges.length,
+                separatorBuilder: (_, __) => const SizedBox(width: 24),
+                itemBuilder: (context, index) {
+                  final badge = badges[index];
+                  return Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      PremiumBadgeWidget(
+                        badge: badge,
+                        size: 70, // Slightly smaller to fit in card
+                        showLabel: false,
                       ),
-                    ),
-                  ],
-                );
-              },
+                      const SizedBox(height: 8),
+                      Text(
+                        badge.name,
+                        style: GoogleFonts.outfit(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: const Color(0xFF1A1A1A),
+                        ),
+                      ),
+                    ],
+                  );
+                },
+              ),
             ),
           );
         }),
