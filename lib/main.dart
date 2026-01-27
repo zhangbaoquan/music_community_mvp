@@ -26,6 +26,8 @@ class MusicCommunityApp extends StatelessWidget {
     return GetMaterialApp(
       title: '亲亲音乐',
       debugShowCheckedModeBanner: false,
+      defaultTransition: Transition.fadeIn, // Smooth fade transition
+      transitionDuration: const Duration(milliseconds: 300), // 300ms duration
       theme: ThemeData(
         useMaterial3: true,
         primaryColor: const Color(0xFF1A1A1A),
