@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:music_community_mvp/features/content/article_detail_view.dart';
+import 'package:music_community_mvp/features/content/user_articles_view.dart';
+import 'package:music_community_mvp/data/models/article.dart';
 import 'package:music_community_mvp/core/shim_google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../music/music_controller.dart';
@@ -254,255 +256,334 @@ class ProfileView extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              "我的文章",
-              style: GoogleFonts.outfit(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-                color: const Color(0xFF1A1A1A),
-              ),
-            ),
-            ElevatedButton.icon(
-              onPressed: () => Get.to(() => const ArticleEditorView()),
-              icon: const Icon(Icons.edit_note, size: 18),
-              label: const Text("写文章"),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.black87,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 20,
-                  vertical: 12,
-                ),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 24),
-
         Obx(() {
-          final articles = articleController.userArticles;
-          if (articles.isEmpty) {
-            return Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(40),
-              decoration: BoxDecoration(
-                color: Colors.grey[50],
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(
-                  color: Colors.grey[200]!,
-                  style: BorderStyle.solid,
-                ),
-              ),
-              child: Column(
+          final allArticles = articleController.userArticles;
+          // Sort by likes descending
+          final sortedArticles = List<Article>.from(allArticles)
+            ..sort((a, b) => b.likesCount.compareTo(a.likesCount));
+
+          // Take top 5
+          final displayArticles = sortedArticles.take(5).toList();
+          final totalCount = allArticles.length;
+
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Icon(
-                    Icons.article_outlined,
-                    size: 48,
-                    color: Colors.grey[400],
-                  ),
-                  const SizedBox(height: 16),
                   Text(
-                    "还没有发布过文章",
-                    style: TextStyle(color: Colors.grey[500], fontSize: 16),
+                    "我的文章 ($totalCount)",
+                    style: GoogleFonts.outfit(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      color: const Color(0xFF1A1A1A),
+                    ),
                   ),
-                  const SizedBox(height: 8),
-                  TextButton(
-                    onPressed: () => Get.to(() => const ArticleEditorView()),
-                    child: const Text("去写第一篇"),
+                  Row(
+                    children: [
+                      if (totalCount > 5)
+                        InkWell(
+                          onTap: () => Get.to(() => const UserArticlesView()),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 4,
+                            ),
+                            child: Row(
+                              children: [
+                                Text(
+                                  "查看全部",
+                                  style: GoogleFonts.outfit(
+                                    fontSize: 14,
+                                    color: Colors.grey,
+                                  ),
+                                ),
+                                const Icon(
+                                  Icons.chevron_right,
+                                  size: 16,
+                                  color: Colors.grey,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      const SizedBox(width: 8),
+                      ElevatedButton.icon(
+                        onPressed: () =>
+                            Get.to(() => const ArticleEditorView()),
+                        icon: const Icon(Icons.edit_note, size: 18),
+                        label: const Text("写文章"),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.black87,
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 20,
+                            vertical: 12,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
-            );
-          }
+              const SizedBox(height: 24),
 
-          return LayoutBuilder(
-            builder: (context, constraints) {
-              final isWide = constraints.maxWidth > 800;
-              return GridView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: isWide ? 2 : 1,
-                  crossAxisSpacing: 16,
-                  mainAxisSpacing: 16,
-                  mainAxisExtent: 130, // Much more compact height
-                ),
-                itemCount: articles.length,
-                itemBuilder: (context, index) {
-                  final article = articles[index];
-                  return Container(
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: Colors.grey[200]!),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.02),
-                          blurRadius: 8,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
+              if (displayArticles.isEmpty)
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(40),
+                  decoration: BoxDecoration(
+                    color: Colors.grey[50],
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: Colors.grey[200]!,
+                      style: BorderStyle.solid,
                     ),
-                    child: Material(
-                      color: Colors.transparent,
-                      borderRadius: BorderRadius.circular(12),
-                      clipBehavior: Clip.antiAlias,
-                      child: InkWell(
-                        onTap: () =>
-                            Get.to(() => ArticleDetailView(article: article)),
-                        child: Padding(
-                          padding: const EdgeInsets.all(16),
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: [
-                              // Cover Image
-                              Container(
-                                width: 90,
-                                height: 90,
-                                margin: const EdgeInsets.only(right: 16),
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(8),
-                                  color: Colors.grey[100],
-                                  image: article.coverUrl != null
-                                      ? DecorationImage(
-                                          image: NetworkImage(
-                                            article.coverUrl!,
-                                          ),
-                                          fit: BoxFit.cover,
-                                        )
-                                      : null,
-                                ),
-                                child: article.coverUrl == null
-                                    ? Icon(
-                                        Icons.article,
-                                        color: Colors.grey[300],
-                                        size: 32,
-                                      )
-                                    : null,
+                  ),
+                  child: Column(
+                    children: [
+                      Icon(
+                        Icons.article_outlined,
+                        size: 48,
+                        color: Colors.grey[400],
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        "还没有发布过文章",
+                        style: TextStyle(color: Colors.grey[500], fontSize: 16),
+                      ),
+                      const SizedBox(height: 8),
+                      TextButton(
+                        onPressed: () =>
+                            Get.to(() => const ArticleEditorView()),
+                        child: const Text("去写第一篇"),
+                      ),
+                    ],
+                  ),
+                )
+              else
+                LayoutBuilder(
+                  builder: (context, constraints) {
+                    final isWide = constraints.maxWidth > 800;
+                    return GridView.builder(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: isWide ? 2 : 1,
+                        crossAxisSpacing: 16,
+                        mainAxisSpacing: 16,
+                        mainAxisExtent:
+                            140, // Slightly taller for interaction stats
+                      ),
+                      itemCount: displayArticles.length,
+                      itemBuilder: (context, index) {
+                        final article = displayArticles[index];
+                        return Container(
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: Colors.grey[200]!),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.02),
+                                blurRadius: 8,
+                                offset: const Offset(0, 2),
                               ),
-
-                              // Content Column
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  mainAxisAlignment: MainAxisAlignment.center,
+                            ],
+                          ),
+                          child: Material(
+                            color: Colors.transparent,
+                            borderRadius: BorderRadius.circular(12),
+                            clipBehavior: Clip.antiAlias,
+                            child: InkWell(
+                              onTap: () => Get.to(
+                                () => ArticleDetailView(article: article),
+                              ),
+                              child: Padding(
+                                padding: const EdgeInsets.all(16),
+                                child: Row(
                                   children: [
-                                    // Title & Summary Group
-                                    Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        Text(
-                                          article.title,
-                                          maxLines: 1,
-                                          overflow: TextOverflow.ellipsis,
-                                          style: const TextStyle(
-                                            fontSize: 16,
-                                            fontWeight: FontWeight.bold,
-                                            color: Color(0xFF1A1A1A),
-                                          ),
-                                        ),
-                                        if (article.summary != null &&
-                                            article.summary!.isNotEmpty) ...[
-                                          const SizedBox(height: 4),
-                                          Text(
-                                            article.summary!,
-                                            maxLines: 1,
-                                            overflow: TextOverflow.ellipsis,
-                                            style: TextStyle(
-                                              color: Colors.grey[500],
-                                              fontSize: 13,
-                                            ),
-                                          ),
-                                        ],
-                                      ],
+                                    // Cover Image
+                                    Container(
+                                      width: 90,
+                                      height: 90,
+                                      margin: const EdgeInsets.only(right: 16),
+                                      decoration: BoxDecoration(
+                                        borderRadius: BorderRadius.circular(8),
+                                        color: Colors.grey[100],
+                                        image: article.coverUrl != null
+                                            ? DecorationImage(
+                                                image: NetworkImage(
+                                                  article.coverUrl!,
+                                                ),
+                                                fit: BoxFit.cover,
+                                              )
+                                            : null,
+                                      ),
+                                      child: article.coverUrl == null
+                                          ? Icon(
+                                              Icons.article,
+                                              color: Colors.grey[300],
+                                              size: 32,
+                                            )
+                                          : null,
                                     ),
 
-                                    const Spacer(), // Push metadata to bottom
-                                    // Bottom Row: Date + Actions
-                                    Row(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.center,
-                                      children: [
-                                        Text(
-                                          article.createdAt
-                                              .toString()
-                                              .split(' ')
-                                              .first,
-                                          style: TextStyle(
-                                            color: Colors.grey[400],
-                                            fontSize: 12,
-                                          ),
-                                        ),
-                                        const Spacer(),
-                                        // Compact Actions
-                                        _CompactActionButton(
-                                          icon: Icons.edit,
-                                          tooltip: "编辑",
-                                          onTap: () => Get.to(
-                                            () => ArticleEditorView(
-                                              article: article,
+                                    // Content Column
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        children: [
+                                          Text(
+                                            article.title,
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: const TextStyle(
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.bold,
+                                              color: Color(0xFF1A1A1A),
                                             ),
                                           ),
-                                        ),
-                                        const SizedBox(width: 8),
-                                        _CompactActionButton(
-                                          icon: Icons.delete_outline,
-                                          tooltip: "删除",
-                                          color: Colors.red[300],
-                                          onTap: () {
-                                            Get.defaultDialog(
-                                              title: "确认删除",
-                                              titlePadding:
-                                                  const EdgeInsets.only(
-                                                    top: 24,
+                                          if (article.summary != null &&
+                                              article.summary!.isNotEmpty) ...[
+                                            const SizedBox(height: 4),
+                                            Text(
+                                              article.summary!,
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                              style: TextStyle(
+                                                color: Colors.grey[500],
+                                                fontSize: 13,
+                                              ),
+                                            ),
+                                          ],
+
+                                          const Spacer(),
+
+                                          // Bottom Row: Likes/Comments + Date + Actions
+                                          Row(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.center,
+                                            children: [
+                                              // Interaction Stats
+                                              Icon(
+                                                Icons.thumb_up_alt_outlined,
+                                                size: 14,
+                                                color: Colors.grey[400],
+                                              ),
+                                              const SizedBox(width: 4),
+                                              Text(
+                                                "${article.likesCount}",
+                                                style: TextStyle(
+                                                  color: Colors.grey[400],
+                                                  fontSize: 12,
+                                                ),
+                                              ),
+                                              const SizedBox(width: 12),
+                                              Icon(
+                                                Icons.comment_outlined,
+                                                size: 14,
+                                                color: Colors.grey[400],
+                                              ),
+                                              const SizedBox(width: 4),
+                                              Text(
+                                                "${article.commentsCount}",
+                                                style: TextStyle(
+                                                  color: Colors.grey[400],
+                                                  fontSize: 12,
+                                                ),
+                                              ),
+
+                                              const Spacer(),
+
+                                              // Date
+                                              Text(
+                                                article.createdAt
+                                                    .toString()
+                                                    .split(' ')
+                                                    .first,
+                                                style: TextStyle(
+                                                  color: Colors.grey[400],
+                                                  fontSize: 12,
+                                                ),
+                                              ),
+
+                                              const SizedBox(width: 8),
+
+                                              // Actions
+                                              _CompactActionButton(
+                                                icon: Icons.edit,
+                                                tooltip: "编辑",
+                                                onTap: () => Get.to(
+                                                  () => ArticleEditorView(
+                                                    article: article,
                                                   ),
-                                              contentPadding:
-                                                  const EdgeInsets.all(24),
-                                              middleText: "确定要删除这篇文章吗？操作不可恢复。",
-                                              textConfirm: "删除",
-                                              textCancel: "取消",
-                                              confirmTextColor: Colors.white,
-                                              buttonColor: Colors.red,
-                                              onConfirm: () async {
-                                                final success =
-                                                    await articleController
-                                                        .deleteArticle(
-                                                          article.id,
+                                                ),
+                                              ),
+                                              const SizedBox(width: 4),
+                                              _CompactActionButton(
+                                                icon: Icons.delete_outline,
+                                                tooltip: "删除",
+                                                color: Colors.red[300],
+                                                onTap: () {
+                                                  Get.defaultDialog(
+                                                    title: "确认删除",
+                                                    titlePadding:
+                                                        const EdgeInsets.only(
+                                                          top: 24,
+                                                        ),
+                                                    contentPadding:
+                                                        const EdgeInsets.all(
+                                                          24,
+                                                        ),
+                                                    middleText:
+                                                        "确定要删除这篇文章吗？操作不可恢复。",
+                                                    textConfirm: "删除",
+                                                    textCancel: "取消",
+                                                    confirmTextColor:
+                                                        Colors.white,
+                                                    buttonColor: Colors.red,
+                                                    onConfirm: () async {
+                                                      final success =
+                                                          await articleController
+                                                              .deleteArticle(
+                                                                article.id,
+                                                              );
+                                                      if (success) {
+                                                        Get.back();
+                                                        Get.snackbar(
+                                                          "删除成功",
+                                                          "文章已删除",
+                                                          maxWidth: 400,
                                                         );
-                                                if (success) {
-                                                  Get.back();
-                                                  Get.snackbar(
-                                                    "删除成功",
-                                                    "文章已删除",
-                                                    maxWidth: 400,
+                                                      }
+                                                    },
                                                   );
-                                                }
-                                              },
-                                            );
-                                          },
-                                        ),
-                                      ],
+                                                },
+                                              ),
+                                            ],
+                                          ),
+                                        ],
+                                      ),
                                     ),
                                   ],
                                 ),
                               ),
-                            ],
+                            ),
                           ),
-                        ),
-                      ),
-                    ),
-                  );
-                },
-              );
-            },
+                        );
+                      },
+                    );
+                  },
+                ),
+            ],
           );
         }),
       ],
