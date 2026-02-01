@@ -69,9 +69,31 @@ class NotificationService extends GetxService {
           .limit(50);
 
       final List<dynamic> data = response;
-      notifications.value = data
+      final rawNotifications = data
           .map((e) => NotificationModel.fromMap(e))
           .toList();
+
+      // Client-side De-duplication Logic
+      final uniqueNotifications = <NotificationModel>[];
+      final seenKeys = <String>{};
+
+      for (var n in rawNotifications) {
+        String key;
+        if (n.type == 'follow') {
+          // For 'follow', only keep the latest one per user
+          key = 'follow_${n.actorId}';
+        } else {
+          // For others, duplicate if same actor, type, resource, and content
+          key = '${n.type}_${n.actorId}_${n.resourceId}_${n.content}';
+        }
+
+        if (!seenKeys.contains(key)) {
+          seenKeys.add(key);
+          uniqueNotifications.add(n);
+        }
+      }
+
+      notifications.value = uniqueNotifications;
 
       // Update unread count
       unreadCount.value = notifications.where((n) => !n.isRead).length;
