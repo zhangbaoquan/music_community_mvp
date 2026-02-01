@@ -42,6 +42,10 @@ class MainLayout extends StatelessWidget {
     const ProfileView(),
     // Tab 3: Notifications
     const NotificationView(),
+    // Tab 4: Search
+    const SearchView(),
+    // Tab 5: Messages
+    const ChatListView(),
   ];
 
   @override
@@ -80,13 +84,13 @@ class MainLayout extends StatelessWidget {
                   actions: [
                     IconButton(
                       icon: const Icon(Icons.search),
-                      onPressed: () => Get.to(() => const SearchView()),
+                      onPressed: () => navCtrl.changePage(4),
                     ),
                     Stack(
                       children: [
                         IconButton(
                           icon: const Icon(Icons.mail_outline),
-                          onPressed: () => Get.to(() => const ChatListView()),
+                          onPressed: () => navCtrl.changePage(5),
                         ),
                         Obx(() {
                           final msgCtrl = Get.put(MessageController());
@@ -173,20 +177,14 @@ class MainLayout extends StatelessWidget {
           ),
           _navItem(icon: Icons.radio_button_checked, label: '心情驿站', index: 0),
           _navItem(icon: Icons.book, label: '心事角落', index: 1),
-          _navItem(
-            icon: Icons.search,
-            label: '搜索发现',
-            index: 90,
-            onTap: () => Get.to(() => const SearchView()),
-          ),
+          _navItem(icon: Icons.search, label: '搜索发现', index: 4),
           Obx(() {
             final msgCtrl = Get.put(MessageController());
             final count = msgCtrl.unreadCount.value;
             return _navItem(
               icon: Icons.mail_outline,
               label: count > 0 ? '消息 ($count)' : '消息中心',
-              index: 91,
-              onTap: () => Get.to(() => const ChatListView()),
+              index: 5,
             );
           }),
           _navItem(icon: Icons.person, label: '个人中心', index: 2),
