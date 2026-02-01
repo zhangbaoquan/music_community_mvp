@@ -21,8 +21,23 @@ class AuthController extends GetxController {
       currentUser.value = session?.user;
 
       if (session != null) {
-        // Logged in -> Go Main Layout
-        Get.offAllNamed('/home');
+        // Logged in
+        // Check current route to see if it's a deep link we should preserve
+        final currentRoute = Get.currentRoute;
+        print('Auth State Change: Logged In. Current Route: $currentRoute');
+
+        if (currentRoute == '/' ||
+            currentRoute == '/login' ||
+            currentRoute.isEmpty) {
+          // Default to home
+          Get.offAllNamed('/home');
+        } else {
+          // Deep link detected (e.g. /chat/...), preserve it!
+          // We must use offAllNamed to remove the AppStartupScreen
+          // Be careful with parameters, GetX usually handles them if we pass the full string
+          // Note: Get.currentRoute includes query params? Yes.
+          Get.offAllNamed(currentRoute);
+        }
       } else {
         // Logged out -> Go Login
         Get.offAllNamed('/login');

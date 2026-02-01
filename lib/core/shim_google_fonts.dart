@@ -25,6 +25,7 @@ class GoogleFonts {
     return TextStyle(
       fontFamily: '-apple-system',
       fontFamilyFallback: const [
+        'Noto Sans SC',
         'PingFang SC',
         'Heiti SC',
         'Microsoft YaHei',
