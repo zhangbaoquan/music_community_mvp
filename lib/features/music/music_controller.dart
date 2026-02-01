@@ -155,4 +155,22 @@ class MusicController extends GetxController {
       isUploading.value = false;
     }
   }
+
+  Future<bool> deleteSong(String songId) async {
+    try {
+      // 1. Delete from DB (RLS will handle permission check)
+      await _supabase.from('songs').delete().eq('id', songId);
+
+      // 2. Refresh lists
+      rxSongs.removeWhere((s) => s.id == songId); // Optimistic update
+      rxUserSongs.removeWhere((s) => s.id == songId);
+
+      Get.snackbar('Success', 'Song deleted successfully');
+      return true;
+    } catch (e) {
+      print('Delete error: $e');
+      Get.snackbar('Error', 'Failed to delete song: $e');
+      return false;
+    }
+  }
 }

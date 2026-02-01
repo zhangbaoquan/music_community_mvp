@@ -8,6 +8,11 @@ import 'features/auth/auth_controller.dart';
 
 import 'package:timeago/timeago.dart' as timeago; // Import timeago
 
+import 'features/layout/main_layout.dart';
+import 'features/auth/login_view.dart';
+import 'features/admin/admin_layout.dart';
+import 'features/admin/admin_guard.dart';
+
 void main() {
   // Ensure binding, but DO NOT await async calls that Block startup
   WidgetsFlutterBinding.ensureInitialized();
@@ -44,7 +49,16 @@ class MusicCommunityApp extends StatelessWidget {
       ],
       supportedLocales: const [Locale('en', 'US'), Locale('zh', 'CN')],
       // Start with a dedicated Splash/Loading logic
-      home: const AppStartupScreen(),
+      home: AppStartupScreen(),
+      getPages: [
+        GetPage(name: '/home', page: () => MainLayout()),
+        GetPage(name: '/login', page: () => const LoginView()),
+        GetPage(
+          name: '/admin',
+          page: () => const AdminLayout(),
+          middlewares: [AdminGuard()],
+        ),
+      ],
     );
   }
 }

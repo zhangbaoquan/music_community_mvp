@@ -10,9 +10,9 @@ import '../player/player_controller.dart';
 import '../diary/diary_view.dart';
 import '../profile/profile_view.dart';
 import '../auth/auth_controller.dart';
-
 import '../notifications/notification_service.dart';
 import '../notifications/notification_view.dart';
+import '../profile/profile_controller.dart';
 
 class NavigationController extends GetxController {
   final RxInt selectedIndex = 0.obs;
@@ -28,20 +28,18 @@ class MainLayout extends StatelessWidget {
   final NavigationController navCtrl = Get.put(NavigationController());
   final AuthController authCtrl = Get.find();
   final PlayerController playerCtrl = Get.put(PlayerController());
+  final ProfileController profileCtrl = Get.put(ProfileController());
   final NotificationService notificationService = Get.put(
     NotificationService(),
   );
 
   final List<Widget> _pages = [
-    // Tab 0: Home (Moods + Articles)
+    // Tab 0: Home
     HomeView(),
-
-    // Tab 1: Mental Corner (Diary)
+    // Tab 1: Diary
     const DiaryView(),
-
     // Tab 2: Profile
     const ProfileView(),
-
     // Tab 3: Notifications
     const NotificationView(),
   ];
@@ -118,28 +116,22 @@ class MainLayout extends StatelessWidget {
               : null,
           drawer: isMobile
               ? Drawer(child: _buildSideNav(isDrawer: true))
-              : null, // Optional drawer for mobile
+              : null,
           body: Column(
             children: [
               Expanded(
                 child: Row(
                   children: [
-                    // Side Navigation (Desktop only)
                     if (!isMobile) _buildSideNav(),
-
-                    // Page Content
                     Expanded(
                       child: Obx(() => _pages[navCtrl.selectedIndex.value]),
                     ),
                   ],
                 ),
               ),
-
-              // Persistent Player Bar
               _buildPlayerBar(),
             ],
           ),
-          // Bottom Navigation (Mobile only)
           bottomNavigationBar: isMobile ? _buildBottomNav() : null,
         );
       },
@@ -154,7 +146,6 @@ class MainLayout extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Logo Area
           Padding(
             padding: const EdgeInsets.only(left: 12, bottom: 40),
             child: Row(
@@ -176,19 +167,16 @@ class MainLayout extends StatelessWidget {
                     color: const Color(0xFF1A1A1A),
                   ),
                 ),
-                if (isDrawer) const Spacer(), // Close button for drawer?
+                if (isDrawer) const Spacer(),
               ],
             ),
           ),
-
-          // Navigation Items
           _navItem(icon: Icons.radio_button_checked, label: '心情驿站', index: 0),
           _navItem(icon: Icons.book, label: '心事角落', index: 1),
-          // Search Entry
           _navItem(
             icon: Icons.search,
             label: '搜索发现',
-            index: 90, // Special index
+            index: 90,
             onTap: () => Get.to(() => const SearchView()),
           ),
           Obx(() {
@@ -202,8 +190,6 @@ class MainLayout extends StatelessWidget {
             );
           }),
           _navItem(icon: Icons.person, label: '个人中心', index: 2),
-
-          // Notification Item with Badge
           Obx(() {
             final unread = notificationService.unreadCount.value;
             return Stack(
@@ -229,10 +215,21 @@ class MainLayout extends StatelessWidget {
               ],
             );
           }),
-
           const Spacer(),
-
-          // Sign Out
+          Obx(() {
+            if (profileCtrl.isAdmin.value) {
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 8.0),
+                child: _navItem(
+                  icon: Icons.admin_panel_settings,
+                  label: '后台管理',
+                  index: 88,
+                  onTap: () => Get.toNamed('/admin'),
+                ),
+              );
+            }
+            return const SizedBox.shrink();
+          }),
           _navItem(
             icon: Icons.logout,
             label: '退出登录',
@@ -343,7 +340,6 @@ class MainLayout extends StatelessWidget {
             ),
           ],
         ),
-        // Using the new compact PlayerBar widget here
         child: const PlayerBar(),
       );
     });

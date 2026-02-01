@@ -11,6 +11,7 @@ class ProfileController extends GetxController {
   final username = ''.obs;
   final avatarUrl = ''.obs;
   final signature = ''.obs;
+  final isAdmin = false.obs; // NEW: Admin status
   final diaryCount = 0.obs;
 
   // Social Stats
@@ -38,13 +39,17 @@ class ProfileController extends GetxController {
         // Fetch Profile Data
         final response = await _supabase
             .from('profiles')
-            .select('username, avatar_url, signature')
+            .select(
+              'username, avatar_url, signature, is_admin',
+            ) // Updated selection
             .eq('id', user.id)
             .single();
 
         username.value = response['username'] as String? ?? '';
         avatarUrl.value = response['avatar_url'] as String? ?? '';
         signature.value = response['signature'] as String? ?? '';
+        isAdmin.value =
+            response['is_admin'] as bool? ?? false; // Update isAdmin
 
         // Fetch Diaries Count
         final statsResponse = await _supabase
