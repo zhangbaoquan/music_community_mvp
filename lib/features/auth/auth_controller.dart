@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'login_view.dart';
-import '../layout/main_layout.dart'; // import for MainLayout
 
 class AuthController extends GetxController {
   final _supabase = Supabase.instance.client;
@@ -24,11 +22,10 @@ class AuthController extends GetxController {
 
       if (session != null) {
         // Logged in -> Go Main Layout
-        // Since we are not using named routes yet, we just replace the view
-        Get.offAll(() => MainLayout());
+        Get.offAllNamed('/home');
       } else {
         // Logged out -> Go Login
-        Get.offAll(() => const LoginView());
+        Get.offAllNamed('/login');
       }
     });
   }
