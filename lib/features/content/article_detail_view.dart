@@ -14,8 +14,13 @@ import 'package:timeago/timeago.dart' as timeago;
 
 class ArticleDetailView extends StatefulWidget {
   final Article article;
+  final bool autoOpenComments;
 
-  const ArticleDetailView({super.key, required this.article});
+  const ArticleDetailView({
+    super.key,
+    required this.article,
+    this.autoOpenComments = false,
+  });
 
   @override
   State<ArticleDetailView> createState() => _ArticleDetailViewState();
@@ -47,6 +52,10 @@ class _ArticleDetailViewState extends State<ArticleDetailView> {
     } catch (e) {
       _quillController = QuillController.basic();
     }
+    // Ensure ArticleController exists
+    if (!Get.isRegistered<ArticleController>()) {
+      Get.put(ArticleController());
+    }
     // Fetch comments
     Get.find<ArticleController>().fetchComments(widget.article.id);
 
@@ -54,7 +63,18 @@ class _ArticleDetailViewState extends State<ArticleDetailView> {
     _checkFollowStatus();
 
     // Setup BGM
+    // Ensure PlayerController exists
+    if (!Get.isRegistered<PlayerController>()) {
+      Get.put(PlayerController());
+    }
     _playBgm();
+
+    // Auto-open comments if requested
+    if (widget.autoOpenComments) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _scaffoldKey.currentState?.openEndDrawer();
+      });
+    }
   }
 
   void _playBgm() {

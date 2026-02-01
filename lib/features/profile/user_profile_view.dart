@@ -49,21 +49,31 @@ class _UserProfileViewState extends State<UserProfileView> {
   }
 
   Future<void> _loadProfile() async {
-    final data = await _profileCtrl.getPublicProfile(widget.userId);
-    // Fetch content using the TAGGED controllers
-    _musicCtrl.fetchUserSongs(widget.userId);
-    _articleCtrl.fetchUserArticles(widget.userId);
+    try {
+      final data = await _profileCtrl.getPublicProfile(widget.userId);
+      // Fetch content using the TAGGED controllers
+      _musicCtrl.fetchUserSongs(widget.userId);
+      _articleCtrl.fetchUserArticles(widget.userId);
 
-    // Record Visit (Phase 6.4)
-    if (!_isMe) {
-      _profileCtrl.recordVisit(widget.userId);
-    }
+      // Record Visit (Phase 6.4)
+      if (!_isMe) {
+        _profileCtrl.recordVisit(widget.userId);
+      }
 
-    if (mounted) {
-      setState(() {
-        _profileData = data;
-        _isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _profileData = data;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      print("Error loading profile: $e");
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+          // _profileData remains null, triggers "User doesn't exist" or error UI
+        });
+      }
     }
   }
 

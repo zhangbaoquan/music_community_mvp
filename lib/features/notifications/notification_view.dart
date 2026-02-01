@@ -123,7 +123,13 @@ class _NotificationItemState extends State<_NotificationItem> {
 
   void _handleTap() async {
     // Mark Read
-    Get.find<NotificationService>().markAsRead(widget.notification.id);
+    try {
+      if (Get.isRegistered<NotificationService>()) {
+        Get.find<NotificationService>().markAsRead(widget.notification.id);
+      }
+    } catch (e) {
+      print("NotificationService error: $e");
+    }
 
     // Navigation
     if (widget.notification.type == 'follow') {
@@ -134,27 +140,46 @@ class _NotificationItemState extends State<_NotificationItem> {
     if (widget.notification.resourceId != null &&
         (widget.notification.type == 'like_article' ||
             widget.notification.type == 'comment_article')) {
-      // Must fetch article details quickly or pass minimal data
       Get.dialog(
         const Center(child: CircularProgressIndicator()),
         barrierDismissible: false,
       );
+
       try {
         final articleRes = await Supabase.instance.client
             .from('articles')
             .select('*, profiles(username, avatar_url)')
             .eq('id', widget.notification.resourceId!)
-            .single();
+            .maybeSingle(); // Use maybeSingle to avoid exception on deleted items
 
-        Get.back(); // close loading
+        // Close loading dialog if open
+        if (Get.isDialogOpen ?? false) {
+          Get.back();
+        }
 
         if (articleRes != null) {
           final article = Article.fromMap(articleRes);
-          Get.to(() => ArticleDetailView(article: article));
+          // Auto-open comments if it's a comment or like_comment notification
+          // Assuming 'comment_article' or 'like_comment'
+          final isCommentAction =
+              widget.notification.type == 'comment_article' ||
+              widget.notification.type == 'like_comment';
+
+          Get.to(
+            () => ArticleDetailView(
+              article: article,
+              autoOpenComments: isCommentAction,
+            ),
+          );
+        } else {
+          Get.snackbar('提示', '该内容可能已被删除');
         }
       } catch (e) {
-        Get.back();
-        Get.snackbar('Error', 'Unable to load content');
+        print("Error fetching article: $e");
+        if (Get.isDialogOpen ?? false) {
+          Get.back();
+        }
+        Get.snackbar('错误', '无法加载内容');
       }
     }
   }
