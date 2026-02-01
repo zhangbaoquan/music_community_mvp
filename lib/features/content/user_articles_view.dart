@@ -106,7 +106,8 @@ class UserArticlesView extends GetView<ArticleController> {
         borderRadius: BorderRadius.circular(12),
         clipBehavior: Clip.antiAlias,
         child: InkWell(
-          onTap: () => Get.to(() => ArticleDetailView(article: article)),
+          onTap: () =>
+              Get.toNamed('/article/${article.id}', arguments: article),
           child: Padding(
             padding: const EdgeInsets.all(16),
             child: Row(

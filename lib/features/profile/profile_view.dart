@@ -1,22 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:music_community_mvp/features/content/article_detail_view.dart';
-import 'package:music_community_mvp/features/content/user_articles_view.dart';
 import 'package:music_community_mvp/data/models/article.dart';
 import 'package:music_community_mvp/core/shim_google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../music/music_controller.dart';
-import '../music/upload_music_view.dart';
 import '../player/player_controller.dart';
 import 'profile_controller.dart';
 import 'edit_profile_dialog.dart';
 import '../content/article_controller.dart';
-import '../content/article_editor_view.dart';
-import 'follow_list_view.dart';
-import 'visitor_list_view.dart';
-import '../gamification/badge_detail_view.dart';
-import '../gamification/badge_service.dart';
 import '../gamification/premium_badge_widget.dart';
+import '../gamification/badge_service.dart';
 
 class ProfileView extends StatelessWidget {
   const ProfileView({super.key});
@@ -181,14 +174,8 @@ class ProfileView extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: [
                     InkWell(
-                      onTap: () => Get.to(
-                        () => FollowListView(
-                          userId: controller.userEmail.value.isNotEmpty
-                              ? Supabase.instance.client.auth.currentUser!.id
-                              : '', // Better way to get ID
-                          title: "我的关注",
-                          type: "following",
-                        ),
+                      onTap: () => Get.toNamed(
+                        '/follows/${Supabase.instance.client.auth.currentUser!.id}/following',
                       ),
                       child: _buildStatItem(
                         "关注",
@@ -196,12 +183,8 @@ class ProfileView extends StatelessWidget {
                       ),
                     ),
                     InkWell(
-                      onTap: () => Get.to(
-                        () => FollowListView(
-                          userId: Supabase.instance.client.auth.currentUser!.id,
-                          title: "我的粉丝",
-                          type: "followers",
-                        ),
+                      onTap: () => Get.toNamed(
+                        '/follows/${Supabase.instance.client.auth.currentUser!.id}/followers',
                       ),
                       child: _buildStatItem(
                         "粉丝",
@@ -209,7 +192,7 @@ class ProfileView extends StatelessWidget {
                       ),
                     ),
                     InkWell(
-                      onTap: () => Get.to(() => const VisitorListView()),
+                      onTap: () => Get.toNamed('/visitors'),
                       child: _buildStatItem(
                         "访客",
                         "${controller.visitorsCount.value}",
@@ -284,7 +267,7 @@ class ProfileView extends StatelessWidget {
                     children: [
                       if (totalCount > 5)
                         InkWell(
-                          onTap: () => Get.to(() => const UserArticlesView()),
+                          onTap: () => Get.toNamed('/user_articles'),
                           child: Padding(
                             padding: const EdgeInsets.symmetric(
                               horizontal: 8,
@@ -310,8 +293,7 @@ class ProfileView extends StatelessWidget {
                         ),
                       const SizedBox(width: 8),
                       ElevatedButton.icon(
-                        onPressed: () =>
-                            Get.to(() => const ArticleEditorView()),
+                        onPressed: () => Get.toNamed('/editor'),
                         icon: const Icon(Icons.edit_note, size: 18),
                         label: const Text("写文章"),
                         style: ElevatedButton.styleFrom(
@@ -358,8 +340,7 @@ class ProfileView extends StatelessWidget {
                       ),
                       const SizedBox(height: 8),
                       TextButton(
-                        onPressed: () =>
-                            Get.to(() => const ArticleEditorView()),
+                        onPressed: () => Get.toNamed('/editor'),
                         child: const Text("去写第一篇"),
                       ),
                     ],
@@ -400,8 +381,9 @@ class ProfileView extends StatelessWidget {
                             borderRadius: BorderRadius.circular(12),
                             clipBehavior: Clip.antiAlias,
                             child: InkWell(
-                              onTap: () => Get.to(
-                                () => ArticleDetailView(article: article),
+                              onTap: () => Get.toNamed(
+                                '/article/${article.id}',
+                                arguments: article,
                               ),
                               child: Padding(
                                 padding: const EdgeInsets.all(16),
@@ -521,10 +503,9 @@ class ProfileView extends StatelessWidget {
                                               _CompactActionButton(
                                                 icon: Icons.edit,
                                                 tooltip: "编辑",
-                                                onTap: () => Get.to(
-                                                  () => ArticleEditorView(
-                                                    article: article,
-                                                  ),
+                                                onTap: () => Get.toNamed(
+                                                  '/editor',
+                                                  arguments: article,
                                                 ),
                                               ),
                                               const SizedBox(width: 4),
@@ -614,7 +595,7 @@ class ProfileView extends StatelessWidget {
               ),
             ),
             ElevatedButton.icon(
-              onPressed: () => Get.to(() => const UploadMusicView()),
+              onPressed: () => Get.toNamed('/upload_music'),
               icon: const Icon(Icons.upload_file, size: 18),
               label: const Text("上传乐曲"),
               style: ElevatedButton.styleFrom(
@@ -664,7 +645,7 @@ class ProfileView extends StatelessWidget {
                   ),
                   const SizedBox(height: 8),
                   TextButton(
-                    onPressed: () => Get.to(() => const UploadMusicView()),
+                    onPressed: () => Get.toNamed('/upload_music'),
                     child: const Text("去发布第一首"),
                   ),
                 ],
@@ -846,7 +827,7 @@ class ProfileView extends StatelessWidget {
               ),
             ),
             InkWell(
-              onTap: () => Get.to(() => const BadgeDetailView()),
+              onTap: () => Get.toNamed('/badges'),
               child: Row(
                 children: [
                   Text(

@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:music_community_mvp/core/shim_google_fonts.dart';
 import 'package:music_community_mvp/features/profile/profile_controller.dart';
-import 'package:music_community_mvp/features/profile/user_profile_view.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class FollowListView extends StatefulWidget {
@@ -93,7 +92,7 @@ class _FollowListViewState extends State<FollowListView> {
                       // Navigate to my own profile (tab switch) or just back
                       Get.back(); // Simplest for now
                     } else {
-                      Get.to(() => UserProfileView(userId: user['user_id']));
+                      Get.toNamed('/profile/${user['user_id']}');
                     }
                   },
                   child: Row(

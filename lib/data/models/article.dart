@@ -36,6 +36,10 @@ class Article {
     this.isCollected = false,
   });
 
+  factory Article.empty() {
+    return Article(id: '', userId: '', title: '', createdAt: DateTime.now());
+  }
+
   factory Article.fromMap(Map<String, dynamic> map) {
     return Article(
       id: map['id'] as String,

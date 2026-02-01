@@ -1,14 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:music_community_mvp/core/shim_google_fonts.dart';
-import 'package:music_community_mvp/features/music/music_controller.dart';
-import 'package:music_community_mvp/features/player/player_controller.dart';
-import 'package:music_community_mvp/features/profile/profile_controller.dart';
 import 'package:music_community_mvp/features/content/article_controller.dart';
-import 'package:music_community_mvp/features/content/article_detail_view.dart';
-import 'package:music_community_mvp/features/messages/chat_detail_view.dart';
+import 'package:music_community_mvp/features/profile/profile_controller.dart';
+import 'package:music_community_mvp/features/player/player_controller.dart';
+import 'package:music_community_mvp/features/music/music_controller.dart';
+import 'package:music_community_mvp/core/shim_google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../profile/follow_list_view.dart';
 
 class UserProfileView extends StatefulWidget {
   final String userId;
@@ -176,12 +173,12 @@ class _UserProfileViewState extends State<UserProfileView> {
             const SizedBox(width: 12),
             OutlinedButton.icon(
               onPressed: () {
-                Get.to(
-                  () => ChatDetailView(
-                    partnerId: widget.userId,
-                    partnerName: _profileData!['username'] ?? 'Unknown',
-                    partnerAvatar: _profileData!['avatar_url'],
-                  ),
+                Get.toNamed(
+                  '/chat/${widget.userId}',
+                  parameters: {
+                    'name': _profileData!['username'] ?? 'Unknown',
+                    'avatar': _profileData!['avatar_url'] ?? '',
+                  },
                 );
               },
               icon: const Icon(Icons.mail_outline, size: 18),
@@ -208,23 +205,11 @@ class _UserProfileViewState extends State<UserProfileView> {
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
           InkWell(
-            onTap: () => Get.to(
-              () => FollowListView(
-                userId: widget.userId,
-                title: '关注',
-                type: 'following',
-              ),
-            ),
+            onTap: () => Get.toNamed('/follows/${widget.userId}/following'),
             child: _statItem("关注", "${_profileData!['following_count'] ?? 0}"),
           ),
           InkWell(
-            onTap: () => Get.to(
-              () => FollowListView(
-                userId: widget.userId,
-                title: '粉丝',
-                type: 'followers',
-              ),
-            ),
+            onTap: () => Get.toNamed('/follows/${widget.userId}/followers'),
             child: _statItem("粉丝", "${_profileData!['followers_count'] ?? 0}"),
           ),
           _statItem("日记", "${_profileData!['diary_count'] ?? 0}"),
@@ -375,7 +360,8 @@ class _UserProfileViewState extends State<UserProfileView> {
             itemBuilder: (context, index) {
               final article = articles[index];
               return InkWell(
-                onTap: () => Get.to(() => ArticleDetailView(article: article)),
+                onTap: () =>
+                    Get.toNamed('/article/${article.id}', arguments: article),
                 child: Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(

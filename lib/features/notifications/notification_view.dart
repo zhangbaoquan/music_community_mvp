@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:music_community_mvp/features/notifications/notification_service.dart';
 import 'package:music_community_mvp/features/profile/profile_controller.dart';
-import 'package:music_community_mvp/features/content/article_detail_view.dart';
 import 'package:music_community_mvp/features/profile/user_profile_view.dart';
 import 'package:music_community_mvp/data/models/article.dart'; // Needed for navigation if we fetch article, or we pass ID
 import 'package:supabase_flutter/supabase_flutter.dart'; // To fetch article details if needed
@@ -133,7 +132,7 @@ class _NotificationItemState extends State<_NotificationItem> {
 
     // Navigation
     if (widget.notification.type == 'follow') {
-      Get.to(() => UserProfileView(userId: widget.notification.actorId));
+      Get.toNamed('/profile/${widget.notification.actorId}');
       return;
     }
 
@@ -165,11 +164,9 @@ class _NotificationItemState extends State<_NotificationItem> {
               widget.notification.type == 'comment_article' ||
               widget.notification.type == 'like_comment';
 
-          Get.to(
-            () => ArticleDetailView(
-              article: article,
-              autoOpenComments: isCommentAction,
-            ),
+          Get.toNamed(
+            '/article/${article.id}?autoOpen=$isCommentAction',
+            arguments: article,
           );
         } else {
           Get.snackbar('提示', '该内容可能已被删除');

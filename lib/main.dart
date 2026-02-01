@@ -12,6 +12,16 @@ import 'features/layout/main_layout.dart';
 import 'features/auth/login_view.dart';
 import 'features/admin/admin_layout.dart';
 import 'features/admin/admin_guard.dart';
+import 'features/content/article_detail_view.dart';
+import 'features/profile/user_profile_view.dart';
+import 'features/messages/chat_detail_view.dart';
+import 'features/music/upload_music_view.dart';
+import 'features/content/user_articles_view.dart';
+import 'features/content/article_editor_view.dart';
+import 'features/gamification/badge_detail_view.dart';
+import 'features/profile/visitor_list_view.dart';
+import 'features/profile/follow_list_view.dart';
+import 'data/models/article.dart'; // For Article model
 
 void main() {
   // Ensure binding, but DO NOT await async calls that Block startup
@@ -57,6 +67,52 @@ class MusicCommunityApp extends StatelessWidget {
           name: '/admin',
           page: () => const AdminLayout(),
           middlewares: [AdminGuard()],
+        ),
+        // Named Routes for Core Pages
+        GetPage(
+          name: '/profile/:id',
+          page: () => UserProfileView(userId: Get.parameters['id']!),
+        ),
+        GetPage(
+          name: '/article/:id',
+          page: () {
+            final article = Get.arguments is Article
+                ? Get.arguments as Article
+                : Article.empty();
+            final autoOpen = Get.parameters['autoOpen'] == 'true';
+            return ArticleDetailView(
+              article: article,
+              autoOpenComments: autoOpen,
+            );
+          },
+        ),
+        GetPage(
+          name: '/chat/:userId',
+          page: () => ChatDetailView(
+            partnerId: Get.parameters['userId']!,
+            partnerName: Get.parameters['name'] ?? 'Chat',
+            partnerAvatar: Get.parameters['avatar'] ?? '',
+          ),
+        ),
+        GetPage(name: '/upload_music', page: () => const UploadMusicView()),
+        GetPage(
+          name: '/editor',
+          page: () => ArticleEditorView(article: Get.arguments as Article?),
+        ),
+        GetPage(name: '/user_articles', page: () => const UserArticlesView()),
+        GetPage(name: '/badges', page: () => const BadgeDetailView()),
+        GetPage(name: '/visitors', page: () => const VisitorListView()),
+        GetPage(
+          name: '/follows/:userId/:type',
+          page: () {
+            final type = Get.parameters['type'] ?? 'followers';
+            final title = type == 'followers' ? '粉丝列表' : '关注列表';
+            return FollowListView(
+              userId: Get.parameters['userId']!,
+              type: type,
+              title: title,
+            );
+          },
         ),
       ],
     );

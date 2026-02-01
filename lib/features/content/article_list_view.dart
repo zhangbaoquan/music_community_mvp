@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:music_community_mvp/data/models/article.dart';
 import 'article_controller.dart';
-import 'article_detail_view.dart';
-import 'article_editor_view.dart';
 
 import 'package:timeago/timeago.dart' as timeago;
 
@@ -18,7 +16,7 @@ class ArticleListView extends StatelessWidget {
     return Scaffold(
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          Get.to(() => const ArticleEditorView());
+          Get.toNamed('/editor');
         },
         child: const Icon(Icons.edit_note),
       ),
@@ -65,7 +63,7 @@ class _ArticleCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () {
-        Get.to(() => ArticleDetailView(article: article));
+        Get.toNamed('/article/${article.id}', arguments: article);
       },
       child: Container(
         margin: const EdgeInsets.only(bottom: 20),
@@ -180,7 +178,10 @@ class _ArticleCard extends StatelessWidget {
                         color: Colors.grey[400],
                         count: article.commentsCount,
                         onTap: () {
-                          Get.to(() => ArticleDetailView(article: article));
+                          Get.toNamed(
+                            '/article/${article.id}',
+                            arguments: article,
+                          );
                         },
                       ),
                       const SizedBox(width: 20),

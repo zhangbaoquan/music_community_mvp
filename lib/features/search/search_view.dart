@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:music_community_mvp/features/search/search_controller.dart'
     as s;
-import 'package:music_community_mvp/features/profile/user_profile_view.dart';
-import 'package:music_community_mvp/features/content/article_detail_view.dart';
 import 'package:timeago/timeago.dart' as timeago;
 
 class SearchView extends StatefulWidget {
@@ -193,7 +191,7 @@ class _SearchViewState extends State<SearchView>
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
       ),
-      onTap: () => Get.to(() => UserProfileView(userId: user['id'])),
+      onTap: () => Get.toNamed('/profile/${user['id']}'),
     );
   }
 
@@ -238,7 +236,7 @@ class _SearchViewState extends State<SearchView>
           textConfirm: "去主页",
           onConfirm: () {
             Get.back();
-            Get.to(() => UserProfileView(userId: diary['user_id']));
+            Get.toNamed('/profile/${diary['user_id']}');
           },
           textCancel: "关闭",
         );
@@ -263,7 +261,7 @@ class _SearchViewState extends State<SearchView>
       margin: const EdgeInsets.only(bottom: 12),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: InkWell(
-        onTap: () => Get.to(() => ArticleDetailView(article: article)),
+        onTap: () => Get.toNamed('/article/${article.id}', arguments: article),
         borderRadius: BorderRadius.circular(12),
         child: Padding(
           padding: const EdgeInsets.all(12),

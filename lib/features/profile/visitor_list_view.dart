@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:music_community_mvp/features/profile/profile_controller.dart';
-import 'package:music_community_mvp/features/profile/user_profile_view.dart';
 import 'package:timeago/timeago.dart' as timeago;
 
 class VisitorListView extends StatefulWidget {
@@ -102,7 +101,7 @@ class _VisitorItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return InkWell(
-      onTap: () => Get.to(() => UserProfileView(userId: userId)),
+      onTap: () => Get.toNamed('/profile/$userId'),
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
         child: Row(

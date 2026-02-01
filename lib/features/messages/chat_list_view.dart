@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:music_community_mvp/features/messages/message_controller.dart';
-import 'package:music_community_mvp/features/messages/chat_detail_view.dart';
+
 import 'package:timeago/timeago.dart' as timeago;
-import 'package:supabase_flutter/supabase_flutter.dart';
 
 class ChatListView extends StatelessWidget {
   const ChatListView({super.key});
@@ -115,12 +114,12 @@ class ChatListView extends StatelessWidget {
                 style: const TextStyle(fontSize: 12, color: Colors.grey),
               ),
               onTap: () {
-                Get.to(
-                  () => ChatDetailView(
-                    partnerId: partnerId,
-                    partnerName: partnerName ?? 'Unknown',
-                    partnerAvatar: partnerAvatar,
-                  ),
+                Get.toNamed(
+                  '/chat/$partnerId',
+                  parameters: {
+                    'name': partnerName ?? 'Unknown',
+                    'avatar': partnerAvatar ?? '',
+                  },
                 );
               },
             );
