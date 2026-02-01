@@ -9,6 +9,10 @@ class Song {
   final String? uploaderId; // Added for Phase 4
   final DateTime? createdAt;
 
+  // UI Helpers (fetched via join)
+  final String? uploaderName;
+  final String? uploaderAvatar;
+
   Song({
     required this.id,
     required this.title,
@@ -19,9 +23,16 @@ class Song {
     this.moodTags,
     this.uploaderId,
     this.createdAt,
+    this.uploaderName,
+    this.uploaderAvatar,
   });
 
   factory Song.fromMap(Map<String, dynamic> map) {
+    Map<String, dynamic>? profile;
+    if (map['profiles'] != null) {
+      profile = map['profiles'] as Map<String, dynamic>;
+    }
+
     return Song(
       id: map['id'] as String,
       title: map['title'] as String,
@@ -36,6 +47,8 @@ class Song {
       createdAt: map['created_at'] != null
           ? DateTime.parse(map['created_at'])
           : null,
+      uploaderName: profile?['username'],
+      uploaderAvatar: profile?['avatar_url'],
     );
   }
 

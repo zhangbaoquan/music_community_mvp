@@ -6,6 +6,9 @@ import 'manage_music_view.dart';
 import 'manage_articles_view.dart';
 import 'manage_comments_view.dart';
 
+import 'manage_diaries_view.dart';
+import 'manage_users_view.dart';
+
 class AdminLayout extends StatelessWidget {
   const AdminLayout({super.key});
 
@@ -41,7 +44,8 @@ class AdminLayout extends StatelessWidget {
                   _buildNavItem(0, "音乐管理", Icons.music_note, controller),
                   _buildNavItem(1, "文章管理", Icons.article, controller),
                   _buildNavItem(2, "评论管理", Icons.comment, controller),
-                  // _buildNavItem(3, "用户管理", Icons.people, controller),
+                  _buildNavItem(3, "日记管理", Icons.book, controller),
+                  _buildNavItem(4, "用户管理", Icons.people, controller),
                 ],
               ),
             ),
@@ -57,6 +61,10 @@ class AdminLayout extends StatelessWidget {
                   return const ManageArticlesView();
                 case 2:
                   return const ManageCommentsView();
+                case 3:
+                  return const ManageDiariesView();
+                case 4:
+                  return const ManageUsersView();
                 default:
                   return const Center(child: Text("Select a tab"));
               }

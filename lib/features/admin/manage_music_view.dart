@@ -61,6 +61,7 @@ class ManageMusicView extends StatelessWidget {
                       DataColumn(label: Text("封面")),
                       DataColumn(label: Text("标题")),
                       DataColumn(label: Text("艺术家")),
+                      DataColumn(label: Text("上传者")), // Added Uploader column
                       DataColumn(label: Text("心情标签")),
                       DataColumn(label: Text("操作")),
                     ],
@@ -90,6 +91,33 @@ class ManageMusicView extends StatelessWidget {
                             Text(
                               song.artist ?? "-",
                               overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          DataCell(
+                            // Uploader Logic
+                            Row(
+                              children: [
+                                if (song.uploaderAvatar != null)
+                                  Container(
+                                    width: 20,
+                                    height: 20,
+                                    margin: const EdgeInsets.only(right: 8),
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      image: DecorationImage(
+                                        image: NetworkImage(
+                                          song.uploaderAvatar!,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                Text(
+                                  song.uploaderName ?? "Unknown",
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                           DataCell(Text(song.moodTags?.join(", ") ?? "-")),

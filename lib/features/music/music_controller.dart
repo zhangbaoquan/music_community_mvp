@@ -26,7 +26,7 @@ class MusicController extends GetxController {
       isLoading.value = true;
       final response = await _supabase
           .from('songs')
-          .select()
+          .select('*, profiles(username, avatar_url)')
           .order('created_at', ascending: false)
           .limit(100);
 
