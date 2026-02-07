@@ -104,4 +104,44 @@ class Article {
       // 'created_at': createdAt.toIso8601String(), // Usually handled by DB default
     };
   }
+
+  Article copyWith({
+    String? id,
+    String? userId,
+    String? title,
+    String? summary,
+    String? coverUrl,
+    dynamic content,
+    DateTime? createdAt,
+    bool? isPublished,
+    String? authorName,
+    String? authorAvatar,
+    String? bgmSongId,
+    String? bgmTitle,
+    int? likesCount,
+    int? collectionsCount,
+    int? commentsCount,
+    bool? isLiked,
+    bool? isCollected,
+  }) {
+    return Article(
+      id: id ?? this.id,
+      userId: userId ?? this.userId,
+      title: title ?? this.title,
+      summary: summary ?? this.summary,
+      coverUrl: coverUrl ?? this.coverUrl,
+      content: content ?? this.content,
+      createdAt: createdAt ?? this.createdAt,
+      isPublished: isPublished ?? this.isPublished,
+      authorName: authorName ?? this.authorName,
+      authorAvatar: authorAvatar ?? this.authorAvatar,
+      bgmSongId: bgmSongId ?? this.bgmSongId,
+      bgmTitle: bgmTitle ?? this.bgmTitle,
+      likesCount: likesCount ?? this.likesCount,
+      collectionsCount: collectionsCount ?? this.collectionsCount,
+      commentsCount: commentsCount ?? this.commentsCount,
+      isLiked: isLiked ?? this.isLiked,
+      isCollected: isCollected ?? this.isCollected,
+    );
+  }
 }

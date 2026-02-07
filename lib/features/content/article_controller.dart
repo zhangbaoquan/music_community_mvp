@@ -84,6 +84,51 @@ class ArticleController extends GetxController {
     }
   }
 
+  /// Fetch Single Article Details (for Deep Linking)
+  Future<Article?> fetchArticleDetails(String id) async {
+    try {
+      isLoading.value = true;
+      final userId = _supabase.auth.currentUser?.id;
+
+      final response = await _supabase
+          .from('articles')
+          .select(
+            '*, bgm_song_id, profiles(username, avatar_url), songs(title), likes:article_likes(count), collections:article_collections(count), comments:article_comments(count)',
+          )
+          .eq('id', id)
+          .single();
+
+      final article = Article.fromMap(response);
+
+      // Fetch User Status
+      if (userId != null) {
+        // Check like
+        final myLike = await _supabase
+            .from('article_likes')
+            .select('article_id')
+            .eq('user_id', userId)
+            .eq('article_id', id)
+            .maybeSingle();
+        article.isLiked = myLike != null;
+
+        // Check collection
+        final myCol = await _supabase
+            .from('article_collections')
+            .select('article_id')
+            .eq('user_id', userId)
+            .eq('article_id', id)
+            .maybeSingle();
+        article.isCollected = myCol != null;
+      }
+      return article;
+    } catch (e) {
+      print('Error fetching article details: $e');
+      return null;
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
   /// Toggle Like
   Future<bool> toggleLike(Article article) async {
     final userId = _supabase.auth.currentUser?.id;

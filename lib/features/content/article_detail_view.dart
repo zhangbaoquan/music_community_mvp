@@ -35,39 +35,46 @@ class _ArticleDetailViewState extends State<ArticleDetailView> {
   final _isFollowing = false.obs;
   final _isFollowLoading = false.obs;
 
+  // Local state for deep linking support
+  late Article _currentArticle;
+  bool _isLoading = false;
+
   @override
   void initState() {
     super.initState();
-    // Load content
-    try {
-      if (widget.article.content != null) {
-        _quillController = QuillController(
-          document: Document.fromJson(widget.article.content),
-          selection: const TextSelection.collapsed(offset: 0),
-          readOnly: true,
-        );
-      } else {
-        _quillController = QuillController.basic();
-      }
-    } catch (e) {
-      _quillController = QuillController.basic();
-    }
-    // Ensure ArticleController exists
+    // 0. Ensure ArticleController exists FIRST
     if (!Get.isRegistered<ArticleController>()) {
       Get.put(ArticleController());
     }
-    // Fetch comments
+
+    // 1. Initialize with passed article
+    _currentArticle = widget.article;
+
+    // 2. Check if deep link (Stub: ID exists but title is empty)
+    if (_currentArticle.title.isEmpty && _currentArticle.id.isNotEmpty) {
+      _isLoading = true; // Set directly before async call
+      _quillController = QuillController.basic(); // Safe init
+      _loadFullArticle();
+    } else {
+      _initQuill();
+    }
+
+    // Fetch comments (Always fetch for the ID)
     Get.find<ArticleController>().fetchComments(widget.article.id);
 
     // Check Follow Status
-    _checkFollowStatus();
+    _checkFollowStatus(); // Will access _currentArticle inside
 
     // Setup BGM
     // Ensure PlayerController exists
     if (!Get.isRegistered<PlayerController>()) {
       Get.put(PlayerController());
     }
-    _playBgm();
+
+    // Defer BGM play until we are sure we have the article data (especially song ID)
+    if (_currentArticle.title.isNotEmpty) {
+      _playBgm();
+    }
 
     // Auto-open comments if requested
     if (widget.autoOpenComments) {
@@ -77,15 +84,51 @@ class _ArticleDetailViewState extends State<ArticleDetailView> {
     }
   }
 
+  void _initQuill() {
+    try {
+      if (_currentArticle.content != null) {
+        _quillController = QuillController(
+          document: Document.fromJson(_currentArticle.content),
+          selection: const TextSelection.collapsed(offset: 0),
+          readOnly: true,
+        );
+      } else {
+        _quillController = QuillController.basic();
+      }
+    } catch (e) {
+      _quillController = QuillController.basic();
+    }
+  }
+
+  Future<void> _loadFullArticle() async {
+    setState(() => _isLoading = true);
+    final ctrl = Get.find<ArticleController>();
+    final fullArticle = await ctrl.fetchArticleDetails(widget.article.id);
+
+    if (fullArticle != null) {
+      setState(() {
+        _currentArticle = fullArticle;
+        _isLoading = false;
+        _initQuill(); // Init editor with new content
+      });
+      // Now play BGM and check follow
+      _playBgm();
+      _checkFollowStatus();
+    } else {
+      setState(() => _isLoading = false);
+      Get.snackbar('错误', '文章加载失败或已被删除');
+    }
+  }
+
   void _playBgm() {
     print(
-      "ArticleDetailView: _playBgm called. SongID: ${widget.article.bgmSongId}",
+      "ArticleDetailView: _playBgm called. SongID: ${_currentArticle.bgmSongId}",
     );
-    if (widget.article.bgmSongId != null) {
+    if (_currentArticle.bgmSongId != null) {
       Get.find<PlayerController>(); // Early init check
       // We might not have the full song details here if not joined.
       // We need to fetch the full song or ensure the previous join got it.
-      _fetchAndPlaySong(widget.article.bgmSongId!);
+      _fetchAndPlaySong(_currentArticle.bgmSongId!);
     } else {
       print("ArticleDetailView: No BGM ID found.");
     }
@@ -116,9 +159,9 @@ class _ArticleDetailViewState extends State<ArticleDetailView> {
     final profileCtrl = Get.put(ProfileController()); // Ensure IT exists
     // Don't check if it's me
     final currentUserId = Supabase.instance.client.auth.currentUser?.id;
-    if (currentUserId != null && widget.article.userId != currentUserId) {
+    if (currentUserId != null && _currentArticle.userId != currentUserId) {
       _isFollowing.value = await profileCtrl.checkIsFollowing(
-        widget.article.userId,
+        _currentArticle.userId,
       );
     }
   }
@@ -126,7 +169,7 @@ class _ArticleDetailViewState extends State<ArticleDetailView> {
   Widget _buildFollowButton() {
     final currentUserId = Supabase.instance.client.auth.currentUser?.id;
     // Don't show button for self
-    if (currentUserId == widget.article.userId) return const SizedBox();
+    if (currentUserId == _currentArticle.userId) return const SizedBox();
 
     return Obx(() {
       if (_isFollowLoading.value) {
@@ -144,9 +187,9 @@ class _ArticleDetailViewState extends State<ArticleDetailView> {
           final profileCtrl = Get.find<ProfileController>();
           bool success;
           if (isFollowing) {
-            success = await profileCtrl.unfollowUser(widget.article.userId);
+            success = await profileCtrl.unfollowUser(_currentArticle.userId);
           } else {
-            success = await profileCtrl.followUser(widget.article.userId);
+            success = await profileCtrl.followUser(_currentArticle.userId);
           }
 
           if (success) {
@@ -192,30 +235,42 @@ class _ArticleDetailViewState extends State<ArticleDetailView> {
 
   @override
   Widget build(BuildContext context) {
+    // Show loading if stub or fetch in progress
+    if (_isLoading) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
+
+    // Safety check: if load failed and title still empty
+    if (_currentArticle.title.isEmpty) {
+      return const Scaffold(body: Center(child: Text("加载失败")));
+    }
+
     return Scaffold(
       key: _scaffoldKey,
-      endDrawer: ArticleCommentDrawer(articleId: widget.article.id),
+      endDrawer: ArticleCommentDrawer(articleId: _currentArticle.id),
       body: CustomScrollView(
         controller: _scrollController,
         slivers: [
           // Sliver App Bar with Cover
           SliverAppBar(
-            expandedHeight: widget.article.coverUrl != null ? 300 : 100,
+            expandedHeight: _currentArticle.coverUrl != null ? 300 : 100,
             pinned: true,
             flexibleSpace: FlexibleSpaceBar(
-              title: widget.article.coverUrl == null
+              title: _currentArticle.coverUrl == null
                   ? Text(
-                      widget.article.title,
+                      _currentArticle.title,
                       style: const TextStyle(color: Colors.black),
                     )
                   : null, // If cover exists, show title in body instead for better visuals
-              background: widget.article.coverUrl != null
-                  ? Image.network(widget.article.coverUrl!, fit: BoxFit.cover)
+              background:
+                  _currentArticle.coverUrl != null &&
+                      _currentArticle.coverUrl!.isNotEmpty
+                  ? Image.network(_currentArticle.coverUrl!, fit: BoxFit.cover)
                   : null,
             ),
             backgroundColor: Colors.white,
             iconTheme: IconThemeData(
-              color: widget.article.coverUrl != null
+              color: _currentArticle.coverUrl != null
                   ? Colors.white
                   : Colors.black,
             ),
@@ -229,7 +284,7 @@ class _ArticleDetailViewState extends State<ArticleDetailView> {
                 children: [
                   // Title Block
                   Text(
-                    widget.article.title,
+                    _currentArticle.title,
                     style: const TextStyle(
                       fontSize: 32,
                       fontWeight: FontWeight.bold,
@@ -244,10 +299,14 @@ class _ArticleDetailViewState extends State<ArticleDetailView> {
                     children: [
                       CircleAvatar(
                         radius: 16,
-                        backgroundImage: widget.article.authorAvatar != null
-                            ? NetworkImage(widget.article.authorAvatar!)
+                        backgroundImage:
+                            _currentArticle.authorAvatar != null &&
+                                _currentArticle.authorAvatar!.isNotEmpty
+                            ? NetworkImage(_currentArticle.authorAvatar!)
                             : null,
-                        child: widget.article.authorAvatar == null
+                        child:
+                            _currentArticle.authorAvatar == null ||
+                                _currentArticle.authorAvatar!.isEmpty
                             ? const Icon(Icons.person, size: 16)
                             : null,
                       ),
@@ -257,19 +316,28 @@ class _ArticleDetailViewState extends State<ArticleDetailView> {
                         children: [
                           Row(
                             children: [
-                              Text(
-                                widget.article.authorName ?? '未知作者',
-                                style: const TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.bold,
+                              if (_currentArticle.authorName != null)
+                                Text(
+                                  _currentArticle.authorName!,
+                                  style: const TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                 ),
-                              ),
+                              if (_currentArticle.authorName == null)
+                                const Text(
+                                  '未知作者',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
                               const SizedBox(width: 8),
                               _buildFollowButton(),
                             ],
                           ),
                           Text(
-                            '发布于 ${timeago.format(widget.article.createdAt, locale: 'zh')}',
+                            '发布于 ${timeago.format(_currentArticle.createdAt, locale: 'zh')}',
                             style: TextStyle(
                               fontSize: 12,
                               color: Colors.grey[500],
@@ -284,8 +352,8 @@ class _ArticleDetailViewState extends State<ArticleDetailView> {
                   // Music Player Card
                   const _MusicPlayerCard(), // Add control
                   // Summary Quote
-                  if (widget.article.summary != null &&
-                      widget.article.summary!.isNotEmpty)
+                  if (_currentArticle.summary != null &&
+                      _currentArticle.summary!.isNotEmpty)
                     Container(
                       padding: const EdgeInsets.only(left: 16),
                       decoration: const BoxDecoration(
@@ -294,7 +362,7 @@ class _ArticleDetailViewState extends State<ArticleDetailView> {
                         ),
                       ),
                       child: Text(
-                        widget.article.summary!,
+                        _currentArticle.summary!,
                         style: const TextStyle(
                           fontSize: 16,
                           fontStyle: FontStyle.italic,
@@ -449,30 +517,30 @@ class _ArticleDetailViewState extends State<ArticleDetailView> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   _BottomActionBtn(
-                    icon: widget.article.isLiked
+                    icon: _currentArticle.isLiked
                         ? Icons.favorite
                         : Icons.favorite_border,
-                    label: widget.article.likesCount.toString(),
-                    isActive: widget.article.isLiked,
+                    label: _currentArticle.likesCount.toString(),
+                    isActive: _currentArticle.isLiked,
                     activeColor: Colors.red,
                     onTap: () async {
                       await Get.find<ArticleController>().toggleLike(
-                        widget.article,
+                        _currentArticle,
                       );
                       setState(() {});
                     },
                   ),
                   const SizedBox(width: 16), // Gap between buttons
                   _BottomActionBtn(
-                    icon: widget.article.isCollected
+                    icon: _currentArticle.isCollected
                         ? Icons.bookmark
                         : Icons.bookmark_border,
-                    label: widget.article.collectionsCount.toString(),
-                    isActive: widget.article.isCollected,
+                    label: _currentArticle.collectionsCount.toString(),
+                    isActive: _currentArticle.isCollected,
                     activeColor: Colors.orange,
                     onTap: () async {
                       await Get.find<ArticleController>().toggleCollection(
-                        widget.article,
+                        _currentArticle,
                       );
                       setState(() {});
                     },
@@ -507,10 +575,11 @@ class _CommentPreviewItem extends StatelessWidget {
           children: [
             CircleAvatar(
               radius: 16,
-              backgroundImage: comment.userAvatar != null
+              backgroundImage:
+                  comment.userAvatar != null && comment.userAvatar!.isNotEmpty
                   ? NetworkImage(comment.userAvatar!)
                   : null,
-              child: comment.userAvatar == null
+              child: comment.userAvatar == null || comment.userAvatar!.isEmpty
                   ? const Icon(Icons.person, size: 16)
                   : null,
             ),

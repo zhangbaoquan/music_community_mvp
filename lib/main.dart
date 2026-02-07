@@ -30,6 +30,25 @@ void main() {
   // Register Chinese messages for timeago
   timeago.setLocaleMessages('zh', timeago.ZhCnMessages());
 
+  // Global Error Widget for Release Mode debugging
+  ErrorWidget.builder = (FlutterErrorDetails details) {
+    return MaterialApp(
+      home: Scaffold(
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(20.0),
+            child: SingleChildScrollView(
+              child: Text(
+                'UI ERROR:\n${details.exception}\n\nSTACK:\n${details.stack}',
+                style: const TextStyle(color: Colors.red),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  };
+
   runApp(const MusicCommunityApp());
 }
 
@@ -78,7 +97,7 @@ class MusicCommunityApp extends StatelessWidget {
           page: () {
             final article = Get.arguments is Article
                 ? Get.arguments as Article
-                : Article.empty();
+                : Article.empty().copyWith(id: Get.parameters['id']);
             final autoOpen = Get.parameters['autoOpen'] == 'true';
             return ArticleDetailView(
               article: article,

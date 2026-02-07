@@ -13,36 +13,58 @@ class AuthController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    currentUser.value = _supabase.auth.currentUser;
 
-    // Listen to auth state changes
+    // 1. Setup Listener for FUTURE changes
     _supabase.auth.onAuthStateChange.listen((data) {
-      final Session? session = data.session;
-      currentUser.value = session?.user;
-
-      if (session != null) {
-        // Logged in
-        // Check current route to see if it's a deep link we should preserve
-        final currentRoute = Get.currentRoute;
-        print('Auth State Change: Logged In. Current Route: $currentRoute');
-
-        if (currentRoute == '/' ||
-            currentRoute == '/login' ||
-            currentRoute.isEmpty) {
-          // Default to home
-          Get.offAllNamed('/home');
-        } else {
-          // Deep link detected (e.g. /chat/...), preserve it!
-          // We must use offAllNamed to remove the AppStartupScreen
-          // Be careful with parameters, GetX usually handles them if we pass the full string
-          // Note: Get.currentRoute includes query params? Yes.
-          Get.offAllNamed(currentRoute);
-        }
-      } else {
-        // Logged out -> Go Login
-        Get.offAllNamed('/login');
-      }
+      _handleAuthRedirect(data.session);
     });
+
+    // 2. Handle EXISTING state immediately
+    // Supabase.initialize() has completed in main.dart, so currentSession is ready.
+    final session = _supabase.auth.currentSession;
+    _handleAuthRedirect(session);
+  }
+
+  void _handleAuthRedirect(Session? session) {
+    currentUser.value = session?.user;
+
+    if (session != null) {
+      // Logged in
+
+      // 1. Try Get.currentRoute first
+      var targetRoute = Get.currentRoute;
+
+      // 2. Fallback: Parse Uri.base if Get.currentRoute is '/' but browser has fragment
+      if (targetRoute == '/' || targetRoute.isEmpty) {
+        try {
+          // Uri.base.fragment returns "article/xxx?..."
+          final fragment = Uri.base.fragment;
+          if (fragment.isNotEmpty && fragment != '/') {
+            targetRoute = fragment.startsWith('/') ? fragment : '/$fragment';
+          }
+        } catch (_) {
+          // Ignore parsing errors
+        }
+      }
+
+      print('Auth Redirect: Logged In. Target: $targetRoute');
+
+      // Prevent infinite loop if we are already on the target route?
+      // GetX handles offAllNamed efficiently.
+
+      if (targetRoute == '/' ||
+          targetRoute == '/login' ||
+          targetRoute.isEmpty) {
+        // Default to home
+        Get.offAllNamed('/home');
+      } else {
+        // Deep link detected (e.g. /chat/...), preserve it!
+        Get.offAllNamed(targetRoute);
+      }
+    } else {
+      // Logged out -> Go Login
+      Get.offAllNamed('/login');
+    }
   }
 
   Future<void> signIn(String email, String password) async {
