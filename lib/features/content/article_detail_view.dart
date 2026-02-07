@@ -766,7 +766,9 @@ class _MusicPlayerCard extends StatelessWidget {
             Row(
               children: [
                 const Icon(Icons.volume_down, size: 16, color: Colors.grey),
-                Expanded(
+                SizedBox(
+                  width:
+                      120, // Limit width to make it look like a control, not a progress bar
                   child: SliderTheme(
                     data: SliderTheme.of(context).copyWith(
                       thumbShape: const RoundSliderThumbShape(
@@ -776,6 +778,8 @@ class _MusicPlayerCard extends StatelessWidget {
                       activeTrackColor: Colors.black54,
                       inactiveTrackColor: Colors.grey[300],
                       thumbColor: Colors.black,
+                      overlayShape: SliderComponentShape
+                          .noOverlay, // Remove the large hover circle
                     ),
                     child: Slider(
                       value: player.volume.value,
@@ -784,6 +788,11 @@ class _MusicPlayerCard extends StatelessWidget {
                   ),
                 ),
                 const Icon(Icons.volume_up, size: 16, color: Colors.grey),
+                const SizedBox(width: 8),
+                Text(
+                  "${(player.volume.value * 100).toInt()}%",
+                  style: const TextStyle(fontSize: 12, color: Colors.grey),
+                ),
               ],
             ),
           ],
