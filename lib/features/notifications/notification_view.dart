@@ -233,6 +233,11 @@ class _NotificationItemState extends State<_NotificationItem> {
         actionText = '有新动态';
     }
 
+    // Override for Feedback Reply (System Message)
+    final isSystemReply = widget.notification.type == 'feedback_reply';
+    final displayName = isSystemReply ? "系统管理员" : widget.notification.actorName;
+    final displayAvatar = isSystemReply ? "" : widget.notification.actorAvatar;
+
     return InkWell(
       onTap: _handleTap,
       child: Container(
@@ -246,20 +251,27 @@ class _NotificationItemState extends State<_NotificationItem> {
             // Avatar with Type Badge
             GestureDetector(
               onTap: () {
-                Get.to(
-                  () => UserProfileView(userId: widget.notification.actorId),
-                );
+                if (!isSystemReply) {
+                  Get.to(
+                    () => UserProfileView(userId: widget.notification.actorId),
+                  );
+                }
               },
               child: Stack(
                 clipBehavior: Clip.none,
                 children: [
                   CircleAvatar(
                     radius: 24,
-                    backgroundImage: widget.notification.actorAvatar.isNotEmpty
-                        ? NetworkImage(widget.notification.actorAvatar)
+                    backgroundImage: displayAvatar.isNotEmpty
+                        ? NetworkImage(displayAvatar)
                         : null,
-                    child: widget.notification.actorAvatar.isEmpty
-                        ? const Icon(Icons.person, size: 24, color: Colors.grey)
+                    backgroundColor: isSystemReply ? Colors.orange[100] : null,
+                    child: displayAvatar.isEmpty
+                        ? Icon(
+                            isSystemReply ? Icons.support_agent : Icons.person,
+                            size: 24,
+                            color: isSystemReply ? Colors.orange : Colors.grey,
+                          )
                         : null,
                   ),
                   Positioned(
@@ -298,7 +310,7 @@ class _NotificationItemState extends State<_NotificationItem> {
                       ),
                       children: [
                         TextSpan(
-                          text: widget.notification.actorName,
+                          text: displayName,
                           style: const TextStyle(fontWeight: FontWeight.bold),
                         ),
                         const TextSpan(text: ' '),

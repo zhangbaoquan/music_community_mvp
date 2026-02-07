@@ -171,7 +171,7 @@ class NotificationService extends GetxService {
       });
     } catch (e) {
       print('Error sending notification: $e');
-      // Fail silently to not disrupt the main action
+      rethrow; // Let the caller handle/show the error
     }
   }
 }
