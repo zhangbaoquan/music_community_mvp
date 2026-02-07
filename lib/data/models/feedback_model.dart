@@ -8,6 +8,7 @@ class FeedbackModel {
   final List<String> images;
   final String? contact;
   final String status;
+  final String? replyContent; // Admin reply
   final DateTime createdAt;
 
   FeedbackModel({
@@ -19,6 +20,7 @@ class FeedbackModel {
     required this.images,
     this.contact,
     required this.status,
+    this.replyContent,
     required this.createdAt,
   });
 
@@ -51,6 +53,7 @@ class FeedbackModel {
       images: imgList,
       contact: map['contact'],
       status: map['status'] ?? 'pending',
+      replyContent: map['reply_content'],
       createdAt: DateTime.parse(map['created_at']).toLocal(),
     );
   }

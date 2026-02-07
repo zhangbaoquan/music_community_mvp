@@ -53,10 +53,10 @@ class AdminController extends GetxController {
     String content,
   ) async {
     try {
-      // 1. Update status
+      // 1. Update status AND reply_content
       await Supabase.instance.client
           .from('feedbacks')
-          .update({'status': 'resolved'})
+          .update({'status': 'resolved', 'reply_content': content})
           .eq('id', feedbackId);
 
       // 2. Send Notification

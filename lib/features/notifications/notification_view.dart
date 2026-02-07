@@ -136,6 +136,20 @@ class _NotificationItemState extends State<_NotificationItem> {
       return;
     }
 
+    if (widget.notification.type == 'feedback_reply' &&
+        widget.notification.content != null) {
+      Get.dialog(
+        AlertDialog(
+          title: const Text("管理员回复"),
+          content: Text(widget.notification.content!),
+          actions: [
+            TextButton(onPressed: () => Get.back(), child: const Text("关闭")),
+          ],
+        ),
+      );
+      return;
+    }
+
     if (widget.notification.resourceId != null &&
         (widget.notification.type == 'like_article' ||
             widget.notification.type == 'comment_article')) {

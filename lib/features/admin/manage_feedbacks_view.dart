@@ -224,7 +224,20 @@ class _FeedbackItem extends StatelessWidget {
                   "✅ 已标记为已处理/已回复",
                   style: TextStyle(color: Colors.green),
                 ),
-                // Ideally we store the reply content too, but for MVP we might not have it in model
+                if (feedback.replyContent != null &&
+                    feedback.replyContent!.isNotEmpty) ...[
+                  const SizedBox(height: 8),
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      color: Colors.blue.withOpacity(0.05),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: Colors.blue.withOpacity(0.1)),
+                    ),
+                    child: Text(feedback.replyContent!),
+                  ),
+                ],
               ] else ...[
                 TextField(
                   controller: replyController,
