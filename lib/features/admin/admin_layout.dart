@@ -8,6 +8,7 @@ import 'manage_comments_view.dart';
 
 import 'manage_diaries_view.dart';
 import 'manage_users_view.dart';
+import 'manage_feedbacks_view.dart';
 
 class AdminLayout extends StatelessWidget {
   const AdminLayout({super.key});
@@ -46,6 +47,7 @@ class AdminLayout extends StatelessWidget {
                   _buildNavItem(2, "评论管理", Icons.comment, controller),
                   _buildNavItem(3, "日记管理", Icons.book, controller),
                   _buildNavItem(4, "用户管理", Icons.people, controller),
+                  _buildNavItem(5, "反馈管理", Icons.feedback, controller),
                 ],
               ),
             ),
@@ -65,6 +67,8 @@ class AdminLayout extends StatelessWidget {
                   return const ManageDiariesView();
                 case 4:
                   return const ManageUsersView();
+                case 5:
+                  return const ManageFeedbacksView();
                 default:
                   return const Center(child: Text("Select a tab"));
               }

@@ -208,6 +208,11 @@ class _NotificationItemState extends State<_NotificationItem> {
         typeColor = Colors.pink;
         actionText = '赞了你的评论';
         break;
+      case 'feedback_reply':
+        typeIcon = Icons.support_agent;
+        typeColor = Colors.orange;
+        actionText = '回复了你的反馈';
+        break;
       default:
         typeIcon = Icons.notifications;
         typeColor = Colors.grey;

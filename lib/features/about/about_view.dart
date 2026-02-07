@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart'; // For kIsWeb
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:music_community_mvp/core/shim_google_fonts.dart';
 
 class AboutView extends StatefulWidget {
@@ -69,29 +70,79 @@ class _AboutViewState extends State<AboutView> {
 
     setState(() => _isSubmitting = true);
 
-    // Simulate upload delay (Text + Images)
-    await Future.delayed(Duration(seconds: 1 + _selectedImages.length));
+    try {
+      final user = Supabase.instance.client.auth.currentUser;
+      List<String> imageUrls = [];
 
-    print("Feedback submitted: $content");
-    print("Contact: ${_contactController.text}");
-    print("Images: ${_selectedImages.map((e) => e.name).toList()}");
+      // 1. Upload Images
+      if (_selectedImages.isNotEmpty) {
+        for (var image in _selectedImages) {
+          final bytes = await image.readAsBytes();
+          final fileExt = image.name.split('.').last;
+          final fileName =
+              '${DateTime.now().millisecondsSinceEpoch}_${image.name}';
+          final path = 'feedback_images/$fileName';
 
-    if (mounted) {
-      setState(() {
-        _isSubmitting = false;
-        _feedbackController.clear();
-        _contactController.clear();
-        _selectedImages.clear();
+          await Supabase.instance.client.storage
+              .from(
+                'images',
+              ) // Using the common 'images' bucket or specific one
+              .uploadBinary(
+                path,
+                bytes,
+                fileOptions: FileOptions(
+                  contentType: 'image/$fileExt',
+                  upsert: true,
+                ),
+              );
+
+          final imageUrl = Supabase.instance.client.storage
+              .from('images')
+              .getPublicUrl(path);
+          imageUrls.add(imageUrl);
+        }
+      }
+
+      // 2. Insert into Database
+      await Supabase.instance.client.from('feedbacks').insert({
+        'user_id':
+            user?.id, // Nullable if not logged in (RLS might require auth)
+        'content': content,
+        'contact': _contactController.text,
+        'images': imageUrls,
+        'status': 'pending',
       });
 
-      Get.snackbar(
-        "提交成功",
-        "感谢您的反馈，我们会认真阅读每一条建议！",
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.green,
-        colorText: Colors.white,
-        margin: const EdgeInsets.all(16),
-      );
+      if (mounted) {
+        setState(() {
+          _isSubmitting = false;
+          _feedbackController.clear();
+          _contactController.clear();
+          _selectedImages.clear();
+        });
+
+        Get.snackbar(
+          "提交成功",
+          "感谢您的反馈，我们会认真阅读每一条建议！",
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.green,
+          colorText: Colors.white,
+          margin: const EdgeInsets.all(16),
+        );
+      }
+    } catch (e) {
+      print("Feedback submission error: $e");
+      if (mounted) {
+        setState(() => _isSubmitting = false);
+        Get.snackbar(
+          "提交失败",
+          "发生错误，请稍后重试: $e",
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
+          margin: const EdgeInsets.all(16),
+        );
+      }
     }
   }
 
