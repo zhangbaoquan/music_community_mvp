@@ -23,6 +23,7 @@ import 'features/profile/visitor_list_view.dart';
 import 'features/profile/follow_list_view.dart';
 import 'data/models/article.dart'; // For Article model
 import 'features/about/about_view.dart'; // About and Feedback Data
+import 'features/safety/safety_service.dart';
 
 void main() {
   // Ensure binding, but DO NOT await async calls that Block startup
@@ -171,6 +172,8 @@ class _AppStartupScreenState extends State<AppStartupScreen> {
 
       // Inject AuthController to handle navigation logic (Auto-login / Redirect)
       Get.put(AuthController(), permanent: true);
+      // Inject SafetyService for content filtering and rate limiting
+      Get.put(SafetyService());
     } catch (e) {
       setState(() => status = "初始化失败 (Error): $e");
     }

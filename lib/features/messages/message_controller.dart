@@ -2,6 +2,7 @@ import 'package:get/get.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:music_community_mvp/data/models/private_message.dart';
 import '../profile/profile_controller.dart';
+import '../safety/safety_service.dart';
 
 class MessageController extends GetxController {
   final _supabase = Supabase.instance.client;
@@ -122,6 +123,15 @@ class MessageController extends GetxController {
   // 3. Send Message
   Future<void> sendMessage(String partnerId, String content) async {
     if (!Get.find<ProfileController>().checkActionAllowed('发送私信')) return;
+
+    // Safety Check
+    if (!Get.find<SafetyService>().canPost(
+      content,
+      'send_message',
+      cooldownSeconds: 5,
+    ))
+      return;
+
     final myId = _supabase.auth.currentUser?.id;
     if (myId == null || content.trim().isEmpty) return;
 

@@ -7,6 +7,7 @@ import 'package:music_community_mvp/features/player/player_controller.dart';
 import 'article_controller.dart';
 import 'package:music_community_mvp/data/models/article_comment.dart';
 import 'article_comment_drawer.dart';
+import '../safety/report_dialog.dart';
 
 import 'package:music_community_mvp/features/profile/profile_controller.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -274,6 +275,40 @@ class _ArticleDetailViewState extends State<ArticleDetailView> {
                   ? Colors.white
                   : Colors.black,
             ),
+            actions: [
+              // Only keep Delete for own articles
+              if (_currentArticle.userId ==
+                  Supabase.instance.client.auth.currentUser?.id)
+                IconButton(
+                  icon: const Icon(Icons.delete),
+                  onPressed: () async {
+                    final confirm = await Get.dialog<bool>(
+                      AlertDialog(
+                        title: const Text('确认删除'),
+                        content: const Text('删除后无法恢复，确定要删除吗？'),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Get.back(result: false),
+                            child: const Text('取消'),
+                          ),
+                          TextButton(
+                            onPressed: () => Get.back(result: true),
+                            child: const Text(
+                              '删除',
+                              style: TextStyle(color: Colors.red),
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                    if (confirm == true) {
+                      final success = await Get.find<ArticleController>()
+                          .deleteArticle(_currentArticle.id);
+                      if (success) Get.back();
+                    }
+                  },
+                ),
+            ],
           ),
 
           SliverToBoxAdapter(
@@ -560,6 +595,31 @@ class _ArticleDetailViewState extends State<ArticleDetailView> {
                       setState(() {});
                     },
                   ),
+                  const SizedBox(width: 16), // Gap
+                  // Share Button (Moved from Top)
+                  IconButton(
+                    icon: const Icon(Icons.share, color: Colors.black54),
+                    onPressed: () => Get.snackbar("提示", "分享功能开发中"),
+                  ),
+                  const SizedBox(width: 8),
+
+                  // Report Button (Only if not me)
+                  if (_currentArticle.userId !=
+                      Supabase.instance.client.auth.currentUser?.id)
+                    IconButton(
+                      icon: const Icon(
+                        Icons.report_gmailerrorred_outlined,
+                        color: Colors.black54,
+                      ),
+                      onPressed: () {
+                        Get.dialog(
+                          ReportDialog(
+                            targetType: 'article',
+                            targetId: _currentArticle.id,
+                          ),
+                        );
+                      },
+                    ),
                 ],
               ),
             ],
@@ -580,6 +640,30 @@ class _CommentPreviewItem extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: onTap,
+      onLongPress: () {
+        Get.bottomSheet(
+          Container(
+            color: Colors.white,
+            child: Wrap(
+              children: [
+                ListTile(
+                  leading: const Icon(Icons.report_problem, color: Colors.red),
+                  title: const Text(
+                    '举报评论',
+                    style: TextStyle(color: Colors.red),
+                  ),
+                  onTap: () {
+                    Get.back();
+                    Get.dialog(
+                      ReportDialog(targetType: 'comment', targetId: comment.id),
+                    );
+                  },
+                ),
+              ],
+            ),
+          ),
+        );
+      },
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
         decoration: const BoxDecoration(

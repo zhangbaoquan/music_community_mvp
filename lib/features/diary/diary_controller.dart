@@ -1,6 +1,7 @@
 import 'package:get/get.dart';
 import '../profile/profile_controller.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../safety/safety_service.dart';
 
 class DiaryEntry {
   final String id;
@@ -71,6 +72,10 @@ class DiaryController extends GetxController {
 
   Future<void> addEntry(String content, String mood) async {
     if (!Get.find<ProfileController>().checkActionAllowed('发布日记')) return;
+
+    // Safety Check
+    if (!Get.find<SafetyService>().canPost(content, 'add_diary')) return;
+
     try {
       final userId = _supabase.auth.currentUser?.id;
       if (userId == null) {

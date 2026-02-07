@@ -6,6 +6,7 @@ import 'package:music_community_mvp/features/player/player_controller.dart';
 import 'package:music_community_mvp/features/music/music_controller.dart';
 import 'package:music_community_mvp/core/shim_google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../safety/report_dialog.dart';
 
 class UserProfileView extends StatefulWidget {
   final String userId;
@@ -94,6 +95,42 @@ class _UserProfileViewState extends State<UserProfileView> {
         backgroundColor: Colors.white,
         elevation: 0,
         iconTheme: const IconThemeData(color: Colors.black),
+        actions: [
+          if (!_isMe)
+            IconButton(
+              icon: const Icon(Icons.more_horiz),
+              onPressed: () {
+                Get.bottomSheet(
+                  Container(
+                    color: Colors.white,
+                    child: Wrap(
+                      children: [
+                        ListTile(
+                          leading: const Icon(
+                            Icons.report_problem,
+                            color: Colors.red,
+                          ),
+                          title: const Text(
+                            '举报用户',
+                            style: TextStyle(color: Colors.red),
+                          ),
+                          onTap: () {
+                            Get.back();
+                            Get.dialog(
+                              ReportDialog(
+                                targetType: 'user',
+                                targetId: widget.userId,
+                              ),
+                            );
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
+        ],
       ),
       body: SingleChildScrollView(
         child: Container(

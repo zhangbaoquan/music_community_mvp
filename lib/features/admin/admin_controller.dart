@@ -15,6 +15,9 @@ class AdminController extends GetxController {
   final users = <Map<String, dynamic>>[].obs;
   final isLoadingUsers = false.obs;
 
+  final reports = <Map<String, dynamic>>[].obs;
+  final isLoadingReports = false.obs;
+
   @override
   void onInit() {
     super.onInit();
@@ -38,10 +41,14 @@ class AdminController extends GetxController {
     } else if (index == 5) {
       // Feedbacks tab
       fetchFeedbacks();
+    } else if (index == 6) {
+      // Reports tab
+      fetchReports();
     }
   }
 
   final unresolvedCount = 0.obs;
+  final unresolvedReportsCount = 0.obs;
 
   Future<void> fetchUnresolvedCount() async {
     try {
@@ -50,6 +57,12 @@ class AdminController extends GetxController {
           .count(CountOption.exact)
           .neq('status', 'resolved');
       unresolvedCount.value = count;
+
+      final countReports = await Supabase.instance.client
+          .from('reports')
+          .count(CountOption.exact)
+          .eq('status', 'pending');
+      unresolvedReportsCount.value = countReports;
     } catch (e) {
       print("Error fetching unresolved count: $e");
     }
@@ -68,6 +81,55 @@ class AdminController extends GetxController {
       Get.snackbar('Error', 'Failed to load users: $e');
     } finally {
       isLoadingUsers.value = false;
+    }
+  }
+
+  Future<void> fetchReports() async {
+    try {
+      isLoadingReports.value = true;
+      final response = await Supabase.instance.client
+          .from('reports')
+          .select('*, reporter:profiles!reporter_id(username, avatar_url)')
+          .order('created_at', ascending: false);
+
+      reports.value = List<Map<String, dynamic>>.from(response);
+
+      // Update local count
+      unresolvedReportsCount.value = reports
+          .where((r) => r['status'] == 'pending')
+          .length;
+    } catch (e) {
+      Get.snackbar('Error', 'Failed to load reports: $e');
+    } finally {
+      isLoadingReports.value = false;
+    }
+  }
+
+  Future<void> updateReportStatus(String reportId, String status) async {
+    try {
+      await Supabase.instance.client
+          .from('reports')
+          .update({'status': status})
+          .eq('id', reportId);
+
+      // Optimistic update
+      final index = reports.indexWhere((r) => r['id'] == reportId);
+      if (index != -1) {
+        final updated = Map<String, dynamic>.from(reports[index]);
+        updated['status'] = status;
+        reports[index] = updated;
+        reports.refresh();
+        // Update count
+        if (status != 'pending') {
+          // If it was pending, decrement count. But calculating from list is safer.
+          unresolvedReportsCount.value = reports
+              .where((r) => r['status'] == 'pending')
+              .length;
+        }
+      }
+      Get.snackbar('成功', '举报状态已更新');
+    } catch (e) {
+      Get.snackbar('错误', '更新失败: $e');
     }
   }
 

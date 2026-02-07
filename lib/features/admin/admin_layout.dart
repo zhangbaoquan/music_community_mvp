@@ -9,6 +9,7 @@ import 'manage_comments_view.dart';
 import 'manage_diaries_view.dart';
 import 'manage_users_view.dart';
 import 'manage_feedbacks_view.dart';
+import 'manage_reports_view.dart';
 
 class AdminLayout extends StatelessWidget {
   const AdminLayout({super.key});
@@ -48,6 +49,7 @@ class AdminLayout extends StatelessWidget {
                   _buildNavItem(3, "日记管理", Icons.book, controller),
                   _buildNavItem(4, "用户管理", Icons.people, controller),
                   _buildNavItem(5, "反馈管理", Icons.feedback, controller),
+                  _buildNavItem(6, "举报管理", Icons.report_problem, controller),
                 ],
               ),
             ),
@@ -69,6 +71,8 @@ class AdminLayout extends StatelessWidget {
                   return const ManageUsersView();
                 case 5:
                   return const ManageFeedbacksView();
+                case 6:
+                  return const ManageReportsView();
                 default:
                   return const Center(child: Text("Select a tab"));
               }
@@ -105,6 +109,20 @@ class AdminLayout extends StatelessWidget {
           (index == 5) // Feedback Tab Index
           ? Obx(() {
               if (controller.unresolvedCount.value > 0) {
+                return Container(
+                  width: 8,
+                  height: 8,
+                  decoration: const BoxDecoration(
+                    color: Colors.red,
+                    shape: BoxShape.circle,
+                  ),
+                );
+              }
+              return const SizedBox.shrink();
+            })
+          : (index == 6)
+          ? Obx(() {
+              if (controller.unresolvedReportsCount.value > 0) {
                 return Container(
                   width: 8,
                   height: 8,

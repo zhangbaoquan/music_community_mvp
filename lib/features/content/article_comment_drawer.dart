@@ -4,6 +4,8 @@ import 'package:timeago/timeago.dart' as timeago;
 import 'package:music_community_mvp/data/models/article_comment.dart';
 import 'package:emoji_picker_flutter/emoji_picker_flutter.dart';
 import 'article_controller.dart';
+import '../safety/report_dialog.dart';
+import '../../core/ui/action_sheet.dart';
 
 class ArticleCommentDrawer extends StatefulWidget {
   final String articleId;
@@ -475,6 +477,24 @@ class _ArticleCommentDrawerState extends State<ArticleCommentDrawer> {
       children: [
         InkWell(
           onTap: onTap,
+          onLongPress: () {
+            showCustomActionSheet(
+              context: context,
+              title: "评论操作",
+              actions: [
+                ActionSheetItem(
+                  title: "举报评论",
+                  icon: Icons.report_problem,
+                  isDestructive: true,
+                  onTap: () {
+                    Get.dialog(
+                      ReportDialog(targetType: 'comment', targetId: comment.id),
+                    );
+                  },
+                ),
+              ],
+            );
+          },
           child: Container(
             padding: const EdgeInsets.symmetric(
               horizontal: 20,

@@ -7,6 +7,7 @@ import 'package:music_community_mvp/data/models/article_comment.dart';
 import 'package:collection/collection.dart';
 import '../gamification/badge_service.dart';
 import '../profile/profile_controller.dart';
+import '../safety/safety_service.dart';
 
 class ArticleController extends GetxController {
   final _supabase = Supabase.instance.client;
@@ -367,6 +368,16 @@ class ArticleController extends GetxController {
     String? parentId,
   }) async {
     if (!Get.find<ProfileController>().checkActionAllowed('发布评论')) return false;
+
+    // Safety Check
+    if (!Get.find<SafetyService>().canPost(
+      content,
+      'add_comment',
+      cooldownSeconds: 10,
+    )) {
+      return false;
+    }
+
     final user = _supabase.auth.currentUser;
     if (user == null) {
       Get.snackbar('错误', '请先登录');
@@ -536,6 +547,15 @@ class ArticleController extends GetxController {
     PlatformFile? coverFile,
     String? bgmSongId,
   }) async {
+    if (!Get.find<ProfileController>().checkActionAllowed('更新文章')) return false;
+
+    // Safety Check
+    final safetyService = Get.find<SafetyService>();
+    if (!safetyService.validateContent(title) ||
+        !safetyService.validateContent(summary)) {
+      return false;
+    }
+
     try {
       isUploading.value = true;
       final updates = <String, dynamic>{
@@ -593,6 +613,19 @@ class ArticleController extends GetxController {
     PlatformFile? coverFile,
     String? bgmSongId,
   }) async {
+    if (!Get.find<ProfileController>().checkActionAllowed('发布文章')) return false;
+
+    // Safety Check
+    final safetyService = Get.find<SafetyService>();
+    if (!safetyService.validateContent(title) ||
+        !safetyService.validateContent(summary)) {
+      return false;
+    }
+    // Rate Limit for Articles (60s)
+    if (!safetyService.checkRateLimit('publish_article')) {
+      return false;
+    }
+
     try {
       isUploading.value = true;
       final user = _supabase.auth.currentUser;
