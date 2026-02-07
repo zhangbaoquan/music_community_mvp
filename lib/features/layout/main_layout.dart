@@ -14,6 +14,7 @@ import '../notifications/notification_service.dart';
 import '../notifications/notification_view.dart';
 import '../profile/profile_controller.dart';
 import '../about/about_view.dart';
+import '../sponsor/sponsor_dialog.dart';
 
 class NavigationController extends GetxController {
   final RxInt selectedIndex = 0.obs;
@@ -231,6 +232,12 @@ class MainLayout extends StatelessWidget {
             }
             return const SizedBox.shrink();
           }),
+          _navItem(
+            icon: Icons.favorite_border,
+            label: '赞助支持',
+            index: 77,
+            onTap: () => Get.dialog(const SponsorDialog()),
+          ),
           _navItem(icon: Icons.info_outline, label: '关于与帮助', index: 6),
           _navItem(
             icon: Icons.logout,

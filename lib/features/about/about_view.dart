@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:music_community_mvp/core/shim_google_fonts.dart';
+import '../sponsor/sponsor_dialog.dart';
 
 class AboutView extends StatefulWidget {
   const AboutView({super.key});
@@ -224,6 +225,19 @@ class _AboutViewState extends State<AboutView> {
               fontSize: 12,
               color: Colors.grey[600],
               fontWeight: FontWeight.w500,
+            ),
+          ),
+        ),
+        const SizedBox(height: 24),
+        OutlinedButton.icon(
+          onPressed: () => Get.dialog(const SponsorDialog()),
+          icon: const Icon(Icons.favorite, size: 16, color: Colors.red),
+          label: const Text("赞助支持"),
+          style: OutlinedButton.styleFrom(
+            foregroundColor: Colors.red,
+            side: const BorderSide(color: Colors.red),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
             ),
           ),
         ),
