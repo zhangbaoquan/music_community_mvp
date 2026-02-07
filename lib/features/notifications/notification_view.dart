@@ -14,44 +14,59 @@ class NotificationView extends StatelessWidget {
   Widget build(BuildContext context) {
     final service = Get.find<NotificationService>();
 
-    return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: AppBar(
-        title: const Text('通知中心', style: TextStyle(color: Colors.black)),
-        backgroundColor: Colors.white,
-        elevation: 0,
-        iconTheme: const IconThemeData(color: Colors.black),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.done_all),
-            tooltip: '全部已读',
-            onPressed: () => service.markAllAsRead(),
+    return Column(
+      children: [
+        // Custom Header for Actions
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              TextButton.icon(
+                onPressed: () => service.markAllAsRead(),
+                icon: const Icon(Icons.done_all, size: 18),
+                label: const Text("全部已读"),
+                style: TextButton.styleFrom(
+                  foregroundColor: Colors.grey[600],
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
+                ),
+              ),
+            ],
           ),
-        ],
-      ),
-      body: Obx(() {
-        if (service.notifications.isEmpty) {
-          return const Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(Icons.notifications_none, size: 64, color: Colors.grey),
-                SizedBox(height: 16),
-                Text('暂无新通知', style: TextStyle(color: Colors.grey)),
-              ],
-            ),
-          );
-        }
+        ),
+        Expanded(
+          child: Obx(() {
+            if (service.notifications.isEmpty) {
+              return const Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.notifications_none,
+                      size: 64,
+                      color: Colors.grey,
+                    ),
+                    SizedBox(height: 16),
+                    Text('暂无新通知', style: TextStyle(color: Colors.grey)),
+                  ],
+                ),
+              );
+            }
 
-        return ListView.separated(
-          itemCount: service.notifications.length,
-          separatorBuilder: (context, index) => const Divider(height: 1),
-          itemBuilder: (context, index) {
-            final notification = service.notifications[index];
-            return _NotificationItem(notification: notification);
-          },
-        );
-      }),
+            return ListView.separated(
+              itemCount: service.notifications.length,
+              separatorBuilder: (context, index) => const Divider(height: 1),
+              itemBuilder: (context, index) {
+                final notification = service.notifications[index];
+                return _NotificationItem(notification: notification);
+              },
+            );
+          }),
+        ),
+      ],
     );
   }
 }
