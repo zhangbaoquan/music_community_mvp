@@ -1,5 +1,8 @@
+import 'dart:io';
+import 'package:flutter/foundation.dart'; // For kIsWeb
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:music_community_mvp/core/shim_google_fonts.dart';
 
 class AboutView extends StatefulWidget {
@@ -12,6 +15,7 @@ class AboutView extends StatefulWidget {
 class _AboutViewState extends State<AboutView> {
   final _feedbackController = TextEditingController();
   final _contactController = TextEditingController();
+  final List<XFile> _selectedImages = [];
   bool _isSubmitting = false;
 
   @override
@@ -19,6 +23,34 @@ class _AboutViewState extends State<AboutView> {
     _feedbackController.dispose();
     _contactController.dispose();
     super.dispose();
+  }
+
+  Future<void> _pickImage() async {
+    if (_selectedImages.length >= 3) {
+      Get.snackbar("提示", "最多只能上传 3 张图片");
+      return;
+    }
+
+    final ImagePicker picker = ImagePicker();
+    try {
+      final XFile? image = await picker.pickImage(
+        source: ImageSource.gallery,
+        imageQuality: 80, // Compress slightly
+      );
+      if (image != null) {
+        setState(() {
+          _selectedImages.add(image);
+        });
+      }
+    } catch (e) {
+      Get.snackbar("错误", "无法选择图片: $e");
+    }
+  }
+
+  void _removeImage(int index) {
+    setState(() {
+      _selectedImages.removeAt(index);
+    });
   }
 
   Future<void> _submitFeedback() async {
@@ -37,16 +69,20 @@ class _AboutViewState extends State<AboutView> {
 
     setState(() => _isSubmitting = true);
 
-    // Simulator network delay
-    await Future.delayed(const Duration(seconds: 1));
+    // Simulate upload delay (Text + Images)
+    await Future.delayed(Duration(seconds: 1 + _selectedImages.length));
 
-    // In a real app, send to backend here
-    print("Feedback submitted: $content, Contact: ${_contactController.text}");
+    print("Feedback submitted: $content");
+    print("Contact: ${_contactController.text}");
+    print("Images: ${_selectedImages.map((e) => e.name).toList()}");
 
     if (mounted) {
-      setState(() => _isSubmitting = false);
-      _feedbackController.clear();
-      _contactController.clear();
+      setState(() {
+        _isSubmitting = false;
+        _feedbackController.clear();
+        _contactController.clear();
+        _selectedImages.clear();
+      });
 
       Get.snackbar(
         "提交成功",
@@ -228,6 +264,88 @@ class _AboutViewState extends State<AboutView> {
             contentPadding: const EdgeInsets.all(16),
           ),
         ),
+        const SizedBox(height: 16),
+
+        // Image Picker Area
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // 1. Image List
+            ..._selectedImages.asMap().entries.map((entry) {
+              final index = entry.key;
+              final file = entry.value;
+              return Stack(
+                children: [
+                  Container(
+                    width: 70,
+                    height: 70,
+                    margin: const EdgeInsets.only(right: 12),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: Colors.grey[300]!),
+                      image: DecorationImage(
+                        image: kIsWeb
+                            ? NetworkImage(file.path)
+                            : FileImage(File(file.path)) as ImageProvider,
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+                  ),
+                  Positioned(
+                    top: -4,
+                    right: 8, // Adjust for margin
+                    child: GestureDetector(
+                      onTap: () => _removeImage(index),
+                      child: Container(
+                        padding: const EdgeInsets.all(2),
+                        decoration: const BoxDecoration(
+                          color: Colors.red,
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.close,
+                          size: 12,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              );
+            }),
+
+            // 2. Add Button (Show if < 3)
+            if (_selectedImages.length < 3)
+              InkWell(
+                onTap: _pickImage,
+                child: Container(
+                  width: 70,
+                  height: 70,
+                  decoration: BoxDecoration(
+                    color: Colors.grey[50],
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Colors.grey[300]!, width: 1),
+                  ),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.add_a_photo,
+                        color: Colors.grey[400],
+                        size: 24,
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        "${_selectedImages.length}/3",
+                        style: TextStyle(fontSize: 10, color: Colors.grey[400]),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+          ],
+        ),
+
         const SizedBox(height: 16),
         TextField(
           controller: _contactController,
