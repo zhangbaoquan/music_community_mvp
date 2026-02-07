@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../core/shim_google_fonts.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:timeago/timeago.dart' as timeago;
 import 'admin_user_detail_view.dart';
+import 'admin_controller.dart';
 
 class ManageUsersView extends StatefulWidget {
   const ManageUsersView({super.key});
@@ -13,34 +13,14 @@ class ManageUsersView extends StatefulWidget {
 }
 
 class _ManageUsersViewState extends State<ManageUsersView> {
-  final _supabase = Supabase.instance.client;
-  final RxList<Map<String, dynamic>> users = <Map<String, dynamic>>[].obs;
-  final RxBool isLoading = false.obs;
+  final AdminController controller = Get.find<AdminController>();
 
   @override
   void initState() {
     super.initState();
-    fetchUsers();
-  }
-
-  Future<void> fetchUsers() async {
-    try {
-      isLoading.value = true;
-      // Fetch all profiles
-      final response = await _supabase
-          .from('profiles')
-          .select()
-          .order(
-            'updated_at',
-            ascending: false,
-          ); // Use updated_at as proxy for activity
-
-      users.value = List<Map<String, dynamic>>.from(response);
-    } catch (e) {
-      Get.snackbar('Error', 'Failed to load users: $e');
-    } finally {
-      isLoading.value = false;
-    }
+    // Only fetch if empty to avoid reloading when switching tabs back and forth too often,
+    // or always fetch to ensure freshness. Let's stick to safe "always fetch" for admin panel.
+    controller.fetchUsers();
   }
 
   @override
@@ -61,7 +41,7 @@ class _ManageUsersViewState extends State<ManageUsersView> {
                 ),
               ),
               IconButton(
-                onPressed: fetchUsers,
+                onPressed: controller.fetchUsers,
                 icon: const Icon(Icons.refresh),
                 tooltip: "刷新列表",
               ),
@@ -70,10 +50,10 @@ class _ManageUsersViewState extends State<ManageUsersView> {
           const SizedBox(height: 16),
           Expanded(
             child: Obx(() {
-              if (isLoading.value) {
+              if (controller.isLoadingUsers.value) {
                 return const Center(child: CircularProgressIndicator());
               }
-              if (users.isEmpty) {
+              if (controller.users.isEmpty) {
                 return const Center(child: Text("暂无用户"));
               }
 
@@ -85,27 +65,27 @@ class _ManageUsersViewState extends State<ManageUsersView> {
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: DataTable(
-                    showCheckboxColumn:
-                        false, // Make row clickable without checkbox
+                    showCheckboxColumn: false,
                     columns: const [
                       DataColumn(label: Text("头像")),
                       DataColumn(label: Text("昵称")),
-                      DataColumn(label: Text("签名")),
+                      DataColumn(label: Text("状态")),
                       DataColumn(label: Text("最近活跃")),
                       DataColumn(label: Text("操作")),
                     ],
-                    rows: users.map((user) {
+                    rows: controller.users.map((user) {
                       final avatarUrl = user['avatar_url'] as String?;
                       final username = user['username'] ?? "Unknown";
                       final signature = user['signature'] ?? "-";
-                      // updated_at is auto-managed by Supabase usually
                       final time =
                           DateTime.tryParse(user['updated_at'].toString()) ??
                           DateTime.now();
 
+                      final status = user['status'] ?? 'active';
+                      final isBanned = status == 'banned';
+
                       return DataRow(
                         onSelectChanged: (_) {
-                          // Navigate to detail view
                           Get.to(
                             () => AdminUserDetailView(
                               userId: user['id'],
@@ -138,25 +118,91 @@ class _ManageUsersViewState extends State<ManageUsersView> {
                             ),
                           ),
                           DataCell(
-                            Text(
-                              username,
-                              style: const TextStyle(
-                                fontWeight: FontWeight.bold,
-                              ),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Text(
+                                  username,
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                Text(
+                                  signature,
+                                  style: const TextStyle(
+                                    fontSize: 10,
+                                    color: Colors.grey,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ],
                             ),
                           ),
                           DataCell(
-                            SizedBox(
-                              width: 200,
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 2,
+                              ),
+                              decoration: BoxDecoration(
+                                color: isBanned
+                                    ? Colors.red[100]
+                                    : Colors.green[100],
+                                borderRadius: BorderRadius.circular(4),
+                              ),
                               child: Text(
-                                signature,
-                                overflow: TextOverflow.ellipsis,
+                                isBanned ? "已封禁" : "正常",
+                                style: TextStyle(
+                                  color: isBanned ? Colors.red : Colors.green,
+                                  fontSize: 12,
+                                ),
                               ),
                             ),
                           ),
                           DataCell(Text(timeago.format(time, locale: 'zh'))),
                           DataCell(
-                            const Icon(Icons.chevron_right, color: Colors.grey),
+                            PopupMenuButton<String>(
+                              onSelected: (value) {
+                                if (value == 'ban') {
+                                  _showBanDialog(
+                                    context,
+                                    user['id'],
+                                    username,
+                                    controller,
+                                  );
+                                } else if (value == 'unban') {
+                                  controller.unbanUser(user['id']);
+                                } else if (value == 'clear') {
+                                  _showClearContentDialog(
+                                    context,
+                                    user['id'],
+                                    username,
+                                    controller,
+                                  );
+                                }
+                              },
+                              itemBuilder: (context) => [
+                                if (!isBanned)
+                                  const PopupMenuItem(
+                                    value: 'ban',
+                                    child: Text('封禁用户'),
+                                  )
+                                else
+                                  const PopupMenuItem(
+                                    value: 'unban',
+                                    child: Text('解封用户'),
+                                  ),
+                                const PopupMenuItem(
+                                  value: 'clear',
+                                  child: Text(
+                                    '清空内容',
+                                    style: TextStyle(color: Colors.red),
+                                  ),
+                                ),
+                              ],
+                              icon: const Icon(Icons.more_vert),
+                            ),
                           ),
                         ],
                       );
@@ -168,6 +214,77 @@ class _ManageUsersViewState extends State<ManageUsersView> {
           ),
         ],
       ),
+    );
+  }
+
+  void _showBanDialog(
+    BuildContext context,
+    String userId,
+    String username,
+    AdminController controller,
+  ) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text("封禁用户: $username"),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                title: const Text("1 天"),
+                onTap: () => {Get.back(), controller.banUser(userId, 1)},
+              ),
+              ListTile(
+                title: const Text("7 天"),
+                onTap: () => {Get.back(), controller.banUser(userId, 7)},
+              ),
+              ListTile(
+                title: const Text("1 个月"),
+                onTap: () => {Get.back(), controller.banUser(userId, 30)},
+              ),
+              ListTile(
+                title: const Text("永久封禁"),
+                onTap: () => {Get.back(), controller.banUser(userId, 36500)},
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(onPressed: () => Get.back(), child: const Text("取消")),
+          ],
+        );
+      },
+    );
+  }
+
+  void _showClearContentDialog(
+    BuildContext context,
+    String userId,
+    String username,
+    AdminController controller,
+  ) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text("⚠️ 危险操作", style: TextStyle(color: Colors.red)),
+          content: Text("确定要清空用户 [$username] 的所有内容吗？\n包括文章、评论、动态等。\n此操作不可恢复！"),
+          actions: [
+            TextButton(onPressed: () => Get.back(), child: const Text("取消")),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red,
+                foregroundColor: Colors.white,
+              ),
+              onPressed: () {
+                Get.back();
+                controller.clearUserContent(userId);
+              },
+              child: const Text("确认清空"),
+            ),
+          ],
+        );
+      },
     );
   }
 }

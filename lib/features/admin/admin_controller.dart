@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:music_community_mvp/data/models/feedback_model.dart';
@@ -10,6 +11,9 @@ class AdminController extends GetxController {
 
   final feedbacks = <FeedbackModel>[].obs;
   final isLoadingFeedbacks = false.obs;
+
+  final users = <Map<String, dynamic>>[].obs;
+  final isLoadingUsers = false.obs;
 
   @override
   void onInit() {
@@ -28,7 +32,11 @@ class AdminController extends GetxController {
 
   void switchTab(int index) {
     currentTab.value = index;
-    if (index == 5) {
+    if (index == 4) {
+      // Users tab
+      fetchUsers();
+    } else if (index == 5) {
+      // Feedbacks tab
       fetchFeedbacks();
     }
   }
@@ -47,6 +55,22 @@ class AdminController extends GetxController {
     }
   }
 
+  Future<void> fetchUsers() async {
+    try {
+      isLoadingUsers.value = true;
+      final response = await Supabase.instance.client
+          .from('profiles')
+          .select()
+          .order('updated_at', ascending: false);
+
+      users.value = List<Map<String, dynamic>>.from(response);
+    } catch (e) {
+      Get.snackbar('Error', 'Failed to load users: $e');
+    } finally {
+      isLoadingUsers.value = false;
+    }
+  }
+
   Future<void> fetchFeedbacks() async {
     try {
       isLoadingFeedbacks.value = true;
@@ -58,9 +82,7 @@ class AdminController extends GetxController {
       final data = response as List<dynamic>;
       feedbacks.value = data.map((e) => FeedbackModel.fromMap(e)).toList();
 
-      // Update count locally based on fetched data if we have all data,
-      // or just re-fetch count to be safe/consistent
-      // Simple approach: count locally from fetched list if we fetched ALL (no pagination yet)
+      // Update count locally
       unresolvedCount.value = feedbacks
           .where((f) => f.status != 'resolved')
           .length;
@@ -103,6 +125,98 @@ class AdminController extends GetxController {
       Get.snackbar('Success', 'Reply sent successfully');
     } catch (e) {
       Get.snackbar('Error', 'Failed to reply: $e');
+    }
+  }
+
+  // --- User Management ---
+
+  Future<void> banUser(String userId, int days) async {
+    try {
+      final bannedUntil = DateTime.now().add(Duration(days: days));
+      await Supabase.instance.client
+          .from('profiles')
+          .update({
+            'status': 'banned',
+            'banned_until': bannedUntil.toIso8601String(),
+          })
+          .eq('id', userId);
+
+      Get.snackbar('成功', '用户已封禁 ${days > 30000 ? "永久" : "$days 天"}');
+
+      // Optimistic Update
+      final index = users.indexWhere((u) => u['id'] == userId);
+      if (index != -1) {
+        // Create a new map to ensure reactivity triggers
+        final updatedUser = Map<String, dynamic>.from(users[index]);
+        updatedUser['status'] = 'banned';
+        updatedUser['banned_until'] = bannedUntil.toIso8601String();
+        users[index] = updatedUser;
+        users.refresh();
+      }
+    } catch (e) {
+      print("Ban Error: $e");
+      Get.snackbar('错误', '封禁失败: $e');
+    }
+  }
+
+  Future<void> unbanUser(String userId) async {
+    try {
+      await Supabase.instance.client
+          .from('profiles')
+          .update({'status': 'active', 'banned_until': null})
+          .eq('id', userId);
+
+      Get.snackbar('成功', '用户已解封');
+
+      // Optimistic Update
+      final index = users.indexWhere((u) => u['id'] == userId);
+      if (index != -1) {
+        final updatedUser = Map<String, dynamic>.from(users[index]);
+        updatedUser['status'] = 'active';
+        updatedUser['banned_until'] = null;
+        users[index] = updatedUser;
+        users.refresh();
+      }
+    } catch (e) {
+      print("Unban Error: $e");
+      Get.snackbar('错误', '解封失败: $e');
+    }
+  }
+
+  Future<void> clearUserContent(String userId) async {
+    try {
+      Get.dialog(
+        const Center(child: CircularProgressIndicator()),
+        barrierDismissible: false,
+      );
+
+      final client = Supabase.instance.client;
+
+      // 1. Delete Articles (Comments should cascade ideally, but let's delete explicitly if needed)
+      // Supabase cascade usually handles comments/likes if setup correctly.
+      // Assuming ON DELETE CASCADE on foreign keys.
+      await client.from('articles').delete().eq('author_id', userId);
+
+      // 2. Delete Diaries
+      await client.from('diaries').delete().eq('user_id', userId);
+
+      // 3. Delete Comments made by user (on others' posts)
+      await client.from('comments').delete().eq('user_id', userId);
+
+      // 4. Delete Messages (Sent by user)
+      // Note: This leaves the conversation for the other person but missing sender content?
+      // Or we delete the message row.
+      await client.from('messages').delete().eq('sender_id', userId);
+
+      // 5. Delete Notifications (triggered by user)
+      await client.from('notifications').delete().eq('actor_id', userId);
+
+      if (Get.isDialogOpen ?? false) Get.back();
+      Get.snackbar('成功', '用户内容已清空');
+    } catch (e) {
+      if (Get.isDialogOpen ?? false) Get.back();
+      print("Clear Content Error: $e");
+      Get.snackbar('错误', '清空失败: $e');
     }
   }
 }
