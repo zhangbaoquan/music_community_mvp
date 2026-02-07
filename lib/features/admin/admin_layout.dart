@@ -101,6 +101,22 @@ class AdminLayout extends StatelessWidget {
       selected: isSelected,
       selectedTileColor: Colors.white,
       onTap: () => controller.switchTab(index),
+      trailing:
+          (index == 5) // Feedback Tab Index
+          ? Obx(() {
+              if (controller.unresolvedCount.value > 0) {
+                return Container(
+                  width: 8,
+                  height: 8,
+                  decoration: const BoxDecoration(
+                    color: Colors.red,
+                    shape: BoxShape.circle,
+                  ),
+                );
+              }
+              return const SizedBox.shrink();
+            })
+          : null,
     );
   }
 }

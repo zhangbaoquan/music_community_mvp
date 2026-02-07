@@ -21,12 +21,29 @@ class AdminController extends GetxController {
         Get.offAllNamed('/home');
       }
     });
+
+    // Fetch initial count
+    fetchUnresolvedCount();
   }
 
   void switchTab(int index) {
     currentTab.value = index;
     if (index == 5) {
       fetchFeedbacks();
+    }
+  }
+
+  final unresolvedCount = 0.obs;
+
+  Future<void> fetchUnresolvedCount() async {
+    try {
+      final count = await Supabase.instance.client
+          .from('feedbacks')
+          .count(CountOption.exact)
+          .neq('status', 'resolved');
+      unresolvedCount.value = count;
+    } catch (e) {
+      print("Error fetching unresolved count: $e");
     }
   }
 
@@ -40,6 +57,13 @@ class AdminController extends GetxController {
 
       final data = response as List<dynamic>;
       feedbacks.value = data.map((e) => FeedbackModel.fromMap(e)).toList();
+
+      // Update count locally based on fetched data if we have all data,
+      // or just re-fetch count to be safe/consistent
+      // Simple approach: count locally from fetched list if we fetched ALL (no pagination yet)
+      unresolvedCount.value = feedbacks
+          .where((f) => f.status != 'resolved')
+          .length;
     } catch (e) {
       Get.snackbar('Error', 'Failed to load feedbacks: $e');
     } finally {
