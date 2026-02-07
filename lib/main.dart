@@ -170,7 +170,7 @@ class _AppStartupScreenState extends State<AppStartupScreen> {
       setState(() => status = "准备就绪 (Ready)");
 
       // Inject AuthController to handle navigation logic (Auto-login / Redirect)
-      Get.put(AuthController());
+      Get.put(AuthController(), permanent: true);
     } catch (e) {
       setState(() => status = "初始化失败 (Error): $e");
     }
