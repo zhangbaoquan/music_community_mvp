@@ -27,7 +27,7 @@ class MainLayout extends StatelessWidget {
   MainLayout({super.key});
 
   final NavigationController navCtrl = Get.put(NavigationController());
-  final AuthController authCtrl = Get.find();
+  // Removed explicit authCtrl to avoid Get.find error on refresh if not yet initialized
   final PlayerController playerCtrl = Get.put(PlayerController());
   final ProfileController profileCtrl = Get.put(ProfileController());
   final NotificationService notificationService = Get.put(
@@ -257,7 +257,14 @@ class MainLayout extends StatelessWidget {
             icon: Icons.logout,
             label: '退出登录',
             index: 99,
-            onTap: () => authCtrl.signOut(),
+            onTap: () {
+              if (Get.isRegistered<AuthController>()) {
+                Get.find<AuthController>().signOut();
+              } else {
+                // Fallback or ignore if not ready
+                Get.offAllNamed('/login');
+              }
+            },
           ),
         ],
       ),
