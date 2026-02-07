@@ -6,6 +6,7 @@ import '../../data/models/article.dart';
 import 'package:music_community_mvp/data/models/article_comment.dart';
 import 'package:collection/collection.dart';
 import '../gamification/badge_service.dart';
+import '../profile/profile_controller.dart';
 
 class ArticleController extends GetxController {
   final _supabase = Supabase.instance.client;
@@ -131,6 +132,7 @@ class ArticleController extends GetxController {
 
   /// Toggle Like
   Future<bool> toggleLike(Article article) async {
+    if (!Get.find<ProfileController>().checkActionAllowed('点赞文章')) return false;
     final userId = _supabase.auth.currentUser?.id;
     if (userId == null) return false;
 
@@ -172,6 +174,7 @@ class ArticleController extends GetxController {
 
   /// Toggle Collection
   Future<bool> toggleCollection(Article article) async {
+    if (!Get.find<ProfileController>().checkActionAllowed('收藏文章')) return false;
     final userId = _supabase.auth.currentUser?.id;
     if (userId == null) return false;
 
@@ -363,6 +366,7 @@ class ArticleController extends GetxController {
     String content, {
     String? parentId,
   }) async {
+    if (!Get.find<ProfileController>().checkActionAllowed('发布评论')) return false;
     final user = _supabase.auth.currentUser;
     if (user == null) {
       Get.snackbar('错误', '请先登录');
@@ -438,6 +442,7 @@ class ArticleController extends GetxController {
 
   // Toggle Comment Like
   Future<void> toggleCommentLike(ArticleComment comment) async {
+    if (!Get.find<ProfileController>().checkActionAllowed('点赞评论')) return;
     final user = _supabase.auth.currentUser;
     if (user == null) {
       Get.snackbar('提示', '请先登录');
@@ -510,6 +515,7 @@ class ArticleController extends GetxController {
 
   /// Delete Article
   Future<bool> deleteArticle(String articleId) async {
+    if (!Get.find<ProfileController>().checkActionAllowed('删除文章')) return false;
     try {
       await _supabase.from('articles').delete().eq('id', articleId);
       articles.removeWhere((a) => a.id == articleId);

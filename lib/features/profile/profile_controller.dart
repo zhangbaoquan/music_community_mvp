@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -13,6 +14,32 @@ class ProfileController extends GetxController {
   final signature = ''.obs;
   final isAdmin = false.obs; // NEW: Admin status
   final diaryCount = 0.obs;
+
+  // Ban Status
+  final status = 'active'.obs;
+  final bannedUntil = Rx<DateTime?>(null);
+
+  bool get isBanned {
+    if (status.value != 'banned') return false;
+    // If banned_until is null, assume permanent ban
+    // If it has a date, check if it's in the future
+    if (bannedUntil.value == null) return true;
+    return bannedUntil.value!.isAfter(DateTime.now());
+  }
+
+  bool checkActionAllowed(String actionName) {
+    if (isBanned) {
+      Get.snackbar(
+        '当前处于封禁中',
+        '您已被封禁，不能进行此操作 ($actionName)',
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+        snackPosition: SnackPosition.BOTTOM,
+      );
+      return false;
+    }
+    return true;
+  }
 
   // Social Stats
   final followingCount = 0.obs;
@@ -40,7 +67,7 @@ class ProfileController extends GetxController {
         final response = await _supabase
             .from('profiles')
             .select(
-              'username, avatar_url, signature, is_admin',
+              'username, avatar_url, signature, is_admin, status, banned_until',
             ) // Updated selection
             .eq('id', user.id)
             .single();
@@ -48,8 +75,16 @@ class ProfileController extends GetxController {
         username.value = response['username'] as String? ?? '';
         avatarUrl.value = response['avatar_url'] as String? ?? '';
         signature.value = response['signature'] as String? ?? '';
-        isAdmin.value =
-            response['is_admin'] as bool? ?? false; // Update isAdmin
+        isAdmin.value = response['is_admin'] as bool? ?? false;
+
+        // Ban Info
+        status.value = response['status'] as String? ?? 'active';
+        final bannedUntilStr = response['banned_until'] as String?;
+        if (bannedUntilStr != null) {
+          bannedUntil.value = DateTime.tryParse(bannedUntilStr);
+        } else {
+          bannedUntil.value = null;
+        }
 
         // Fetch Diaries Count
         final statsResponse = await _supabase
@@ -202,6 +237,8 @@ class ProfileController extends GetxController {
     String? newSignature,
     PlatformFile? newAvatar,
   }) async {
+    if (!checkActionAllowed('编辑资料')) return false;
+
     final user = _supabase.auth.currentUser;
     if (user == null) return false;
 

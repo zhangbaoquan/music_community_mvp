@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../data/models/song.dart';
+import '../profile/profile_controller.dart';
 
 class MusicController extends GetxController {
   final _supabase = Supabase.instance.client;
@@ -64,6 +65,7 @@ class MusicController extends GetxController {
     XFile? coverFile,
     List<String> moodTags = const [],
   }) async {
+    if (!Get.find<ProfileController>().checkActionAllowed('上传音乐')) return false;
     try {
       isUploading.value = true;
       uploadProgress.value =
@@ -157,6 +159,7 @@ class MusicController extends GetxController {
   }
 
   Future<bool> deleteSong(String songId) async {
+    if (!Get.find<ProfileController>().checkActionAllowed('删除音乐')) return false;
     try {
       // 1. Delete from DB (RLS will handle permission check)
       await _supabase.from('songs').delete().eq('id', songId);

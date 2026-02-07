@@ -89,15 +89,43 @@ class ProfileView extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Obx(
-                              () => Text(
-                                controller.username.value.isNotEmpty
-                                    ? controller.username.value
-                                    : '未设置昵称',
-                                style: GoogleFonts.outfit(
-                                  fontSize: 24,
-                                  fontWeight: FontWeight.w600,
-                                  color: const Color(0xFF1A1A1A),
-                                ),
+                              () => Row(
+                                children: [
+                                  Text(
+                                    controller.username.value.isNotEmpty
+                                        ? controller.username.value
+                                        : '未设置昵称',
+                                    style: GoogleFonts.outfit(
+                                      fontSize: 24,
+                                      fontWeight: FontWeight.w600,
+                                      color: const Color(0xFF1A1A1A),
+                                    ),
+                                  ),
+                                  if (controller.isBanned) ...[
+                                    const SizedBox(width: 8),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 8,
+                                        vertical: 2,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: Colors.red[50],
+                                        borderRadius: BorderRadius.circular(4),
+                                        border: Border.all(
+                                          color: Colors.red[200]!,
+                                        ),
+                                      ),
+                                      child: const Text(
+                                        "违规封禁中",
+                                        style: TextStyle(
+                                          color: Colors.red,
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ],
                               ),
                             ),
                             const SizedBox(height: 8),
@@ -133,7 +161,11 @@ class ProfileView extends StatelessWidget {
                         borderRadius: BorderRadius.circular(16),
                       ),
                       child: TextButton.icon(
-                        onPressed: () => Get.dialog(const EditProfileDialog()),
+                        onPressed: () {
+                          if (controller.checkActionAllowed('编辑资料')) {
+                            Get.dialog(const EditProfileDialog());
+                          }
+                        },
                         icon: const Icon(
                           Icons.edit,
                           size: 14,
@@ -231,6 +263,7 @@ class ProfileView extends StatelessWidget {
 
   Widget _buildMyArticlesSection() {
     final articleController = Get.put(ArticleController());
+    final controller = Get.find<ProfileController>();
     final currentUser = Supabase.instance.client.auth.currentUser;
     if (currentUser != null) {
       articleController.fetchUserArticles(currentUser.id);
@@ -293,7 +326,11 @@ class ProfileView extends StatelessWidget {
                         ),
                       const SizedBox(width: 8),
                       ElevatedButton.icon(
-                        onPressed: () => Get.toNamed('/editor'),
+                        onPressed: () {
+                          if (controller.checkActionAllowed('发布文章')) {
+                            Get.toNamed('/editor');
+                          }
+                        },
                         icon: const Icon(Icons.edit_note, size: 18),
                         label: const Text("写文章"),
                         style: ElevatedButton.styleFrom(
@@ -340,7 +377,11 @@ class ProfileView extends StatelessWidget {
                       ),
                       const SizedBox(height: 8),
                       TextButton(
-                        onPressed: () => Get.toNamed('/editor'),
+                        onPressed: () {
+                          if (controller.checkActionAllowed('发布文章')) {
+                            Get.toNamed('/editor');
+                          }
+                        },
                         child: const Text("去写第一篇"),
                       ),
                     ],
@@ -503,10 +544,17 @@ class ProfileView extends StatelessWidget {
                                               _CompactActionButton(
                                                 icon: Icons.edit,
                                                 tooltip: "编辑",
-                                                onTap: () => Get.toNamed(
-                                                  '/editor',
-                                                  arguments: article,
-                                                ),
+                                                onTap: () {
+                                                  if (controller
+                                                      .checkActionAllowed(
+                                                        '编辑文章',
+                                                      )) {
+                                                    Get.toNamed(
+                                                      '/editor',
+                                                      arguments: article,
+                                                    );
+                                                  }
+                                                },
                                               ),
                                               const SizedBox(width: 4),
                                               _CompactActionButton(
@@ -514,6 +562,11 @@ class ProfileView extends StatelessWidget {
                                                 tooltip: "删除",
                                                 color: Colors.red[300],
                                                 onTap: () {
+                                                  if (!controller
+                                                      .checkActionAllowed(
+                                                        '删除文章',
+                                                      ))
+                                                    return;
                                                   Get.defaultDialog(
                                                     title: "确认删除",
                                                     titlePadding:
@@ -574,6 +627,7 @@ class ProfileView extends StatelessWidget {
   Widget _buildMyMusicSection() {
     // Ensure MusicController is available
     final musicController = Get.put(MusicController());
+    final controller = Get.find<ProfileController>();
     // Trigger fetch for current user
     final currentUser = Supabase.instance.client.auth.currentUser;
     if (currentUser != null) {
@@ -595,7 +649,11 @@ class ProfileView extends StatelessWidget {
               ),
             ),
             ElevatedButton.icon(
-              onPressed: () => Get.toNamed('/upload_music'),
+              onPressed: () {
+                if (controller.checkActionAllowed('上传音乐')) {
+                  Get.toNamed('/upload_music');
+                }
+              },
               icon: const Icon(Icons.upload_file, size: 18),
               label: const Text("上传乐曲"),
               style: ElevatedButton.styleFrom(
@@ -645,7 +703,11 @@ class ProfileView extends StatelessWidget {
                   ),
                   const SizedBox(height: 8),
                   TextButton(
-                    onPressed: () => Get.toNamed('/upload_music'),
+                    onPressed: () {
+                      if (controller.checkActionAllowed('上传音乐')) {
+                        Get.toNamed('/upload_music');
+                      }
+                    },
                     child: const Text("去发布第一首"),
                   ),
                 ],

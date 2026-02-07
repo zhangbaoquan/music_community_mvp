@@ -165,6 +165,28 @@ class _UserProfileViewState extends State<UserProfileView> {
                     fontStyle: FontStyle.italic,
                   ),
                 ),
+                if (_profileData!['status'] == 'banned') ...[
+                  const SizedBox(height: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 2,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.red[50],
+                      borderRadius: BorderRadius.circular(4),
+                      border: Border.all(color: Colors.red[200]!),
+                    ),
+                    child: const Text(
+                      "违规封禁中",
+                      style: TextStyle(
+                        color: Colors.red,
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ],
               ],
             ),
           ),

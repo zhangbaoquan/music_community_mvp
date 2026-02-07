@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:music_community_mvp/core/shim_google_fonts.dart';
+import '../profile/profile_controller.dart';
 import 'diary_controller.dart';
 import 'package:intl/intl.dart';
 
@@ -110,6 +111,12 @@ class _DiaryViewState extends State<DiaryView> {
                     // Save Button
                     ElevatedButton(
                       onPressed: () {
+                        if (!Get.find<ProfileController>().checkActionAllowed(
+                          '发布日记',
+                        )) {
+                          return;
+                        }
+
                         if (textController.text.isNotEmpty) {
                           controller.addEntry(
                             textController.text,

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:music_community_mvp/data/models/article.dart';
 import 'article_controller.dart';
+import '../profile/profile_controller.dart';
 
 import 'package:timeago/timeago.dart' as timeago;
 
@@ -16,7 +17,9 @@ class ArticleListView extends StatelessWidget {
     return Scaffold(
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          Get.toNamed('/editor');
+          if (Get.find<ProfileController>().checkActionAllowed('发布文章')) {
+            Get.toNamed('/editor');
+          }
         },
         child: const Icon(Icons.edit_note),
       ),

@@ -1,4 +1,5 @@
 import 'package:get/get.dart';
+import '../profile/profile_controller.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class DiaryEntry {
@@ -69,6 +70,7 @@ class DiaryController extends GetxController {
   }
 
   Future<void> addEntry(String content, String mood) async {
+    if (!Get.find<ProfileController>().checkActionAllowed('发布日记')) return;
     try {
       final userId = _supabase.auth.currentUser?.id;
       if (userId == null) {

@@ -482,6 +482,11 @@ class _ArticleDetailViewState extends State<ArticleDetailView> {
               Expanded(
                 child: GestureDetector(
                   onTap: () {
+                    if (!Get.find<ProfileController>().checkActionAllowed(
+                      '发布评论',
+                    )) {
+                      return;
+                    }
                     // Open drawer in "All Comments" mode (or generic input mode)
                     Get.find<ArticleController>().selectedThread.value = null;
                     _scaffoldKey.currentState?.openEndDrawer();
@@ -524,6 +529,11 @@ class _ArticleDetailViewState extends State<ArticleDetailView> {
                     isActive: _currentArticle.isLiked,
                     activeColor: Colors.red,
                     onTap: () async {
+                      if (!Get.find<ProfileController>().checkActionAllowed(
+                        '点赞文章',
+                      )) {
+                        return;
+                      }
                       await Get.find<ArticleController>().toggleLike(
                         _currentArticle,
                       );
@@ -539,6 +549,11 @@ class _ArticleDetailViewState extends State<ArticleDetailView> {
                     isActive: _currentArticle.isCollected,
                     activeColor: Colors.orange,
                     onTap: () async {
+                      if (!Get.find<ProfileController>().checkActionAllowed(
+                        '收藏文章',
+                      )) {
+                        return;
+                      }
                       await Get.find<ArticleController>().toggleCollection(
                         _currentArticle,
                       );
