@@ -4,6 +4,7 @@ import 'package:music_community_mvp/core/shim_google_fonts.dart';
 import 'package:music_community_mvp/features/search/search_view.dart';
 import 'package:music_community_mvp/features/messages/chat_list_view.dart';
 import 'package:music_community_mvp/features/messages/message_controller.dart';
+import 'package:music_community_mvp/features/messages/message_center_view.dart';
 import '../player/player_bar.dart';
 import '../home/home_view.dart';
 import '../player/player_controller.dart';
@@ -42,13 +43,11 @@ class MainLayout extends StatelessWidget {
     const DiaryView(),
     // Tab 2: Profile
     const ProfileView(),
-    // Tab 3: Notifications
-    const NotificationView(),
-    // Tab 4: Search
+    // Tab 3: Search
     const SearchView(),
-    // Tab 5: Messages
-    const ChatListView(),
-    // Tab 6: About
+    // Tab 4: Message Center (Merged)
+    const MessageCenterView(),
+    // Tab 5: About
     const AboutView(),
   ];
 
@@ -88,17 +87,22 @@ class MainLayout extends StatelessWidget {
                   actions: [
                     IconButton(
                       icon: const Icon(Icons.search),
-                      onPressed: () => navCtrl.changePage(4),
+                      onPressed: () => navCtrl.changePage(3),
                     ),
                     Stack(
                       children: [
                         IconButton(
-                          icon: const Icon(Icons.mail_outline),
-                          onPressed: () => navCtrl.changePage(5),
+                          icon: const Icon(Icons.notifications_none),
+                          onPressed: () => navCtrl.changePage(4),
                         ),
                         Obx(() {
                           final msgCtrl = Get.put(MessageController());
-                          if (msgCtrl.unreadCount.value > 0) {
+                          final msgCount = msgCtrl.unreadCount.value;
+                          final notifCount =
+                              notificationService.unreadCount.value;
+                          final totalCount = msgCount + notifCount;
+
+                          if (totalCount > 0) {
                             return Positioned(
                               right: 8,
                               top: 8,
@@ -181,42 +185,54 @@ class MainLayout extends StatelessWidget {
           ),
           _navItem(icon: Icons.radio_button_checked, label: '心情驿站', index: 0),
           _navItem(icon: Icons.book, label: '心事角落', index: 1),
-          _navItem(icon: Icons.search, label: '搜索发现', index: 4),
+          _navItem(icon: Icons.search, label: '搜索发现', index: 3),
           Obx(() {
             final msgCtrl = Get.put(MessageController());
-            final count = msgCtrl.unreadCount.value;
-            return _navItem(
-              icon: Icons.mail_outline,
-              label: count > 0 ? '消息 ($count)' : '消息中心',
-              index: 5,
-            );
-          }),
-          _navItem(icon: Icons.person, label: '个人中心', index: 2),
-          Obx(() {
-            final unread = notificationService.unreadCount.value;
+            final msgCount = msgCtrl.unreadCount.value;
+            final notifCount = notificationService.unreadCount.value;
+            final totalCount = msgCount + notifCount;
+
             return Stack(
               clipBehavior: Clip.none,
               children: [
-                _navItem(icon: Icons.notifications, label: '通知消息', index: 3),
-                if (unread > 0)
+                _navItem(
+                  icon: Icons.notifications_none,
+                  label: '消息中心',
+                  index: 4,
+                ),
+                if (totalCount > 0)
                   Positioned(
                     right: 12,
                     top: 12,
                     child: Container(
-                      padding: const EdgeInsets.all(4),
-                      decoration: const BoxDecoration(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 4,
+                        vertical: 2,
+                      ),
+                      decoration: BoxDecoration(
                         color: Colors.red,
-                        shape: BoxShape.circle,
+                        borderRadius: BorderRadius.circular(10),
                       ),
                       constraints: const BoxConstraints(
-                        minWidth: 8,
-                        minHeight: 8,
+                        minWidth: 16,
+                        minHeight: 16,
+                      ),
+                      child: Center(
+                        child: Text(
+                          totalCount > 99 ? '99+' : '$totalCount',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                       ),
                     ),
                   ),
               ],
             );
           }),
+          _navItem(icon: Icons.person, label: '个人中心', index: 2),
           const Spacer(),
           Obx(() {
             if (profileCtrl.isAdmin.value) {
@@ -238,7 +254,7 @@ class MainLayout extends StatelessWidget {
             index: 77,
             onTap: () => Get.dialog(const SponsorDialog()),
           ),
-          _navItem(icon: Icons.info_outline, label: '关于与帮助', index: 6),
+          _navItem(icon: Icons.info_outline, label: '关于与帮助', index: 5),
           _navItem(
             icon: Icons.logout,
             label: '退出登录',
@@ -268,11 +284,15 @@ class MainLayout extends StatelessWidget {
           const BottomNavigationBarItem(icon: Icon(Icons.person), label: '我的'),
           BottomNavigationBarItem(
             icon: Obx(() {
-              final unread = notificationService.unreadCount.value;
+              final msgCtrl = Get.put(MessageController());
+              final msgCount = msgCtrl.unreadCount.value;
+              final notifCount = notificationService.unreadCount.value;
+              final totalCount = msgCount + notifCount;
+
               return Badge(
-                isLabelVisible: unread > 0,
-                label: Text('$unread'),
-                child: const Icon(Icons.notifications),
+                isLabelVisible: totalCount > 0,
+                label: Text('$totalCount'),
+                child: const Icon(Icons.notifications_none),
               );
             }),
             label: '消息',
