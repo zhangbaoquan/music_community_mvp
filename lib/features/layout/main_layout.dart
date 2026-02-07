@@ -13,6 +13,7 @@ import '../auth/auth_controller.dart';
 import '../notifications/notification_service.dart';
 import '../notifications/notification_view.dart';
 import '../profile/profile_controller.dart';
+import '../about/about_view.dart';
 
 class NavigationController extends GetxController {
   final RxInt selectedIndex = 0.obs;
@@ -46,6 +47,8 @@ class MainLayout extends StatelessWidget {
     const SearchView(),
     // Tab 5: Messages
     const ChatListView(),
+    // Tab 6: About
+    const AboutView(),
   ];
 
   @override
@@ -228,6 +231,7 @@ class MainLayout extends StatelessWidget {
             }
             return const SizedBox.shrink();
           }),
+          _navItem(icon: Icons.info_outline, label: '关于与帮助', index: 6),
           _navItem(
             icon: Icons.logout,
             label: '退出登录',

@@ -22,6 +22,7 @@ import 'features/gamification/badge_detail_view.dart';
 import 'features/profile/visitor_list_view.dart';
 import 'features/profile/follow_list_view.dart';
 import 'data/models/article.dart'; // For Article model
+import 'features/about/about_view.dart'; // About and Feedback Data
 
 void main() {
   // Ensure binding, but DO NOT await async calls that Block startup
@@ -81,6 +82,7 @@ class MusicCommunityApp extends StatelessWidget {
       home: AppStartupScreen(),
       getPages: [
         GetPage(name: '/home', page: () => MainLayout()),
+        GetPage(name: '/about', page: () => const AboutView()),
         GetPage(name: '/login', page: () => const LoginView()),
         GetPage(
           name: '/admin',
