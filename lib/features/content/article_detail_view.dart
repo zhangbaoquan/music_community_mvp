@@ -516,8 +516,8 @@ class _ArticleDetailViewState extends State<ArticleDetailView> {
               // 1. Comment Input (Opens Drawer for New Comment)
               Expanded(
                 child: GestureDetector(
-                  onTap: () {
-                    if (!Get.find<ProfileController>().checkActionAllowed(
+                  onTap: () async {
+                    if (!await Get.find<ProfileController>().checkActionAllowed(
                       '发布评论',
                     )) {
                       return;
@@ -564,11 +564,7 @@ class _ArticleDetailViewState extends State<ArticleDetailView> {
                     isActive: _currentArticle.isLiked,
                     activeColor: Colors.red,
                     onTap: () async {
-                      if (!Get.find<ProfileController>().checkActionAllowed(
-                        '点赞文章',
-                      )) {
-                        return;
-                      }
+                      // Controller handles auth check
                       await Get.find<ArticleController>().toggleLike(
                         _currentArticle,
                       );
@@ -584,11 +580,7 @@ class _ArticleDetailViewState extends State<ArticleDetailView> {
                     isActive: _currentArticle.isCollected,
                     activeColor: Colors.orange,
                     onTap: () async {
-                      if (!Get.find<ProfileController>().checkActionAllowed(
-                        '收藏文章',
-                      )) {
-                        return;
-                      }
+                      // Controller handles auth check
                       await Get.find<ArticleController>().toggleCollection(
                         _currentArticle,
                       );
@@ -611,7 +603,11 @@ class _ArticleDetailViewState extends State<ArticleDetailView> {
                         Icons.report_gmailerrorred_outlined,
                         color: Colors.black54,
                       ),
-                      onPressed: () {
+                      onPressed: () async {
+                        if (!await Get.find<ProfileController>()
+                            .checkActionAllowed('举报内容')) {
+                          return;
+                        }
                         Get.dialog(
                           ReportDialog(
                             targetType: 'article',

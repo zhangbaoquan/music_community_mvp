@@ -27,7 +27,35 @@ class ProfileController extends GetxController {
     return bannedUntil.value!.isAfter(DateTime.now());
   }
 
-  bool checkActionAllowed(String actionName) {
+  bool get isGuest => _supabase.auth.currentUser == null;
+
+  Future<bool> requireLogin() async {
+    if (!isGuest) return true;
+    final confirm = await Get.dialog<bool>(
+      AlertDialog(
+        title: const Text('提示'),
+        content: const Text('该功能需要登录后才能使用，是否前往登录？'),
+        actions: [
+          TextButton(
+            onPressed: () => Get.back(result: false),
+            child: const Text('取消'),
+          ),
+          TextButton(
+            onPressed: () => Get.back(result: true),
+            child: const Text('去登录'),
+          ),
+        ],
+      ),
+    );
+    if (confirm == true) {
+      Get.toNamed('/login');
+    }
+    return false;
+  }
+
+  Future<bool> checkActionAllowed(String actionName) async {
+    if (await requireLogin() == false) return false;
+
     if (isBanned) {
       Get.snackbar(
         '当前处于封禁中',
@@ -169,6 +197,8 @@ class ProfileController extends GetxController {
 
   /// Follow a user
   Future<bool> followUser(String targetUserId) async {
+    if (!await checkActionAllowed('关注用户')) return false;
+
     final currentUser = _supabase.auth.currentUser;
     if (currentUser == null) return false;
     if (currentUser.id == targetUserId) return false; // Cannot follow self
@@ -211,6 +241,8 @@ class ProfileController extends GetxController {
 
   /// Unfollow a user
   Future<bool> unfollowUser(String targetUserId) async {
+    if (!await checkActionAllowed('取消关注')) return false;
+
     final currentUser = _supabase.auth.currentUser;
     if (currentUser == null) return false;
 
@@ -237,7 +269,7 @@ class ProfileController extends GetxController {
     String? newSignature,
     PlatformFile? newAvatar,
   }) async {
-    if (!checkActionAllowed('编辑资料')) return false;
+    if (!await checkActionAllowed('编辑资料')) return false;
 
     final user = _supabase.auth.currentUser;
     if (user == null) return false;

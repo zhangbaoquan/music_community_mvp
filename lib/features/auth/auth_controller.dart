@@ -65,8 +65,14 @@ class AuthController extends GetxController {
         Get.offAllNamed(targetRoute);
       }
     } else {
-      // Logged out -> Go Login
-      Get.offAllNamed('/login');
+      // Logged out / Guest
+      // Allow access to public routes. If at root, go to home.
+      var targetRoute = Get.currentRoute;
+      if (targetRoute == '/' || targetRoute.isEmpty) {
+        Get.offAllNamed('/home');
+      }
+      // If on other routes (like /login, /article/...), stay there.
+      // Protected routes should have their own guards or checks.
     }
   }
 

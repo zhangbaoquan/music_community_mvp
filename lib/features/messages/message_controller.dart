@@ -122,7 +122,7 @@ class MessageController extends GetxController {
 
   // 3. Send Message
   Future<void> sendMessage(String partnerId, String content) async {
-    if (!Get.find<ProfileController>().checkActionAllowed('发送私信')) return;
+    if (!await Get.find<ProfileController>().checkActionAllowed('发送私信')) return;
 
     // Safety Check
     if (!Get.find<SafetyService>().canPost(

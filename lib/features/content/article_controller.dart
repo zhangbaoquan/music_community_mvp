@@ -133,7 +133,8 @@ class ArticleController extends GetxController {
 
   /// Toggle Like
   Future<bool> toggleLike(Article article) async {
-    if (!Get.find<ProfileController>().checkActionAllowed('点赞文章')) return false;
+    if (!await Get.find<ProfileController>().checkActionAllowed('点赞文章'))
+      return false;
     final userId = _supabase.auth.currentUser?.id;
     if (userId == null) return false;
 
@@ -175,7 +176,8 @@ class ArticleController extends GetxController {
 
   /// Toggle Collection
   Future<bool> toggleCollection(Article article) async {
-    if (!Get.find<ProfileController>().checkActionAllowed('收藏文章')) return false;
+    if (!await Get.find<ProfileController>().checkActionAllowed('收藏文章'))
+      return false;
     final userId = _supabase.auth.currentUser?.id;
     if (userId == null) return false;
 
@@ -367,7 +369,8 @@ class ArticleController extends GetxController {
     String content, {
     String? parentId,
   }) async {
-    if (!Get.find<ProfileController>().checkActionAllowed('发布评论')) return false;
+    if (!await Get.find<ProfileController>().checkActionAllowed('发布评论'))
+      return false;
 
     // Safety Check
     if (!Get.find<SafetyService>().canPost(
@@ -453,7 +456,7 @@ class ArticleController extends GetxController {
 
   // Toggle Comment Like
   Future<void> toggleCommentLike(ArticleComment comment) async {
-    if (!Get.find<ProfileController>().checkActionAllowed('点赞评论')) return;
+    if (!await Get.find<ProfileController>().checkActionAllowed('点赞评论')) return;
     final user = _supabase.auth.currentUser;
     if (user == null) {
       Get.snackbar('提示', '请先登录');
@@ -526,7 +529,8 @@ class ArticleController extends GetxController {
 
   /// Delete Article
   Future<bool> deleteArticle(String articleId) async {
-    if (!Get.find<ProfileController>().checkActionAllowed('删除文章')) return false;
+    if (!await Get.find<ProfileController>().checkActionAllowed('删除文章'))
+      return false;
     try {
       await _supabase.from('articles').delete().eq('id', articleId);
       articles.removeWhere((a) => a.id == articleId);
@@ -547,7 +551,8 @@ class ArticleController extends GetxController {
     PlatformFile? coverFile,
     String? bgmSongId,
   }) async {
-    if (!Get.find<ProfileController>().checkActionAllowed('更新文章')) return false;
+    if (!await Get.find<ProfileController>().checkActionAllowed('更新文章'))
+      return false;
 
     // Safety Check
     final safetyService = Get.find<SafetyService>();
@@ -614,7 +619,8 @@ class ArticleController extends GetxController {
     PlatformFile? coverFile,
     String? bgmSongId,
   }) async {
-    if (!Get.find<ProfileController>().checkActionAllowed('发布文章')) return false;
+    if (!await Get.find<ProfileController>().checkActionAllowed('发布文章'))
+      return false;
 
     // Safety Check
     final safetyService = Get.find<SafetyService>();

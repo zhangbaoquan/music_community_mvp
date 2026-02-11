@@ -230,7 +230,16 @@ class MainLayout extends StatelessWidget {
               ],
             );
           }),
-          _navItem(icon: Icons.person, label: '个人中心', index: 2),
+          _navItem(
+            icon: Icons.person,
+            label: '个人中心',
+            index: 2,
+            onTap: () async {
+              if (await profileCtrl.requireLogin()) {
+                navCtrl.changePage(2);
+              }
+            },
+          ),
           const Spacer(),
           Obx(() {
             if (profileCtrl.isAdmin.value) {
@@ -253,19 +262,25 @@ class MainLayout extends StatelessWidget {
             onTap: () => Get.dialog(const SponsorDialog()),
           ),
           _navItem(icon: Icons.info_outline, label: '关于与帮助', index: 5),
-          _navItem(
-            icon: Icons.logout,
-            label: '退出登录',
-            index: 99,
-            onTap: () {
-              if (Get.isRegistered<AuthController>()) {
-                Get.find<AuthController>().signOut();
-              } else {
-                // Fallback or ignore if not ready
-                Get.offAllNamed('/login');
-              }
-            },
-          ),
+          Obx(() {
+            final isGuest = profileCtrl.isGuest;
+            return _navItem(
+              icon: isGuest ? Icons.login : Icons.logout,
+              label: isGuest ? '立即登录' : '退出登录',
+              index: 99,
+              onTap: () {
+                if (isGuest) {
+                  Get.toNamed('/login');
+                } else {
+                  if (Get.isRegistered<AuthController>()) {
+                    Get.find<AuthController>().signOut();
+                  } else {
+                    Get.offAllNamed('/login');
+                  }
+                }
+              },
+            );
+          }),
         ],
       ),
     );
@@ -275,7 +290,22 @@ class MainLayout extends StatelessWidget {
     return Obx(
       () => BottomNavigationBar(
         currentIndex: navCtrl.selectedIndex.value,
-        onTap: (index) => navCtrl.changePage(index),
+        onTap: (index) async {
+          // Intercept Profile (2) and Messages (3 in items list, but 3 is Messages?)
+          // Items: 0:Home, 1:Diary, 2:Profile, 3:Messages
+          // NavCtrl Indices: 0:Home, 1:Diary, 2:Profile, 3:Search(Hidden on mobile nav), 4:Messages
+          // Wait, BottomNav items map to: 0->0, 1->1, 2->2, 3->4 (Messages)
+
+          if (index == 2) {
+            if (!await profileCtrl.requireLogin()) return;
+            navCtrl.changePage(2);
+          } else if (index == 3) {
+            if (!await profileCtrl.requireLogin()) return;
+            navCtrl.changePage(4); // Map 3(UI) to 4(Page)
+          } else {
+            navCtrl.changePage(index);
+          }
+        },
         backgroundColor: Colors.white,
         selectedItemColor: const Color(0xFF1A1A1A),
         unselectedItemColor: Colors.grey[400],
@@ -285,8 +315,8 @@ class MainLayout extends StatelessWidget {
             icon: Icon(Icons.radio_button_checked),
             label: '驿站',
           ),
-          const BottomNavigationBarItem(icon: Icon(Icons.book), label: '日记'),
-          const BottomNavigationBarItem(icon: Icon(Icons.person), label: '我的'),
+          BottomNavigationBarItem(icon: Icon(Icons.book), label: '日记'),
+          BottomNavigationBarItem(icon: Icon(Icons.person), label: '我的'),
           BottomNavigationBarItem(
             icon: Obx(() {
               final msgCtrl = Get.put(MessageController());

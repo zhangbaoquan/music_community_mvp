@@ -110,10 +110,9 @@ class _DiaryViewState extends State<DiaryView> {
 
                     // Save Button
                     ElevatedButton(
-                      onPressed: () {
-                        if (!Get.find<ProfileController>().checkActionAllowed(
-                          '发布日记',
-                        )) {
+                      onPressed: () async {
+                        if (!await Get.find<ProfileController>()
+                            .checkActionAllowed('发布日记')) {
                           return;
                         }
 

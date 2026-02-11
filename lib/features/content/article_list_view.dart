@@ -16,8 +16,8 @@ class ArticleListView extends StatelessWidget {
 
     return Scaffold(
       floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          if (Get.find<ProfileController>().checkActionAllowed('发布文章')) {
+        onPressed: () async {
+          if (await Get.find<ProfileController>().checkActionAllowed('发布文章')) {
             Get.toNamed('/editor');
           }
         },

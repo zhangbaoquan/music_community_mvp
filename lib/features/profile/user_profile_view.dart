@@ -99,7 +99,8 @@ class _UserProfileViewState extends State<UserProfileView> {
           if (!_isMe)
             IconButton(
               icon: const Icon(Icons.more_horiz),
-              onPressed: () {
+              onPressed: () async {
+                if (!await _profileCtrl.checkActionAllowed('举报用户')) return;
                 Get.bottomSheet(
                   Container(
                     color: Colors.white,
@@ -231,7 +232,8 @@ class _UserProfileViewState extends State<UserProfileView> {
             _FollowButton(targetUserId: widget.userId),
             const SizedBox(width: 12),
             OutlinedButton.icon(
-              onPressed: () {
+              onPressed: () async {
+                if (!await _profileCtrl.checkActionAllowed('发送私信')) return;
                 Get.toNamed(
                   '/chat/${widget.userId}',
                   parameters: {

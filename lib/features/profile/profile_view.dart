@@ -161,8 +161,8 @@ class ProfileView extends StatelessWidget {
                         borderRadius: BorderRadius.circular(16),
                       ),
                       child: TextButton.icon(
-                        onPressed: () {
-                          if (controller.checkActionAllowed('编辑资料')) {
+                        onPressed: () async {
+                          if (await controller.checkActionAllowed('编辑资料')) {
                             Get.dialog(const EditProfileDialog());
                           }
                         },
@@ -326,8 +326,8 @@ class ProfileView extends StatelessWidget {
                         ),
                       const SizedBox(width: 8),
                       ElevatedButton.icon(
-                        onPressed: () {
-                          if (controller.checkActionAllowed('发布文章')) {
+                        onPressed: () async {
+                          if (await controller.checkActionAllowed('发布文章')) {
                             Get.toNamed('/editor');
                           }
                         },
@@ -377,8 +377,8 @@ class ProfileView extends StatelessWidget {
                       ),
                       const SizedBox(height: 8),
                       TextButton(
-                        onPressed: () {
-                          if (controller.checkActionAllowed('发布文章')) {
+                        onPressed: () async {
+                          if (await controller.checkActionAllowed('发布文章')) {
                             Get.toNamed('/editor');
                           }
                         },
@@ -544,8 +544,8 @@ class ProfileView extends StatelessWidget {
                                               _CompactActionButton(
                                                 icon: Icons.edit,
                                                 tooltip: "编辑",
-                                                onTap: () {
-                                                  if (controller
+                                                onTap: () async {
+                                                  if (await controller
                                                       .checkActionAllowed(
                                                         '编辑文章',
                                                       )) {
@@ -561,8 +561,8 @@ class ProfileView extends StatelessWidget {
                                                 icon: Icons.delete_outline,
                                                 tooltip: "删除",
                                                 color: Colors.red[300],
-                                                onTap: () {
-                                                  if (!controller
+                                                onTap: () async {
+                                                  if (!await controller
                                                       .checkActionAllowed(
                                                         '删除文章',
                                                       ))
@@ -649,8 +649,8 @@ class ProfileView extends StatelessWidget {
               ),
             ),
             ElevatedButton.icon(
-              onPressed: () {
-                if (controller.checkActionAllowed('上传音乐')) {
+              onPressed: () async {
+                if (await controller.checkActionAllowed('上传音乐')) {
                   Get.toNamed('/upload_music');
                 }
               },
@@ -703,8 +703,8 @@ class ProfileView extends StatelessWidget {
                   ),
                   const SizedBox(height: 8),
                   TextButton(
-                    onPressed: () {
-                      if (controller.checkActionAllowed('上传音乐')) {
+                    onPressed: () async {
+                      if (await controller.checkActionAllowed('上传音乐')) {
                         Get.toNamed('/upload_music');
                       }
                     },
