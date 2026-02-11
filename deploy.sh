@@ -2,7 +2,7 @@
 
 # Define variables
 REMOTE_USER="ubuntu"
-REMOTE_HOST="43.154.248.236"
+REMOTE_HOST="62.234.178.73"
 REMOTE_DIR="/var/www/html/"
 LOCAL_DIR="build/web/"
 
