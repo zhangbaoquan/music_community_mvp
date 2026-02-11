@@ -563,6 +563,7 @@ class ArticleController extends GetxController {
         'summary': summary,
         'content': contentJson,
         'bgm_song_id': bgmSongId,
+        'is_published': true, // Auto re-publish if it was hidden
       };
 
       if (coverFile != null) {
