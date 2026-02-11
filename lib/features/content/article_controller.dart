@@ -4,7 +4,7 @@ import 'package:get/get.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../data/models/article.dart';
 import 'package:music_community_mvp/data/models/article_comment.dart';
-import 'package:collection/collection.dart';
+
 import '../gamification/badge_service.dart';
 import '../profile/profile_controller.dart';
 import '../safety/safety_service.dart';

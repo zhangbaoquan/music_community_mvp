@@ -208,6 +208,20 @@ class _NotificationItemState extends State<_NotificationItem> {
         Get.snackbar('错误', '无法加载内容');
       }
     }
+
+    if (widget.notification.type == 'system_warning' &&
+        widget.notification.content != null) {
+      Get.dialog(
+        AlertDialog(
+          title: const Text("系统通知", style: TextStyle(color: Colors.red)),
+          content: Text(widget.notification.content!),
+          actions: [
+            TextButton(onPressed: () => Get.back(), child: const Text("了解")),
+          ],
+        ),
+      );
+      return;
+    }
   }
 
   @override
@@ -242,6 +256,11 @@ class _NotificationItemState extends State<_NotificationItem> {
         typeColor = Colors.orange;
         actionText = '回复了你的反馈';
         break;
+      case 'system_warning':
+        typeIcon = Icons.warning_amber_rounded;
+        typeColor = Colors.redAccent;
+        actionText = '系统警告';
+        break;
       default:
         typeIcon = Icons.notifications;
         typeColor = Colors.grey;
@@ -249,7 +268,9 @@ class _NotificationItemState extends State<_NotificationItem> {
     }
 
     // Override for Feedback Reply (System Message)
-    final isSystemReply = widget.notification.type == 'feedback_reply';
+    final isSystemReply =
+        widget.notification.type == 'feedback_reply' ||
+        widget.notification.type == 'system_warning';
     final displayName = isSystemReply ? "系统管理员" : widget.notification.actorName;
     final displayAvatar = isSystemReply ? "" : widget.notification.actorAvatar;
 

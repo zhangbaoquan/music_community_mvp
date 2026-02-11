@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:music_community_mvp/data/models/feedback_model.dart';
 import 'package:music_community_mvp/features/notifications/notification_service.dart';
+import '../../features/content/article_controller.dart';
 import '../profile/profile_controller.dart';
 
 class AdminController extends GetxController {
@@ -105,7 +106,11 @@ class AdminController extends GetxController {
     }
   }
 
-  Future<void> updateReportStatus(String reportId, String status) async {
+  Future<void> updateReportStatus(
+    String reportId,
+    String status, {
+    bool showSnackbar = true,
+  }) async {
     try {
       await Supabase.instance.client
           .from('reports')
@@ -127,9 +132,105 @@ class AdminController extends GetxController {
               .length;
         }
       }
-      Get.snackbar('成功', '举报状态已更新');
+      if (showSnackbar) {
+        Get.snackbar('成功', '举报状态已更新');
+      }
     } catch (e) {
-      Get.snackbar('错误', '更新失败: $e');
+      if (showSnackbar) {
+        Get.snackbar('错误', '更新失败: $e');
+      }
+    }
+  }
+
+  // Enhanced Resolve Logic
+  Future<void> resolveReport({
+    required String reportId,
+    required String action, // 'delete', 'hide', 'ignore'
+    required String targetType,
+    required String targetId,
+    required String message, // System message to violator
+  }) async {
+    // Show Loading
+    Get.dialog(
+      const Center(child: CircularProgressIndicator()),
+      barrierDismissible: false,
+    );
+
+    try {
+      final client = Supabase.instance.client;
+      // final adminId = client.auth.currentUser!.id;
+
+      // 1. Find Violator ID
+      String? violatorId;
+      if (targetType == 'article') {
+        final res = await client
+            .from('articles')
+            .select('user_id')
+            .eq('id', targetId)
+            .maybeSingle();
+        violatorId = res?['user_id'];
+      } else if (targetType == 'comment') {
+        final res = await client
+            .from('article_comments')
+            .select('user_id')
+            .eq('id', targetId)
+            .maybeSingle();
+        violatorId = res?['user_id'];
+      }
+
+      // 2. Perform Action
+      if (action == 'delete') {
+        if (targetType == 'article') {
+          await client.from('articles').delete().eq('id', targetId);
+          // Also remove from local list if exists
+          try {
+            Get.find<ArticleController>().articles.removeWhere(
+              (a) => a.id == targetId,
+            );
+          } catch (_) {}
+        } else if (targetType == 'comment') {
+          await client.from('article_comments').delete().eq('id', targetId);
+        }
+      } else if (action == 'hide' && targetType == 'article') {
+        await client
+            .from('articles')
+            .update({'is_published': false})
+            .eq('id', targetId);
+        // Remove from public list
+        try {
+          Get.find<ArticleController>().articles.removeWhere(
+            (a) => a.id == targetId,
+          );
+        } catch (_) {}
+      }
+
+      // 3. Send Notification (if violator found)
+      if (violatorId != null) {
+        await NotificationService.sendNotification(
+          recipientId: violatorId,
+          type: 'system_warning',
+          content: message,
+          resourceId:
+              targetId, // Might be null/invalid if deleted, but okay for record
+        );
+      }
+
+      // 4. Update Report Status (Suppress inner snackbar)
+      await updateReportStatus(reportId, 'resolved', showSnackbar: false);
+
+      // Close Loading Dialog
+      if (Get.isDialogOpen ?? false) {
+        Get.back();
+      }
+
+      Get.snackbar('处理完成', '操作执行成功');
+    } catch (e) {
+      // Close Loading Dialog on Error
+      if (Get.isDialogOpen ?? false) {
+        Get.back();
+      }
+      print("Resolve Report Error: $e");
+      Get.snackbar('错误', '处理失败: $e');
     }
   }
 
