@@ -677,8 +677,9 @@ class ArticleController extends GetxController {
       await _supabase.from('articles').insert(article.toMap()..remove('id'));
 
       // 3. Refresh list (fire and forget, or await if needed)
-      // 3. Refresh list (fire and forget, or await if needed)
       fetchArticles();
+      // Also refresh user articles for profile view
+      fetchUserArticles(user.id);
 
       // Check Milestones (Phase 14)
       Get.put(BadgeService()).checkArticleMilestones();
