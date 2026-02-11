@@ -60,7 +60,7 @@ class MusicCommunityApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GetMaterialApp(
-      title: '亲亲音乐',
+      title: '亲亲心情笔记',
       debugShowCheckedModeBanner: false,
       defaultTransition: Transition.fadeIn, // Smooth fade transition
       transitionDuration: const Duration(milliseconds: 300), // 300ms duration

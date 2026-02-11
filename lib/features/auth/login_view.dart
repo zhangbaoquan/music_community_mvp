@@ -83,7 +83,7 @@ class _LoginViewState extends State<LoginView> {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Text(
-                            '亲亲音乐',
+                            '亲亲心情笔记',
                             style: GoogleFonts.outfit(
                               fontSize: 26, // Slightly smaller font
                               fontWeight: FontWeight.w800,
