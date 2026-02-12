@@ -358,7 +358,7 @@ class AdminController extends GetxController {
       // 1. Delete Articles (Comments should cascade ideally, but let's delete explicitly if needed)
       // Supabase cascade usually handles comments/likes if setup correctly.
       // Assuming ON DELETE CASCADE on foreign keys.
-      await client.from('articles').delete().eq('author_id', userId);
+      await client.from('articles').delete().eq('user_id', userId);
 
       // 2. Delete Diaries
       await client.from('diaries').delete().eq('user_id', userId);
