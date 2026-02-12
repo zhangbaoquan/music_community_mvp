@@ -1,5 +1,5 @@
 name: music_community_mvp
-description: "亲亲音乐 - 你的音乐心情日记"
+description: "亲亲心情笔记 - 你的音乐心情日记"
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev

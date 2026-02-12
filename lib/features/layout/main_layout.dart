@@ -73,7 +73,7 @@ class MainLayout extends StatelessWidget {
                       ),
                       const SizedBox(width: 8),
                       const Text(
-                        '亲亲音乐',
+                        '亲亲心情笔记',
                         style: TextStyle(
                           color: Colors.black,
                           fontSize: 18,
@@ -170,7 +170,7 @@ class MainLayout extends StatelessWidget {
                 ),
                 const SizedBox(width: 12),
                 Text(
-                  '亲亲音乐',
+                  '亲亲心情笔记',
                   style: GoogleFonts.outfit(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,

@@ -176,7 +176,7 @@ class _AboutViewState extends State<AboutView> {
             const SizedBox(height: 40),
             // Footer
             Text(
-              "© 2026 亲亲音乐 Music Community. All rights reserved.",
+              "© 2026 亲亲心情笔记 Music Community. All rights reserved.",
               style: TextStyle(color: Colors.grey[400], fontSize: 12),
             ),
           ],
@@ -209,7 +209,7 @@ class _AboutViewState extends State<AboutView> {
         ),
         const SizedBox(height: 16),
         Text(
-          "亲亲音乐",
+          "亲亲心情笔记",
           style: GoogleFonts.outfit(fontSize: 24, fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 8),
