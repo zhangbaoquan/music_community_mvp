@@ -263,7 +263,7 @@ class MainLayout extends StatelessWidget {
           ),
           _navItem(icon: Icons.info_outline, label: '关于与帮助', index: 5),
           Obx(() {
-            final isGuest = profileCtrl.isGuest;
+            final isGuest = !Get.find<AuthController>().isLoggedIn;
             return _navItem(
               icon: isGuest ? Icons.login : Icons.logout,
               label: isGuest ? '立即登录' : '退出登录',
