@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:get/get.dart';
 import 'package:just_audio/just_audio.dart';
 import '../../data/models/song.dart';
@@ -7,19 +8,21 @@ class PlayerController extends GetxController {
 
   // Observables
   final isPlaying = false.obs;
-  final isBuffering = false.obs; // Add buffering state
-  final currentMood = ''.obs; // The ID for the current song (e.g. 'Happy')
+  final isBuffering = false.obs;
+  final currentMood = ''.obs;
   final currentTitle = ''.obs;
   final currentArtist = ''.obs;
-  final currentCoverUrl = ''.obs; // Add cover URL observable
+  final currentCoverUrl = ''.obs;
   final currentPosition = Duration.zero.obs;
   final totalDuration = Duration.zero.obs;
   final bufferedPosition = Duration.zero.obs;
-  final volume = 1.0.obs; // Volume 0.0 to 1.0
+  final volume = 1.0.obs;
 
-  // Computed getter for current Song object (subset of fields)
-  // Or just a reactive variable if we want to store the whole object.
   final Rxn<Song> currentSong = Rxn<Song>();
+
+  // Initialization tracking
+  final Completer<void> _initCompleter = Completer<void>();
+  Future<void> get ready => _initCompleter.future;
 
   @override
   void onInit() {
@@ -31,7 +34,6 @@ class PlayerController extends GetxController {
     // Listen to player state
     _player.playerStateStream.listen((state) {
       isPlaying.value = state.playing;
-      // Update buffering state
       isBuffering.value =
           state.processingState == ProcessingState.buffering ||
           state.processingState == ProcessingState.loading;
@@ -39,114 +41,107 @@ class PlayerController extends GetxController {
       if (state.processingState == ProcessingState.completed) {
         isPlaying.value = false;
         _player.seek(Duration.zero);
-        _player.pause();
+        if (_player.playing) {
+          _player.pause();
+        }
       }
     });
 
-    // Listen to duration
     _player.durationStream.listen((duration) {
       totalDuration.value = duration ?? Duration.zero;
     });
 
-    // Listen to position
     _player.positionStream.listen((position) {
       currentPosition.value = position;
     });
 
-    // Listen to buffered position
     _player.bufferedPositionStream.listen((buffered) {
       bufferedPosition.value = buffered;
     });
 
-    // Load a mock playlist item
-    await loadMockTrack();
+    _player.playbackEventStream.listen(
+      (event) {},
+      onError: (Object e, StackTrace stackTrace) {
+        print('Player Stream Error: $e');
+        // Only show snackbar for genuine errors if needed, or keep it silent for now specific to stream errors
+      },
+    );
+
+    if (!_initCompleter.isCompleted) {
+      _initCompleter.complete();
+    }
   }
 
-  // Demo Playlist Data
-  final Map<String, Map<String, String>> _moodPlaylists = {
-    'Happy': {
-      'url':
-          'http://qinqinmusic.com/storage/v1/object/public/songs/happy_diyue.mp3',
-      'title': '笛月',
-      'artist': '董敏 - 笛月',
-    },
-    'Melancholy': {
-      'url':
-          'http://qinqinmusic.com/storage/v1/object/public/songs/sad_dayu.mp3',
-      'title': '大鱼',
-      'artist': '大鱼海棠',
-    },
-    'Peaceful': {
-      'url':
-          'http://qinqinmusic.com/storage/v1/object/public/songs/calmness_OldMemory.mp3',
-      'title': 'Old Memory',
-      'artist': '纯音乐',
-    },
-    'Focused': {
-      'url':
-          'http://qinqinmusic.com/storage/v1/object/public/songs/focus_FengJuZhuDeJieDao.mp3',
-      'title': '风居住的街道',
-      'artist': '矶村由纪子',
-    },
-  };
+  String? _currentUrl;
 
-  Future<void> playMood(String mood) async {
-    final track = _moodPlaylists[mood];
-    if (track != null) {
-      try {
-        await _player.stop(); // Ensure previous track is stopped
-        final url = track['url']!;
-        print(
-          "Attempting to load URL: $url",
-        ); // Debug log available in browser console
+  Future<void> playSong(Song song) async {
+    try {
+      // Stop previous track properly
+      if (_player.playing || _player.processingState != ProcessingState.idle) {
+        await _player.stop();
+      }
 
-        await _player.setUrl(url);
-        currentMood.value = mood; // Update current mood ID
-        currentTitle.value = track['title']!;
-        currentArtist.value = track['artist']!;
-        currentCoverUrl.value = ''; // No specific cover for mood tracks yet
-        _player.play();
-      } catch (e) {
-        print("Error playing $mood: $e");
-        Get.snackbar(
-          "播放失败 (Error)",
-          "无法加载歌曲: $mood\n$e",
-          duration: const Duration(seconds: 5),
-          backgroundColor: Get.theme.colorScheme.errorContainer,
-          colorText: Get.theme.colorScheme.onErrorContainer,
-        );
+      _currentUrl = song.url;
+
+      // Update UI
+      currentSong.value = song;
+      currentMood.value = song.moodTags?.firstOrNull ?? 'User Upload';
+      currentTitle.value = song.title;
+      currentArtist.value = song.artist ?? 'Pianist';
+      currentCoverUrl.value = song.coverUrl ?? '';
+
+      await _player.setVolume(1.0);
+
+      // Standard Logic: Await Load URL
+      await _player.setUrl(song.url);
+
+      // Standard Logic: Attempt Play
+      await _player.play();
+    } catch (e) {
+      print("Play Error: $e");
+      isPlaying.value = false;
+
+      // Only show user-facing errors for interaction issues
+      if (e.toString().contains("interact") ||
+          e.toString().contains("Autoplay")) {
+        Get.snackbar("提示", "需点击播放按钮开始播放");
+      } else {
+        Get.snackbar("播放错误", "无法播放音乐");
       }
     }
   }
 
-  Future<void> playSong(Song song) async {
+  Future<void> togglePlay() async {
     try {
-      await _player.stop();
-      await _player.setUrl(song.url);
-
-      currentSong.value = song; // Update the object
-      currentMood.value = song.moodTags?.firstOrNull ?? 'User Upload';
-      currentTitle.value = song.title;
-      currentArtist.value = song.artist ?? 'Pianist';
-      currentCoverUrl.value = song.coverUrl ?? ''; // Use song cover
-
-      _player.play();
+      if (isPlaying.value) {
+        await _player.pause();
+        Get.snackbar("提示", "已暂停");
+      } else {
+        if (_player.processingState == ProcessingState.idle ||
+            _player.processingState == ProcessingState.completed) {
+          if (_currentUrl != null) {
+            await _player.setUrl(_currentUrl!);
+          } else {
+            Get.snackbar("错误", "暂无正在播放的歌曲");
+            return;
+          }
+        }
+        await _player.play();
+      }
     } catch (e) {
-      print("Error playing song ${song.title}: $e");
-      Get.snackbar("Error", "无法播放歌曲: ${e.toString()}");
-    }
-  }
+      print("Toggle Play Error: $e");
+      Get.snackbar("播放错误", "操作失败");
 
-  // Initial load can be empty or a default track
-  Future<void> loadMockTrack() async {
-    // Optional: load a default track without playing
-  }
-
-  void togglePlay() {
-    if (isPlaying.value) {
-      _player.pause();
-    } else {
-      _player.play();
+      // Basic Emergency Reload
+      if (_currentUrl != null) {
+        try {
+          await _player.stop();
+          await _player.setUrl(_currentUrl!);
+          await _player.play();
+        } catch (e2) {
+          print("Emergency Reload Failed: $e2");
+        }
+      }
     }
   }
 

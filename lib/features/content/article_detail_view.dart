@@ -85,6 +85,33 @@ class _ArticleDetailViewState extends State<ArticleDetailView> {
     }
   }
 
+  @override
+  void didUpdateWidget(ArticleDetailView oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.article.id != widget.article.id) {
+      print(
+        "[ArticleDetailView] DidUpdateWidget: Switching from ${oldWidget.article.title} to ${widget.article.title}",
+      );
+
+      setState(() {
+        _currentArticle = widget.article;
+      });
+
+      if (_currentArticle.title.isEmpty && _currentArticle.id.isNotEmpty) {
+        _loadFullArticle();
+      } else {
+        _initQuill();
+      }
+
+      Get.find<ArticleController>().fetchComments(widget.article.id);
+      _checkFollowStatus();
+
+      // Force play BGM for the new article
+      print("[ArticleDetailView] Triggering BGM for new article...");
+      _playBgm();
+    }
+  }
+
   void _initQuill() {
     try {
       if (_currentArticle.content != null) {
@@ -121,29 +148,55 @@ class _ArticleDetailViewState extends State<ArticleDetailView> {
     }
   }
 
-  void _playBgm() {
+  Future<void> _playBgm() async {
     print(
-      "ArticleDetailView: _playBgm called. SongID: ${_currentArticle.bgmSongId}",
+      "[ArticleDetailView] _playBgm called. SongID: ${_currentArticle.bgmSongId}",
     );
     if (_currentArticle.bgmSongId != null) {
-      Get.find<PlayerController>(); // Early init check
-      // We might not have the full song details here if not joined.
-      // We need to fetch the full song or ensure the previous join got it.
+
+      final playerCtrl = Get.find<PlayerController>();
+
+      // Wait for player to be fully initialized
+      await playerCtrl.ready;
+
+      final currentSongId = playerCtrl.currentSong.value?.id;
+      print(
+        "[ArticleDetailView] Player Current Song ID: $currentSongId vs Target: ${_currentArticle.bgmSongId}",
+      );
+
+      // If we already have the song loaded, just play it
+      if (currentSongId == _currentArticle.bgmSongId) {
+        print("[ArticleDetailView] Song matches. Requesting Play directly.");
+        playerCtrl.playSong(playerCtrl.currentSong.value!);
+        return;
+      }
+
+      // Otherwise fetch and play
+      print("[ArticleDetailView] Song mismatch/empty. Fetching target song...");
       _fetchAndPlaySong(_currentArticle.bgmSongId!);
     } else {
-      print("ArticleDetailView: No BGM ID found.");
+      print("[ArticleDetailView] No BGM ID found for this article.");
     }
   }
 
   Future<void> _fetchAndPlaySong(String songId) async {
     try {
+      print("ArticleDetailView: Fetching song details for $songId");
+
       final res = await Supabase.instance.client
           .from('songs')
           .select()
           .eq('id', songId)
-          .single();
+          .single()
+          .timeout(
+            const Duration(seconds: 8),
+            onTimeout: () {
+              throw "Fetch Song Timeout";
+            },
+          );
 
       final song = Song.fromMap(res);
+      print("ArticleDetailView: Song fetched: ${song.title}");
 
       // Auto-play (maybe check if already playing same song?)
       final playerCtrl = Get.find<PlayerController>();
@@ -419,6 +472,7 @@ class _ArticleDetailViewState extends State<ArticleDetailView> {
                     ),
                   ),
 
+                  const SizedBox(height: 40),
                   const SizedBox(height: 100),
                 ],
               ),
@@ -844,15 +898,27 @@ class _MusicPlayerCard extends StatelessWidget {
                   ),
                 ),
                 // 3. Play/Pause
-                IconButton(
-                  onPressed: player.togglePlay,
-                  icon: Icon(
-                    player.isPlaying.value
-                        ? Icons.pause_circle_filled
-                        : Icons.play_circle_filled,
-                    size: 40,
-                    color: Colors.black87,
-                  ),
+                Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    if (player.isBuffering.value)
+                      const SizedBox(
+                        width: 40,
+                        height: 40,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    else
+                      IconButton(
+                        onPressed: player.togglePlay,
+                        icon: Icon(
+                          player.isPlaying.value
+                              ? Icons.pause_circle_filled
+                              : Icons.play_circle_filled,
+                          size: 40,
+                          color: Colors.black87,
+                        ),
+                      ),
+                  ],
                 ),
               ],
             ),
