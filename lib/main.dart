@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:flutter_localizations/flutter_localizations.dart'; // Add this
 import 'package:flutter_quill/flutter_quill.dart'; // import for FlutterQuillLocalizations
 import 'package:music_community_mvp/core/shim_google_fonts.dart';
+import 'package:music_community_mvp/core/app_scroll_behavior.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'features/auth/auth_controller.dart';
 
@@ -69,7 +70,16 @@ class MusicCommunityApp extends StatelessWidget {
         primaryColor: const Color(0xFF1A1A1A),
         scaffoldBackgroundColor: Colors.white,
         textTheme: GoogleFonts.outfitTextTheme(),
+        scrollbarTheme: ScrollbarThemeData(
+          thumbColor: WidgetStateProperty.all(
+            Colors.grey[400]!.withOpacity(0.6),
+          ),
+          radius: const Radius.circular(4),
+          thickness: WidgetStateProperty.all(6),
+          thumbVisibility: WidgetStateProperty.all(true),
+        ),
       ),
+      scrollBehavior: AppScrollBehavior(),
       locale: const Locale('zh', 'CN'), // Enforce Chinese locale
       // Localizations are REQUIRED for flutter_quill to work in Release mode
       localizationsDelegates: const [

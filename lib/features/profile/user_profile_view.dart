@@ -301,95 +301,154 @@ class _UserProfileViewState extends State<UserProfileView> {
         ),
         const SizedBox(height: 16),
         Obx(() {
-          final songs = _musicCtrl
-              .rxUserSongs; // Note: Ensure MusicController is isolated or handles multiple user streams.
-          // Actually MusicController stores list in 'rxUserSongs'.
-          // If we enter this page, we called fetchUserSongs(userId), so it should be correct for THIS user.
-          // BUT, if we go back to ProfileView, we might need to refresh My Songs.
-          // Ideally MusicController should separate 'currentUserSongs' and 'viewedUserSongs'.
-          // For MVP, simplistic sharing is okay, but beware of state pollution.
+          final songs = _musicCtrl.rxUserSongs;
 
-          if (songs.isEmpty)
-            return const Text("暂无发布", style: TextStyle(color: Colors.grey));
+          if (songs.isEmpty) {
+            return Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(40),
+              decoration: BoxDecoration(
+                color: Colors.grey[50],
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: Colors.grey[200]!,
+                  style: BorderStyle.solid,
+                ),
+              ),
+              child: Column(
+                children: [
+                  Icon(
+                    Icons.music_note_outlined,
+                    size: 48,
+                    color: Colors.grey[400],
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    "还没有发布过原创歌曲",
+                    style: TextStyle(color: Colors.grey[500], fontSize: 16),
+                  ),
+                ],
+              ),
+            );
+          }
 
-          return GridView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2,
-              crossAxisSpacing: 16,
-              mainAxisSpacing: 16,
-              childAspectRatio: 2.5,
-            ),
-            itemCount: songs.length,
-            itemBuilder: (context, index) {
-              final song = songs[index];
-              return Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.grey[100]!),
-                  boxShadow: const [
-                    BoxShadow(
-                      color: Colors.black12,
-                      blurRadius: 4,
-                      offset: Offset(0, 2),
-                    ),
-                  ],
+          return LayoutBuilder(
+            builder: (context, constraints) {
+              int crossAxisCount = 1;
+              if (constraints.maxWidth > 1200) {
+                crossAxisCount = 4;
+              } else if (constraints.maxWidth > 800) {
+                crossAxisCount = 3;
+              } else if (constraints.maxWidth > 600) {
+                crossAxisCount = 2;
+              }
+
+              return GridView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: crossAxisCount,
+                  crossAxisSpacing: 20,
+                  mainAxisSpacing: 20,
+                  childAspectRatio: 3.0,
                 ),
-                child: Row(
-                  children: [
-                    Container(
-                      width: 48,
-                      height: 48,
-                      decoration: BoxDecoration(
-                        color: Colors.grey[200],
-                        borderRadius: BorderRadius.circular(8),
-                        image: song.coverUrl != null
-                            ? DecorationImage(
-                                image: NetworkImage(song.coverUrl!),
-                                fit: BoxFit.cover,
-                              )
-                            : null,
-                      ),
-                      child: song.coverUrl == null
-                          ? const Icon(Icons.music_note, color: Colors.grey)
-                          : null,
+                itemCount: songs.length,
+                itemBuilder: (context, index) {
+                  final song = songs[index];
+                  return Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: Colors.grey[100]!),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.04),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
                     ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            song.title,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(fontWeight: FontWeight.bold),
+                    child: Material(
+                      color: Colors.transparent,
+                      borderRadius: BorderRadius.circular(16),
+                      child: InkWell(
+                        onTap: () =>
+                            Get.find<PlayerController>().playSong(song),
+                        child: Padding(
+                          padding: const EdgeInsets.all(12),
+                          child: Row(
+                            children: [
+                              // Cover
+                              Container(
+                                width: 56,
+                                height: 56,
+                                decoration: BoxDecoration(
+                                  color: Colors.grey[200],
+                                  borderRadius: BorderRadius.circular(12),
+                                  image: song.coverUrl != null
+                                      ? DecorationImage(
+                                          image: NetworkImage(song.coverUrl!),
+                                          fit: BoxFit.cover,
+                                        )
+                                      : null,
+                                ),
+                                child: song.coverUrl == null
+                                    ? const Icon(
+                                        Icons.music_note,
+                                        color: Colors.grey,
+                                      )
+                                    : null,
+                              ),
+                              const SizedBox(width: 12),
+
+                              // Info
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Text(
+                                      song.title,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: const TextStyle(
+                                        fontSize: 15,
+                                        fontWeight: FontWeight.bold,
+                                        color: Color(0xFF1A1A1A),
+                                      ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      song.artist ?? "Unknown",
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: TextStyle(
+                                        color: Colors.grey[500],
+                                        fontSize: 12,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+
+                              // Play Button Icon (Visual indicator)
+                              IconButton(
+                                onPressed: () {
+                                  Get.find<PlayerController>().playSong(song);
+                                },
+                                icon: const Icon(
+                                  Icons.play_circle_fill,
+                                  color: Colors.blue,
+                                ),
+                                tooltip: "播放",
+                              ),
+                            ],
                           ),
-                          Text(
-                            song.artist ?? '',
-                            maxLines: 1,
-                            style: const TextStyle(
-                              fontSize: 12,
-                              color: Colors.grey,
-                            ),
-                          ),
-                        ],
+                        ),
                       ),
                     ),
-                    IconButton(
-                      icon: const Icon(
-                        Icons.play_circle_fill,
-                        color: Colors.blue,
-                      ),
-                      onPressed: () =>
-                          Get.find<PlayerController>().playSong(song),
-                    ),
-                  ],
-                ),
+                  );
+                },
               );
             },
           );
