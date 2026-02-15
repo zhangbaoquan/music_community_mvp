@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:music_community_mvp/data/models/article.dart';
 import 'package:music_community_mvp/features/content/music_picker_sheet.dart';
+import 'package:music_community_mvp/features/content/article_image_embed_builder.dart';
 import 'package:flutter_quill_extensions/flutter_quill_extensions.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'article_controller.dart';
@@ -377,7 +378,10 @@ class _ArticleEditorViewState extends State<ArticleEditorView> {
                       autoFocus: false,
                       expands: false,
                       padding: EdgeInsets.zero,
-                      embedBuilders: FlutterQuillEmbeds.editorBuilders(),
+                      embedBuilders: [
+                        ArticleImageEmbedBuilder(),
+                        ...FlutterQuillEmbeds.editorBuilders(),
+                      ],
                     ),
                   ),
                 ],
