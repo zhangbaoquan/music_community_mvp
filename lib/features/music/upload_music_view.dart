@@ -85,15 +85,11 @@ class _UploadMusicViewState extends State<UploadMusicView> {
       moodTags: [..._selectedMoods, _selectedSource], // Append source as tag
     );
 
+    // We don't need to clear state manually because the page will be popped.
     if (success) {
-      setState(() {
-        _audioFile = null;
-        _coverFile = null;
-        _titleController.clear();
-        _artistController.clear();
-        _selectedMoods.clear();
-        _selectedSource = '原创';
-      });
+      if (mounted) {
+        Navigator.of(context).pop();
+      }
     }
   }
 

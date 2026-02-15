@@ -74,7 +74,7 @@ class MusicController extends GetxController {
 
       final user = _supabase.auth.currentUser;
       if (user == null) {
-        Get.snackbar('Error', 'You must be logged in to upload');
+        Get.snackbar('错误', '请先登录后再上传');
         return false;
       }
 
@@ -147,12 +147,12 @@ class MusicController extends GetxController {
 
       await _supabase.from('songs').insert(insertData);
 
-      Get.snackbar('Success', 'Song uploaded successfully!');
+      Get.snackbar('成功', '音乐上传成功！');
       fetchUserSongs(user.id); // Refresh list
       return true;
     } catch (e) {
       print('Upload error: $e');
-      Get.snackbar('Error', 'Upload failed: $e');
+      Get.snackbar('错误', '上传失败: $e');
       return false;
     } finally {
       isUploading.value = false;
@@ -170,11 +170,11 @@ class MusicController extends GetxController {
       rxSongs.removeWhere((s) => s.id == songId); // Optimistic update
       rxUserSongs.removeWhere((s) => s.id == songId);
 
-      Get.snackbar('Success', 'Song deleted successfully');
+      Get.snackbar('成功', '音乐已删除');
       return true;
     } catch (e) {
       print('Delete error: $e');
-      Get.snackbar('Error', 'Failed to delete song: $e');
+      Get.snackbar('错误', '删除失败: $e');
       return false;
     }
   }

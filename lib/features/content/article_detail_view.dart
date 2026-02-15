@@ -153,7 +153,6 @@ class _ArticleDetailViewState extends State<ArticleDetailView> {
       "[ArticleDetailView] _playBgm called. SongID: ${_currentArticle.bgmSongId}",
     );
     if (_currentArticle.bgmSongId != null) {
-
       final playerCtrl = Get.find<PlayerController>();
 
       // Wait for player to be fully initialized
@@ -654,7 +653,7 @@ class _ArticleDetailViewState extends State<ArticleDetailView> {
                       Supabase.instance.client.auth.currentUser?.id)
                     IconButton(
                       icon: const Icon(
-                        Icons.report_gmailerrorred_outlined,
+                        Icons.warning_amber_rounded,
                         color: Colors.black54,
                       ),
                       onPressed: () async {
