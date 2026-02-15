@@ -17,6 +17,7 @@ class _LoginViewState extends State<LoginView> {
   final _usernameCtrl = TextEditingController();
 
   bool _isLogin = true;
+  bool _obscurePassword = true;
 
   @override
   Widget build(BuildContext context) {
@@ -124,6 +125,37 @@ class _LoginViewState extends State<LoginView> {
                             icon: Icons.lock_rounded,
                             isPassword: true,
                           ),
+
+                          if (_isLogin)
+                            Padding(
+                              padding: const EdgeInsets.only(top: 16.0),
+                              child: Align(
+                                alignment: Alignment.centerRight,
+                                child: TextButton(
+                                  onPressed: _showForgotPasswordDialog,
+                                  style: TextButton.styleFrom(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 4,
+                                      vertical: 0,
+                                    ),
+                                    minimumSize: Size.zero,
+                                    tapTargetSize:
+                                        MaterialTapTargetSize.shrinkWrap,
+                                  ),
+                                  child: const Text(
+                                    '忘记密码?',
+                                    style: TextStyle(
+                                      color: Color(
+                                        0xFF6B4EFF,
+                                      ), // Using brand color
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+
                           const SizedBox(height: 24), // Reduced spacing
 
                           SizedBox(
@@ -209,6 +241,73 @@ class _LoginViewState extends State<LoginView> {
     );
   }
 
+  void _showForgotPasswordDialog() {
+    final resetEmailCtrl = TextEditingController();
+    Get.dialog(
+      Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        child: Container(
+          padding: const EdgeInsets.all(24),
+          constraints: const BoxConstraints(maxWidth: 400),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                '找回密码',
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                '请输入您的注册邮箱，我们将向您发送重置密码的链接。',
+                style: TextStyle(fontSize: 14, color: Colors.grey),
+              ),
+              const SizedBox(height: 24),
+              _buildTextField(
+                controller: resetEmailCtrl,
+                label: '邮箱地址',
+                icon: Icons.email_outlined,
+              ),
+              const SizedBox(height: 24),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  TextButton(
+                    onPressed: () => Get.back(),
+                    child: const Text(
+                      '取消',
+                      style: TextStyle(color: Colors.grey),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  ElevatedButton(
+                    onPressed: () {
+                      final email = resetEmailCtrl.text.trim();
+                      if (email.isEmpty || !email.contains('@')) {
+                        Get.snackbar('提示', '请输入有效的邮箱地址');
+                        return;
+                      }
+                      Get.back(); // Close dialog
+                      _authCtrl.sendPasswordResetEmail(email);
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF1A1A1A),
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                    child: const Text('发送'),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildTextField({
     required TextEditingController controller,
     required String label,
@@ -216,7 +315,7 @@ class _LoginViewState extends State<LoginView> {
     bool isPassword = false,
   }) {
     return Container(
-      height: 48, // Fixed height for input fields
+      height: 48,
       decoration: BoxDecoration(
         color: const Color(0xFFF9FAFB),
         borderRadius: BorderRadius.circular(14),
@@ -224,22 +323,35 @@ class _LoginViewState extends State<LoginView> {
       ),
       child: TextField(
         controller: controller,
-        obscureText: isPassword,
+        obscureText: isPassword ? _obscurePassword : false,
         style: const TextStyle(fontSize: 14, color: Color(0xFF1A1A1A)),
         decoration:
             InputDecoration(
                   hintText: label,
                   hintStyle: TextStyle(color: Colors.grey[400], fontSize: 14),
                   prefixIcon: Icon(icon, color: Colors.grey[400], size: 18),
+                  suffixIcon: isPassword
+                      ? IconButton(
+                          icon: Icon(
+                            _obscurePassword
+                                ? Icons.visibility_off_outlined
+                                : Icons.visibility_outlined,
+                            color: Colors.grey[400],
+                            size: 20,
+                          ),
+                          onPressed: () {
+                            setState(() {
+                              _obscurePassword = !_obscurePassword;
+                            });
+                          },
+                        )
+                      : null,
                   border: InputBorder.none,
                   contentPadding: const EdgeInsets.symmetric(horizontal: 16),
-                  // Center vertically
                   isDense: true,
-                  // alignLabelWithHint: true, // Not needed for single line
                 )
                 .applyDefaults(Theme.of(context).inputDecorationTheme)
                 .copyWith(
-                  // Override problematic default padding if any
                   contentPadding: const EdgeInsets.only(
                     top: 14,
                     bottom: 12,
@@ -247,8 +359,7 @@ class _LoginViewState extends State<LoginView> {
                     right: 16,
                   ),
                 ),
-        textAlignVertical:
-            TextAlignVertical.center, // Crucial for centering icon and text
+        textAlignVertical: TextAlignVertical.center,
       ),
     );
   }
