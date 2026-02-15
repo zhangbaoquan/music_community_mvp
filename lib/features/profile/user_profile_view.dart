@@ -296,7 +296,7 @@ class _UserProfileViewState extends State<UserProfileView> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          "原创音乐",
+          "我的音乐",
           style: GoogleFonts.outfit(fontSize: 20, fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 16),

@@ -715,121 +715,188 @@ class ProfileView extends StatelessWidget {
             );
           }
 
-          return GridView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2, // Adjust for responsiveness?
-              crossAxisSpacing: 20,
-              mainAxisSpacing: 20,
-              childAspectRatio: 2.5, // Wide card for song
-            ),
-            itemCount: songs.length,
-            itemBuilder: (context, index) {
-              final song = songs[index];
-              return Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: Colors.grey[100]!),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.04),
-                      blurRadius: 10,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
+          return LayoutBuilder(
+            builder: (context, constraints) {
+              int crossAxisCount = 1;
+              if (constraints.maxWidth > 1200) {
+                crossAxisCount = 4;
+              } else if (constraints.maxWidth > 800) {
+                crossAxisCount = 3;
+              } else if (constraints.maxWidth > 600) {
+                crossAxisCount = 2;
+              }
+
+              return GridView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: crossAxisCount,
+                  crossAxisSpacing: 20,
+                  mainAxisSpacing: 20,
+                  childAspectRatio:
+                      3.0, // Keeping it wide but slightly taller if needed
                 ),
-                child: Row(
-                  children: [
-                    // Cover
-                    Container(
-                      width: 60,
-                      height: 60,
-                      decoration: BoxDecoration(
-                        color: Colors.grey[200],
-                        borderRadius: BorderRadius.circular(8),
-                        image: song.coverUrl != null
-                            ? DecorationImage(
-                                image: NetworkImage(song.coverUrl!),
-                                fit: BoxFit.cover,
-                              )
-                            : null,
-                      ),
-                      child: song.coverUrl == null
-                          ? const Icon(Icons.music_note, color: Colors.grey)
-                          : null,
+                itemCount: songs.length,
+                itemBuilder: (context, index) {
+                  final song = songs[index];
+                  return Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: Colors.grey[100]!),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.04),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
                     ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            song.title,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            song.artist ?? "Unknown",
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              color: Colors.grey[500],
-                              fontSize: 12,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          // Mini Chips
-                          if (song.moodTags != null &&
-                              song.moodTags!.isNotEmpty)
-                            Wrap(
-                              spacing: 4,
-                              children: song.moodTags!
-                                  .take(2)
-                                  .map(
-                                    (tag) => Container(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 6,
-                                        vertical: 2,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color: Colors.blue[50], // Theme color
-                                        borderRadius: BorderRadius.circular(4),
-                                      ),
-                                      child: Text(
-                                        tag,
-                                        style: TextStyle(
-                                          fontSize: 10,
-                                          color: Colors.blue[800],
-                                        ),
+                    child: Material(
+                      color: Colors.transparent,
+                      borderRadius: BorderRadius.circular(16),
+                      child: InkWell(
+                        onTap: () {
+                          // Play the song (existing functionality if any, otherwise maybe just show details?)
+                          // Assuming we want to play it if tapped? Or maybe separate play button?
+                          // The original code didn't have an onTap action on the container.
+                          // Let's keep it simple or invoke play.
+                          // Given the context "My Music", playing seems reasonable.
+                          // checking if there was original onTap... looking at history...
+                          // The previous snippet didn't show onTap logic for the container itself.
+                          // I'll add a play button to be explicit.
+                        },
+                        child: Padding(
+                          padding: const EdgeInsets.all(
+                            12,
+                          ), // Reduced padding slightly
+                          child: Row(
+                            children: [
+                              // Cover
+                              Container(
+                                width: 56,
+                                height: 56,
+                                decoration: BoxDecoration(
+                                  color: Colors.grey[200],
+                                  borderRadius: BorderRadius.circular(12),
+                                  image: song.coverUrl != null
+                                      ? DecorationImage(
+                                          image: NetworkImage(song.coverUrl!),
+                                          fit: BoxFit.cover,
+                                        )
+                                      : null,
+                                ),
+                                child: song.coverUrl == null
+                                    ? const Icon(
+                                        Icons.music_note,
+                                        color: Colors.grey,
+                                      )
+                                    : null,
+                              ),
+                              const SizedBox(width: 12),
+
+                              // Info
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Text(
+                                      song.title,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: const TextStyle(
+                                        fontSize: 15,
+                                        fontWeight: FontWeight.bold,
+                                        color: Color(0xFF1A1A1A),
                                       ),
                                     ),
-                                  )
-                                  .toList(),
-                            ),
-                        ],
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      song.artist ?? "Unknown",
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: TextStyle(
+                                        color: Colors.grey[500],
+                                        fontSize: 12,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+
+                              // Play Button
+                              IconButton(
+                                onPressed: () {
+                                  Get.find<PlayerController>().playSong(song);
+                                },
+                                icon: const Icon(
+                                  Icons.play_circle_fill,
+                                  color: Colors.blue,
+                                ),
+                                tooltip: "播放",
+                              ),
+
+                              // Delete Button
+                              IconButton(
+                                onPressed: () async {
+                                  if (!await controller.checkActionAllowed(
+                                    '删除音乐',
+                                  ))
+                                    return;
+
+                                  showDialog(
+                                    context: context,
+                                    builder: (BuildContext context) {
+                                      return AlertDialog(
+                                        title: const Text("确认删除"),
+                                        content: const Text(
+                                          "确定要删除这首歌曲吗？操作不可恢复。",
+                                        ),
+                                        actions: [
+                                          TextButton(
+                                            onPressed: () =>
+                                                Navigator.of(context).pop(),
+                                            child: const Text(
+                                              "取消",
+                                              style: TextStyle(
+                                                color: Colors.grey,
+                                              ),
+                                            ),
+                                          ),
+                                          TextButton(
+                                            onPressed: () async {
+                                              Navigator.of(context).pop();
+                                              await musicController.deleteSong(
+                                                song.id,
+                                              );
+                                            },
+                                            child: const Text(
+                                              "删除",
+                                              style: TextStyle(
+                                                color: Colors.red,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      );
+                                    },
+                                  );
+                                },
+                                icon: Icon(
+                                  Icons.delete_outline,
+                                  color: Colors.red[300],
+                                  size: 20,
+                                ),
+                                tooltip: "删除",
+                              ),
+                            ],
+                          ),
+                        ),
                       ),
                     ),
-                    IconButton(
-                      icon: const Icon(
-                        Icons.play_circle_fill,
-                        color: Colors.blue,
-                        size: 36,
-                      ),
-                      onPressed: () {
-                        Get.find<PlayerController>().playSong(song);
-                      },
-                    ),
-                  ],
-                ),
+                  );
+                },
               );
             },
           );
