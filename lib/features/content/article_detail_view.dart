@@ -11,6 +11,7 @@ import '../safety/report_dialog.dart';
 
 import 'package:music_community_mvp/features/profile/profile_controller.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:flutter_quill_extensions/flutter_quill_extensions.dart';
 import 'package:timeago/timeago.dart' as timeago;
 
 class ArticleDetailView extends StatefulWidget {
@@ -464,10 +465,13 @@ class _ArticleDetailViewState extends State<ArticleDetailView> {
                     controller: _quillController,
                     focusNode: FocusNode(),
                     scrollController: ScrollController(),
-                    config: const QuillEditorConfig(
+                    config: QuillEditorConfig(
                       autoFocus: false,
                       expands: false,
-                      padding: EdgeInsets.only(top: 24), // Add padding here
+                      padding: const EdgeInsets.only(
+                        top: 24,
+                      ), // Add padding here
+                      embedBuilders: FlutterQuillEmbeds.editorBuilders(),
                     ),
                   ),
 

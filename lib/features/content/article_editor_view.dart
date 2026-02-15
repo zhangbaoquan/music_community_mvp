@@ -5,6 +5,8 @@ import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:music_community_mvp/data/models/article.dart';
 import 'package:music_community_mvp/features/content/music_picker_sheet.dart';
+import 'package:flutter_quill_extensions/flutter_quill_extensions.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'article_controller.dart';
 import 'dart:convert';
 
@@ -85,6 +87,49 @@ class _ArticleEditorViewState extends State<ArticleEditorView> {
       ),
       isScrollControlled: true,
     );
+  }
+
+  Future<void> _handleImageButton() async {
+    final ImagePicker picker = ImagePicker();
+    final XFile? image = await picker.pickImage(source: ImageSource.gallery);
+
+    if (image != null) {
+      try {
+        // Upload to Supabase
+        final bytes = await image.readAsBytes();
+        final fileName =
+            '${DateTime.now().millisecondsSinceEpoch}_${image.name}';
+        final path = 'article_images/$fileName';
+
+        await Supabase.instance.client.storage
+            .from('articles')
+            .uploadBinary(
+              path,
+              bytes,
+              fileOptions: const FileOptions(upsert: false),
+            );
+
+        final imageUrl = Supabase.instance.client.storage
+            .from('articles')
+            .getPublicUrl(path);
+
+        // Insert into editor
+        final index = _quillController.selection.baseOffset;
+        final length = _quillController.selection.extentOffset - index;
+        _quillController.replaceText(
+          index,
+          length,
+          BlockEmbed.image(imageUrl),
+          null,
+        );
+
+        // Move cursor to next line
+        _quillController.moveCursorToPosition(index + 1);
+      } catch (e) {
+        print('Image upload failed: $e');
+        Get.snackbar('上传失败', '图片上传失败，请重试');
+      }
+    }
   }
 
   void _submit() async {
@@ -327,11 +372,12 @@ class _ArticleEditorViewState extends State<ArticleEditorView> {
                     controller: _quillController,
                     focusNode: FocusNode(),
                     scrollController: ScrollController(),
-                    config: const QuillEditorConfig(
+                    config: QuillEditorConfig(
                       placeholder: '开始撰写你的故事...',
                       autoFocus: false,
                       expands: false,
                       padding: EdgeInsets.zero,
+                      embedBuilders: FlutterQuillEmbeds.editorBuilders(),
                     ),
                   ),
                 ],
@@ -340,13 +386,49 @@ class _ArticleEditorViewState extends State<ArticleEditorView> {
           ),
 
           // Toolbar at bottom
-          QuillSimpleToolbar(
-            controller: _quillController,
-            config: const QuillSimpleToolbarConfig(
-              showSearchButton: false,
-              showInlineCode: false,
-              showSubscript: false,
-              showSuperscript: false,
+          // Toolbar at bottom
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              border: Border(top: BorderSide(color: Colors.grey[200]!)),
+              boxShadow: const [
+                BoxShadow(
+                  color: Colors.black12,
+                  blurRadius: 4,
+                  offset: Offset(0, -1),
+                ),
+              ],
+            ),
+            child: Row(
+              children: [
+                // Custom Image Button
+                IconButton(
+                  icon: const Icon(Icons.add_photo_alternate_outlined),
+                  tooltip: '插入图片',
+                  onPressed: _handleImageButton,
+                  color: Colors.black54,
+                ),
+                // Divider
+                Container(
+                  width: 1,
+                  height: 24,
+                  color: Colors.grey[300],
+                  margin: const EdgeInsets.symmetric(horizontal: 8),
+                ),
+                // Standard Toolbar
+                Expanded(
+                  child: QuillSimpleToolbar(
+                    controller: _quillController,
+                    config: const QuillSimpleToolbarConfig(
+                      showSearchButton: false,
+                      showInlineCode: false,
+                      showSubscript: false,
+                      showSuperscript: false,
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
         ],
