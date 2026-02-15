@@ -150,31 +150,34 @@ class MainLayout extends StatelessWidget {
 
   Widget _buildSideNav({bool isDrawer = false}) {
     return Container(
-      width: 240,
+      width: 270,
       color: Colors.grey[50],
       padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Padding(
-            padding: const EdgeInsets.only(left: 12, bottom: 40),
+            padding: const EdgeInsets.only(left: 8, bottom: 40),
             child: Row(
               children: [
                 ClipRRect(
                   borderRadius: BorderRadius.circular(12),
                   child: Image.asset(
                     'assets/images/logo.png',
-                    width: 56,
-                    height: 56,
+                    width: isDrawer ? 48 : 52,
+                    height: isDrawer ? 48 : 52,
                   ),
                 ),
                 const SizedBox(width: 12),
-                Text(
-                  '亲亲心情笔记',
-                  style: GoogleFonts.outfit(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    color: const Color(0xFF1A1A1A),
+                Expanded(
+                  child: Text(
+                    '亲亲心情笔记',
+                    style: GoogleFonts.outfit(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: const Color(0xFF1A1A1A),
+                    ),
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
                 if (isDrawer) const Spacer(),

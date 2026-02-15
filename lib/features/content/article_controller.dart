@@ -515,7 +515,7 @@ class ArticleController extends GetxController {
       final response = await _supabase
           .from('articles')
           .select(
-            '*, profiles(username, avatar_url), likes:article_likes(count), collections:article_collections(count), comments:article_comments(count)',
+            '*, profiles(username, avatar_url), songs(title), likes:article_likes(count), collections:article_collections(count), comments:article_comments(count)',
           )
           .eq('user_id', userId)
           .order('created_at', ascending: false);
