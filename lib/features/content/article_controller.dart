@@ -550,6 +550,8 @@ class ArticleController extends GetxController {
     required List<dynamic> contentJson,
     PlatformFile? coverFile,
     String? bgmSongId,
+    String type = 'original',
+    List<String> tags = const [],
   }) async {
     if (!await Get.find<ProfileController>().checkActionAllowed('更新文章'))
       return false;
@@ -568,6 +570,8 @@ class ArticleController extends GetxController {
         'summary': summary,
         'content': contentJson,
         'bgm_song_id': bgmSongId,
+        'type': type,
+        'tags': tags,
         'is_published': true, // Auto re-publish if it was hidden
       };
 
@@ -618,6 +622,8 @@ class ArticleController extends GetxController {
     required List<dynamic> contentJson,
     PlatformFile? coverFile,
     String? bgmSongId,
+    String type = 'original',
+    List<String> tags = const [],
   }) async {
     if (!await Get.find<ProfileController>().checkActionAllowed('发布文章'))
       return false;
@@ -639,16 +645,6 @@ class ArticleController extends GetxController {
       if (user == null) return false;
 
       String? coverUrl;
-      // Note: Cover upload logical part seemed missing in the viewed file's `publishArticle`?
-      // Ah, I see line 548 `coverUrl: coverUrl` in `publishArticle` is using null `coverUrl`.
-      // It seems the upload logic was missing or simplified in previous edits?
-      // Wait, looking at lines 491-509 in `updateArticle`, it HAS upload logic.
-      // But `publishArticle` at 531 seems to lack it?
-      // Ah, line 542: `String? coverUrl;` then used in 548. It is null effectively?
-      // I should probably fix that too if I can, but let's stick to BGM first.
-      // Or maybe the user truncated the file view? No, it says "entire file".
-      // It seems I might have broken `publishArticle` in a previous unrelated step or it was incomplete.
-      // I will RE-ADD the upload logic from `updateArticle` to be safe, AND add bgmSongId.
 
       if (coverFile != null) {
         final userId = user.id;
@@ -678,6 +674,8 @@ class ArticleController extends GetxController {
         content: contentJson,
         createdAt: DateTime.now(),
         bgmSongId: bgmSongId,
+        type: type,
+        tags: tags,
       );
 
       await _supabase.from('articles').insert(article.toMap()..remove('id'));

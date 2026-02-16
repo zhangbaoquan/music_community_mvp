@@ -23,11 +23,14 @@ class _ArticleEditorViewState extends State<ArticleEditorView> {
   final _controller = Get.find<ArticleController>();
   late TextEditingController _titleController;
   late TextEditingController _summaryController;
+  TextEditingController? _tagController; // Changed from late to nullable
   late QuillController _quillController;
 
   XFile? _pickedCover;
   String? _selectedBgmId;
   String? _selectedBgmTitle;
+  String _selectedType = 'original';
+  List<String> _selectedTags = [];
 
   @override
   void initState() {
@@ -36,6 +39,14 @@ class _ArticleEditorViewState extends State<ArticleEditorView> {
     _summaryController = TextEditingController(
       text: widget.article?.summary ?? '',
     );
+    // _tagController will be lazy initialized or inited here
+    _tagController = TextEditingController();
+
+    // Initialize Metadata
+    if (widget.article != null) {
+      _selectedType = widget.article!.type;
+      _selectedTags = List.from(widget.article!.tags);
+    }
 
     // Initialize BGM
     _selectedBgmId = widget.article?.bgmSongId;
@@ -62,6 +73,7 @@ class _ArticleEditorViewState extends State<ArticleEditorView> {
   void dispose() {
     _titleController.dispose();
     _summaryController.dispose();
+    _tagController?.dispose();
     _quillController.dispose();
     super.dispose();
   }
@@ -165,6 +177,8 @@ class _ArticleEditorViewState extends State<ArticleEditorView> {
         contentJson: contentList,
         coverFile: coverPlatformFile,
         bgmSongId: _selectedBgmId,
+        type: _selectedType,
+        tags: _selectedTags,
       );
     } else {
       // Create
@@ -174,6 +188,8 @@ class _ArticleEditorViewState extends State<ArticleEditorView> {
         contentJson: contentList,
         coverFile: coverPlatformFile,
         bgmSongId: _selectedBgmId,
+        type: _selectedType,
+        tags: _selectedTags,
       );
     }
 
@@ -197,6 +213,44 @@ class _ArticleEditorViewState extends State<ArticleEditorView> {
         colorText: Colors.red,
       );
     }
+  }
+
+  // Theme Color (Orange-Yellow as requested)
+  final Color _primaryColor = const Color(0xFFFF9800); // Orange
+
+  Widget _buildTypeChip(String label, String value) {
+    final isSelected = _selectedType == value;
+    return GestureDetector(
+      onTap: () {
+        setState(() => _selectedType = value);
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+        decoration: BoxDecoration(
+          color: isSelected ? _primaryColor : Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: isSelected ? _primaryColor : Colors.grey[300]!,
+          ),
+          boxShadow: isSelected
+              ? [
+                  BoxShadow(
+                    color: _primaryColor.withOpacity(0.3),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ]
+              : null,
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            color: isSelected ? Colors.white : Colors.grey[700],
+            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+          ),
+        ),
+      ),
+    );
   }
 
   @override
@@ -364,6 +418,188 @@ class _ArticleEditorViewState extends State<ArticleEditorView> {
                         ],
                       ),
                     ),
+                  ),
+
+                  // 3.5 Type Selector
+                  const SizedBox(height: 24),
+                  Row(
+                    children: [
+                      Container(
+                        width: 4,
+                        height: 16,
+                        decoration: BoxDecoration(
+                          color: _primaryColor,
+                          borderRadius: BorderRadius.circular(2),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      const Text(
+                        "文章类型",
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      _buildTypeChip('原创', 'original'),
+                      const SizedBox(width: 12),
+                      _buildTypeChip('转载', 'repost'),
+                    ],
+                  ),
+
+                  // 3.6 Tags Selector
+                  const SizedBox(height: 24),
+                  Row(
+                    children: [
+                      Container(
+                        width: 4,
+                        height: 16,
+                        decoration: BoxDecoration(
+                          color: _primaryColor,
+                          borderRadius: BorderRadius.circular(2),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      const Text(
+                        "标签 (Tags)",
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    children: [
+                      // Selected Tags
+                      ..._selectedTags.map(
+                        (tag) => Container(
+                          decoration: BoxDecoration(
+                            color: _primaryColor.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(color: _primaryColor),
+                          ),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 6,
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                tag,
+                                style: TextStyle(
+                                  color: _primaryColor,
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                              const SizedBox(width: 4),
+                              GestureDetector(
+                                onTap: () {
+                                  setState(() {
+                                    _selectedTags.remove(tag);
+                                  });
+                                },
+                                child: Icon(
+                                  Icons.close,
+                                  size: 16,
+                                  color: _primaryColor,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      // Predefined Tags
+                      ...["成长", "音乐故事", "情感", "生活"]
+                          .where((t) => !_selectedTags.contains(t))
+                          .map(
+                            (t) => GestureDetector(
+                              onTap: () {
+                                setState(() {
+                                  _selectedTags.add(t);
+                                });
+                              },
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(20),
+                                  border: Border.all(color: Colors.grey[300]!),
+                                ),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 6,
+                                ),
+                                child: Text(
+                                  t,
+                                  style: TextStyle(
+                                    color: Colors.grey[700],
+                                    fontSize: 13,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                      // Add Custom Tag Input
+                      Container(
+                        width: 100,
+                        height: 32,
+                        decoration: BoxDecoration(
+                          color: Colors.grey[50], // Slightly darker than white
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(color: Colors.grey[300]!),
+                        ),
+                        alignment: Alignment.center,
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        child: Row(
+                          children: [
+                            Icon(Icons.add, size: 14, color: Colors.grey[600]),
+                            const SizedBox(width: 4),
+                            Expanded(
+                              child: TextField(
+                                controller: _tagController ??=
+                                    TextEditingController(),
+                                decoration: const InputDecoration(
+                                  hintText: '自定义',
+                                  hintStyle: TextStyle(
+                                    fontSize: 13,
+                                    color: Colors.grey,
+                                  ),
+                                  border: InputBorder.none,
+                                  isDense: true,
+                                  contentPadding: EdgeInsets.zero,
+                                ),
+                                style: const TextStyle(
+                                  fontSize: 13,
+                                  color: Colors.black87,
+                                ),
+                                onSubmitted: (value) {
+                                  if (value.trim().isNotEmpty) {
+                                    setState(() {
+                                      if (!_selectedTags.contains(
+                                        value.trim(),
+                                      )) {
+                                        _selectedTags.add(value.trim());
+                                      }
+                                      _tagController?.clear();
+                                    });
+                                  }
+                                },
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
 
                   const Divider(height: 40),

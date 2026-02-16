@@ -16,6 +16,10 @@ class Article {
   final String? bgmSongId;
   final String? bgmTitle;
 
+  // Metadata
+  final String type; // 'original' or 'repost'
+  final List<String> tags;
+
   Article({
     required this.id,
     required this.userId,
@@ -34,6 +38,8 @@ class Article {
     this.commentsCount = 0,
     this.isLiked = false,
     this.isCollected = false,
+    this.type = 'original',
+    this.tags = const [],
   });
 
   factory Article.empty() {
@@ -58,17 +64,16 @@ class Article {
       // Note: If we join songs(title), it might be inside 'songs' object
       bgmTitle: map['songs'] != null ? map['songs']['title'] as String? : null,
 
+      // Metadata
+      type: map['type'] as String? ?? 'original',
+      tags:
+          (map['tags'] as List<dynamic>?)?.map((e) => e as String).toList() ??
+          [],
+
       // Social Interactions (Aggregated counts or flags)
-      // Note: 'likes' and 'collections' might be Lists if fetched via select(..., likes:article_likes(count))
       likesCount: _parseCount(map['likes']),
       collectionsCount: _parseCount(map['collections']),
       commentsCount: _parseCount(map['comments']),
-      // For 'isLiked', we might fetch it separately or via a smart join.
-      // For MVP simple implementation, we might fetch user-specific status in a separate list or assume data is massaged.
-      // But commonly: select(..., my_likes:article_likes!inner(user_id)) if filtered by user.
-      // Let's assume the controller will enrich this or we rely on a separate 'is_liked' field if using a view.
-      // For now, let's keep it simple: Controller handles 'isLiked' logic or we pass it in.
-      // Wait, let's add mutable fields for UI state management first.
     );
   }
 
@@ -101,6 +106,8 @@ class Article {
       'content': content,
       'is_published': isPublished,
       'bgm_song_id': bgmSongId,
+      'type': type,
+      'tags': tags,
       // 'created_at': createdAt.toIso8601String(), // Usually handled by DB default
     };
   }
@@ -123,6 +130,8 @@ class Article {
     int? commentsCount,
     bool? isLiked,
     bool? isCollected,
+    String? type,
+    List<String>? tags,
   }) {
     return Article(
       id: id ?? this.id,
@@ -142,6 +151,8 @@ class Article {
       commentsCount: commentsCount ?? this.commentsCount,
       isLiked: isLiked ?? this.isLiked,
       isCollected: isCollected ?? this.isCollected,
+      type: type ?? this.type,
+      tags: tags ?? this.tags,
     );
   }
 }

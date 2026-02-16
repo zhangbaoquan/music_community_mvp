@@ -435,7 +435,65 @@ class _ArticleDetailViewState extends State<ArticleDetailView> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 32),
+                  const SizedBox(height: 16),
+                  // Type & Tags
+                  Wrap(
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    spacing: 8,
+                    runSpacing: 4,
+                    children: [
+                      // Type Badge
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 6,
+                          vertical: 2,
+                        ),
+                        decoration: BoxDecoration(
+                          color: _currentArticle.type == 'original'
+                              ? Colors.blueAccent.withValues(alpha: 0.1)
+                              : Colors.orangeAccent.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(4),
+                          border: Border.all(
+                            color: _currentArticle.type == 'original'
+                                ? Colors.blueAccent
+                                : Colors.orangeAccent,
+                            width: 0.5,
+                          ),
+                        ),
+                        child: Text(
+                          _currentArticle.type == 'original' ? '原创' : '转载',
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w500,
+                            color: _currentArticle.type == 'original'
+                                ? Colors.blueAccent
+                                : Colors.orangeAccent,
+                          ),
+                        ),
+                      ),
+                      // Tags
+                      ..._currentArticle.tags.map(
+                        (tag) => Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 2,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.grey[100],
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Text(
+                            '# $tag',
+                            style: TextStyle(
+                              color: Colors.grey[700],
+                              fontSize: 12,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
 
                   // Music Player Card
                   const _MusicPlayerCard(), // Add control
