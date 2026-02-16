@@ -2,9 +2,13 @@ import 'dart:async';
 import 'package:get/get.dart';
 import 'package:just_audio/just_audio.dart';
 import '../../data/models/song.dart';
+import '../../data/services/log_service.dart'; // Import LogService
 
 class PlayerController extends GetxController {
   final AudioPlayer _player = AudioPlayer();
+  // Ensure LogService is available. Better to put it in initial binding, but find is ok here if already put.
+  // Using Get.put to be safe if not initialized elsewhere yet.
+  final LogService _logService = Get.put(LogService());
 
   // Observables
   final isPlaying = false.obs;
@@ -27,6 +31,7 @@ class PlayerController extends GetxController {
   @override
   void onInit() {
     super.onInit();
+    _logService.uploadLog(content: 'PlayerController _initPlayer');
     _initPlayer();
   }
 
@@ -62,7 +67,7 @@ class PlayerController extends GetxController {
     _player.playbackEventStream.listen(
       (event) {},
       onError: (Object e, StackTrace stackTrace) {
-        print('Player Stream Error: $e');
+        _logService.uploadLog(content: 'Player Stream Error: $e');
         // Only show snackbar for genuine errors if needed, or keep it silent for now specific to stream errors
       },
     );
@@ -98,7 +103,7 @@ class PlayerController extends GetxController {
       // Standard Logic: Attempt Play
       await _player.play();
     } catch (e) {
-      print("Play Error: $e");
+      _logService.uploadLog(content: "Play Error: $e");
       isPlaying.value = false;
 
       // Only show user-facing errors for interaction issues
@@ -129,7 +134,7 @@ class PlayerController extends GetxController {
         await _player.play();
       }
     } catch (e) {
-      print("Toggle Play Error: $e");
+      _logService.uploadLog(content: "Toggle Play Error: $e");
       Get.snackbar("播放错误", "操作失败");
 
       // Basic Emergency Reload
@@ -139,7 +144,7 @@ class PlayerController extends GetxController {
           await _player.setUrl(_currentUrl!);
           await _player.play();
         } catch (e2) {
-          print("Emergency Reload Failed: $e2");
+          _logService.uploadLog(content: "Emergency Reload Failed: $e2");
         }
       }
     }

@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'admin_user_log_view.dart';
+
 import 'package:get/get.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/shim_google_fonts.dart';
@@ -35,13 +37,15 @@ class _AdminUserDetailViewState extends State<AdminUserDetailView>
   final RxList<Map<String, dynamic>> songs = <Map<String, dynamic>>[].obs;
   final RxList<Map<String, dynamic>> diaries = <Map<String, dynamic>>[].obs;
   final RxList<Map<String, dynamic>> comments = <Map<String, dynamic>>[].obs;
+  final RxList<Map<String, dynamic>> logs =
+      <Map<String, dynamic>>[].obs; // NEW: Logs
 
   final RxBool isLoading = false.obs;
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 4, vsync: this);
+    _tabController = TabController(length: 5, vsync: this); // Length 5
     _tabController.addListener(_handleTabSelection);
     fetchData(0); // Fetch initial tab data
   }
@@ -87,6 +91,14 @@ class _AdminUserDetailViewState extends State<AdminUserDetailView>
             .eq('user_id', widget.userId)
             .order('created_at', ascending: false);
         comments.value = List<Map<String, dynamic>>.from(res);
+      } else if (tabIndex == 4) {
+        // Logs
+        final res = await _supabase
+            .from('app_logs')
+            .select()
+            .eq('user_id', widget.userId)
+            .order('created_at', ascending: false);
+        logs.value = List<Map<String, dynamic>>.from(res);
       }
     } catch (e) {
       Get.snackbar('Error', 'Failed to load data: $e');
@@ -106,7 +118,36 @@ class _AdminUserDetailViewState extends State<AdminUserDetailView>
     }
   }
 
+  // Delete all logs for a specific date
+  Future<void> deleteLogsByDate(String date) async {
+    try {
+      // Filter logs locally to get IDs (or use date query if precise)
+      // Since we store as timestamptz, querying by date string needs casting.
+      // Easier to delete one by one or using 'in' filter with IDs we know match the date.
+      final logsToDelete = logs.where((log) {
+        final logDate = log['created_at']?.toString().split('T')[0];
+        return logDate == date;
+      }).toList();
+
+      if (logsToDelete.isEmpty) return;
+
+      final ids = logsToDelete.map((e) => e['id']).toList();
+
+      await _supabase.from('app_logs').delete().filter('id', 'in', ids);
+
+      logs.removeWhere((log) {
+        final logDate = log['created_at']?.toString().split('T')[0];
+        return logDate == date;
+      });
+
+      Get.snackbar('Success', 'Logs for $date deleted');
+    } catch (e) {
+      Get.snackbar('Error', 'Failed to delete logs: $e');
+    }
+  }
+
   void _showResetPasswordDialog() {
+    // ... existing implementation ...
     final passwordController = TextEditingController();
     CommonDialog.show(
       title: "重置用户密码",
@@ -175,6 +216,7 @@ class _AdminUserDetailViewState extends State<AdminUserDetailView>
                 Tab(text: "音乐", icon: Icon(Icons.music_note)),
                 Tab(text: "日记", icon: Icon(Icons.book)),
                 Tab(text: "评论", icon: Icon(Icons.comment)),
+                Tab(text: "日志", icon: Icon(Icons.bug_report)), // NEW Tab
               ],
             ),
           ),
@@ -192,6 +234,7 @@ class _AdminUserDetailViewState extends State<AdminUserDetailView>
                   _buildMusicList(),
                   _buildDiaryList(),
                   _buildCommentList(),
+                  _buildLogList(), // NEW View
                 ],
               );
             }),
@@ -201,6 +244,7 @@ class _AdminUserDetailViewState extends State<AdminUserDetailView>
     );
   }
 
+  // ... existing headers ...
   Widget _buildUserProfileHeader() {
     return Container(
       padding: const EdgeInsets.all(24),
@@ -369,6 +413,70 @@ class _AdminUserDetailViewState extends State<AdminUserDetailView>
           ),
         );
       },
+    );
+  }
+
+  Widget _buildLogList() {
+    if (logs.isEmpty) return const Center(child: Text("暂无日志"));
+
+    // Group logs by Date (YYYY-MM-DD)
+    final Map<String, List<Map<String, dynamic>>> groupedLogs = {};
+    for (var log in logs) {
+      final date = log['created_at']?.substring(0, 10) ?? "Unknown Date";
+      if (!groupedLogs.containsKey(date)) {
+        groupedLogs[date] = [];
+      }
+      groupedLogs[date]!.add(log);
+    }
+
+    final sortedDates = groupedLogs.keys.toList()
+      ..sort((a, b) => b.compareTo(a)); // Descending dates
+
+    return ListView.separated(
+      padding: const EdgeInsets.all(16),
+      itemCount: sortedDates.length,
+      separatorBuilder: (context, index) => const Divider(),
+      itemBuilder: (context, index) {
+        final date = sortedDates[index];
+        final dailyLogs = groupedLogs[date]!;
+
+        return ListTile(
+          title: Text(
+            date,
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+          ),
+          subtitle: Text("${dailyLogs.length} 条日志记录"),
+          trailing: IconButton(
+            icon: const Icon(Icons.delete, color: Colors.red),
+            tooltip: "删除该日所有日志",
+            onPressed: () {
+              CommonDialog.show(
+                title: "确认删除",
+                content: "确定要删除 $date 的所有日志吗？",
+                isDestructive: true,
+                onConfirm: () => deleteLogsByDate(date),
+              );
+            },
+          ),
+          onTap: () => _openDayLogs(date, dailyLogs),
+        );
+      },
+    );
+  }
+
+  void _openDayLogs(String date, List<Map<String, dynamic>> dailyLogs) {
+    Get.to(
+      () => AdminUserLogView(
+        date: date,
+        userId: widget.userId,
+        username: widget.username,
+        initialLogs: dailyLogs, // Pass reference
+        onDelete: (logId) {
+          deleteItem('app_logs', logId, logs);
+          // logs RxList update will trigger UI rebuild in parent
+          // The child view maintains its own 'logs' list state for immediate UI feedback.
+        },
+      ),
     );
   }
 }
