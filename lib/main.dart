@@ -65,6 +65,9 @@ class MusicCommunityApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       defaultTransition: Transition.fadeIn, // Smooth fade transition
       transitionDuration: const Duration(milliseconds: 300), // 300ms duration
+      builder: (context, child) {
+        return SelectionArea(child: child!);
+      },
       theme: ThemeData(
         useMaterial3: true,
         primaryColor: const Color(0xFF1A1A1A),
