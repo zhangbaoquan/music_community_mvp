@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../core/shim_google_fonts.dart';
+import '../../core/widgets/common_dialog.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:timeago/timeago.dart' as timeago;
 
@@ -151,13 +152,12 @@ class _ManageCommentsViewState extends State<ManageCommentsView> {
                               ),
                               tooltip: "删除",
                               onPressed: () {
-                                Get.defaultDialog(
+                                CommonDialog.show(
                                   title: "确认删除",
-                                  middleText: "确定要删除这条评论吗？",
-                                  textConfirm: "删除",
-                                  textCancel: "取消",
-                                  confirmTextColor: Colors.white,
-                                  buttonColor: Colors.red,
+                                  content: "确定要删除这条评论吗？",
+                                  confirmText: "删除",
+                                  cancelText: "取消",
+                                  isDestructive: true,
                                   onConfirm: () async {
                                     Get.back(); // close dialog
                                     await deleteComment(comment['id']);

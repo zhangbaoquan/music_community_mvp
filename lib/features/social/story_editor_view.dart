@@ -4,6 +4,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 import 'package:flutter_quill/quill_delta.dart';
 import 'package:music_community_mvp/core/shim_google_fonts.dart';
+import '../../core/widgets/common_dialog.dart';
 import 'comments_controller.dart';
 
 class StoryEditorView extends StatefulWidget {
@@ -566,34 +567,22 @@ class _StoryEditorViewState extends State<StoryEditorView> {
           IconButton(
             icon: const Icon(Icons.delete_outline, color: Colors.red, size: 20),
             onPressed: () {
-              showDialog(
-                context: context,
-                builder: (ctx) => AlertDialog(
-                  title: const Text("确认移除"),
-                  content: const Text("确定要移除这张图片吗？"),
-                  actions: [
-                    TextButton(
-                      onPressed: () => Navigator.pop(ctx),
-                      child: const Text("取消"),
-                    ),
-                    TextButton(
-                      onPressed: () {
-                        Navigator.pop(ctx);
-                        _quillController.replaceText(
-                          _selectedImageNode!.documentOffset,
-                          1,
-                          '',
-                          null,
-                        );
-                        setState(() => _selectedImageNode = null);
-                      },
-                      child: const Text(
-                        "确认",
-                        style: TextStyle(color: Colors.red),
-                      ),
-                    ),
-                  ],
-                ),
+              CommonDialog.show(
+                title: "确认移除",
+                content: "确定要移除这张图片吗？",
+                confirmText: "确认",
+                cancelText: "取消",
+                isDestructive: true,
+                onConfirm: () {
+                  Get.back(); // Close dialog
+                  _quillController.replaceText(
+                    _selectedImageNode!.documentOffset,
+                    1,
+                    '',
+                    null,
+                  );
+                  setState(() => _selectedImageNode = null);
+                },
               );
             },
           ),

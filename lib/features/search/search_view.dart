@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:music_community_mvp/features/search/search_controller.dart'
     as s;
 import 'package:timeago/timeago.dart' as timeago;
+import 'package:music_community_mvp/core/widgets/common_dialog.dart';
 
 class SearchView extends StatefulWidget {
   const SearchView({super.key});
@@ -221,9 +222,9 @@ class _SearchViewState extends State<SearchView>
       onTap: () {
         // Navigate to user profile for now, or maybe a DiaryDetailView if we had one.
         // Or open a dialog showing full diary? Use Dialog closely matching MoodStation.
-        Get.defaultDialog(
+        CommonDialog.show(
           title: "心情日记",
-          content: Column(
+          contentWidget: Column(
             children: [
               Text(diary['content'] ?? ''),
               const SizedBox(height: 10),
@@ -233,12 +234,12 @@ class _SearchViewState extends State<SearchView>
               ),
             ],
           ),
-          textConfirm: "去主页",
+          confirmText: "去主页",
+          cancelText: "关闭",
           onConfirm: () {
             Get.back();
             Get.toNamed('/profile/${diary['user_id']}');
           },
-          textCancel: "关闭",
         );
       },
     );

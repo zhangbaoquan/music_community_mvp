@@ -2,15 +2,21 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/shim_google_fonts.dart';
+import 'package:music_community_mvp/core/widgets/common_dialog.dart';
+import 'admin_controller.dart'; // Import AdminController
 
 class AdminUserDetailView extends StatefulWidget {
   final String userId;
   final String username;
+  final String? email; // Add email
+  final String? avatarUrl; // Add avatarUrl for header
 
   const AdminUserDetailView({
     super.key,
     required this.userId,
     required this.username,
+    this.email,
+    this.avatarUrl,
   });
 
   @override
@@ -21,6 +27,8 @@ class _AdminUserDetailViewState extends State<AdminUserDetailView>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
   final _supabase = Supabase.instance.client;
+  final AdminController controller =
+      Get.find<AdminController>(); // Get Controller
 
   // Data Lists
   final RxList<Map<String, dynamic>> articles = <Map<String, dynamic>>[].obs;
@@ -98,41 +106,183 @@ class _AdminUserDetailViewState extends State<AdminUserDetailView>
     }
   }
 
+  void _showResetPasswordDialog() {
+    final passwordController = TextEditingController();
+    CommonDialog.show(
+      title: "重置用户密码",
+      contentWidget: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Text(
+            "⚠️ 您正在强制修改该用户的密码。\n修改成功后，请务必通知用户新密码，否则用户将无法登录。",
+            style: TextStyle(fontSize: 12, color: Colors.red),
+          ),
+          const SizedBox(height: 16),
+          TextField(
+            controller: passwordController,
+            decoration: const InputDecoration(
+              labelText: "输入新密码",
+              border: OutlineInputBorder(),
+              prefixIcon: Icon(Icons.lock_reset),
+            ),
+          ),
+        ],
+      ),
+      confirmText: "确认重置",
+      cancelText: "取消",
+      isDestructive: true,
+      confirmColor: Colors.orange,
+      onConfirm: () async {
+        if (passwordController.text.trim().length < 6) {
+          Get.snackbar('提示', '密码长度至少6位');
+          return;
+        }
+        Get.back(); // Close dialog first
+        await controller.resetUserPassword(
+          widget.userId,
+          passwordController.text.trim(),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          "${widget.username} 的主页",
+          "用户详情",
           style: GoogleFonts.outfit(fontWeight: FontWeight.bold),
         ),
-        bottom: TabBar(
-          controller: _tabController,
-          labelColor: Colors.black,
-          unselectedLabelColor: Colors.grey,
-          indicatorColor: Colors.black,
-          tabs: const [
-            Tab(text: "文章", icon: Icon(Icons.article)),
-            Tab(text: "音乐", icon: Icon(Icons.music_note)),
-            Tab(text: "日记", icon: Icon(Icons.book)),
-            Tab(text: "评论", icon: Icon(Icons.comment)),
-          ],
-        ),
       ),
-      body: Obx(() {
-        if (isLoading.value) {
-          return const Center(child: CircularProgressIndicator());
-        }
-        return TabBarView(
-          controller: _tabController,
-          children: [
-            _buildArticleList(),
-            _buildMusicList(),
-            _buildDiaryList(),
-            _buildCommentList(),
-          ],
-        );
-      }),
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // 1. User Profile Header
+          _buildUserProfileHeader(),
+          const Divider(height: 1),
+
+          // 2. Tabs
+          Container(
+            color: Colors.white,
+            child: TabBar(
+              controller: _tabController,
+              labelColor: Colors.black,
+              unselectedLabelColor: Colors.grey,
+              indicatorColor: Colors.black,
+              tabs: const [
+                Tab(text: "文章", icon: Icon(Icons.article)),
+                Tab(text: "音乐", icon: Icon(Icons.music_note)),
+                Tab(text: "日记", icon: Icon(Icons.book)),
+                Tab(text: "评论", icon: Icon(Icons.comment)),
+              ],
+            ),
+          ),
+
+          // 3. Tab Views
+          Expanded(
+            child: Obx(() {
+              if (isLoading.value) {
+                return const Center(child: CircularProgressIndicator());
+              }
+              return TabBarView(
+                controller: _tabController,
+                children: [
+                  _buildArticleList(),
+                  _buildMusicList(),
+                  _buildDiaryList(),
+                  _buildCommentList(),
+                ],
+              );
+            }),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildUserProfileHeader() {
+    return Container(
+      padding: const EdgeInsets.all(24),
+      color: Colors.white,
+      child: Row(
+        children: [
+          // Avatar
+          Container(
+            width: 80,
+            height: 80,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: Colors.grey[200],
+              image: widget.avatarUrl != null
+                  ? DecorationImage(
+                      image: NetworkImage(widget.avatarUrl!),
+                      fit: BoxFit.cover,
+                    )
+                  : null,
+            ),
+            child: widget.avatarUrl == null
+                ? const Icon(Icons.person, size: 40, color: Colors.grey)
+                : null,
+          ),
+          const SizedBox(width: 24),
+          // Info
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  widget.username,
+                  style: GoogleFonts.outfit(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                if (widget.email != null) ...[
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      const Icon(Icons.email, size: 16, color: Colors.grey),
+                      const SizedBox(width: 8),
+                      Text(
+                        widget.email!,
+                        style: const TextStyle(
+                          fontSize: 14,
+                          color: Colors.grey,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+                const SizedBox(height: 4),
+                SelectableText(
+                  "ID: ${widget.userId}",
+                  style: const TextStyle(fontSize: 12, color: Colors.grey),
+                ),
+              ],
+            ),
+          ),
+          // Actions
+          Column(
+            children: [
+              OutlinedButton.icon(
+                onPressed: _showResetPasswordDialog,
+                icon: const Icon(Icons.lock_reset, color: Colors.orange),
+                label: const Text(
+                  "重置密码",
+                  style: TextStyle(color: Colors.orange),
+                ),
+                style: OutlinedButton.styleFrom(
+                  side: const BorderSide(color: Colors.orange),
+                ),
+              ),
+              const SizedBox(height: 8),
+              // We could add Ban/Unban here too, but they are already in the list view.
+              // For now, Reset Password is the key request.
+            ],
+          ),
+        ],
+      ),
     );
   }
 

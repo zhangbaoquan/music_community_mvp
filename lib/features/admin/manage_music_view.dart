@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../core/shim_google_fonts.dart';
+import '../../core/widgets/common_dialog.dart';
 import '../music/music_controller.dart';
 
 class ManageMusicView extends StatelessWidget {
@@ -130,13 +131,12 @@ class ManageMusicView extends StatelessWidget {
                               ),
                               tooltip: "删除",
                               onPressed: () {
-                                Get.defaultDialog(
+                                CommonDialog.show(
                                   title: "确认删除",
-                                  middleText: "确定要删除歌曲 '${song.title}' 吗？",
-                                  textConfirm: "删除",
-                                  textCancel: "取消",
-                                  confirmTextColor: Colors.white,
-                                  buttonColor: Colors.red,
+                                  content: "确定要删除歌曲 '${song.title}' 吗？",
+                                  confirmText: "删除",
+                                  cancelText: "取消",
+                                  isDestructive: true,
                                   onConfirm: () async {
                                     Get.back(); // close dialog
                                     await musicController.deleteSong(song.id);

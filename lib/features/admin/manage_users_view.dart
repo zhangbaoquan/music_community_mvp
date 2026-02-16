@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../core/shim_google_fonts.dart';
+import '../../core/widgets/common_dialog.dart';
 import 'package:timeago/timeago.dart' as timeago;
 import 'admin_user_detail_view.dart';
 import 'admin_controller.dart';
@@ -69,6 +70,7 @@ class _ManageUsersViewState extends State<ManageUsersView> {
                     columns: const [
                       DataColumn(label: Text("头像")),
                       DataColumn(label: Text("昵称")),
+                      DataColumn(label: Text("邮箱")), // Add Email Column
                       DataColumn(label: Text("状态")),
                       DataColumn(label: Text("最近活跃")),
                       DataColumn(label: Text("操作")),
@@ -76,6 +78,7 @@ class _ManageUsersViewState extends State<ManageUsersView> {
                     rows: controller.users.map((user) {
                       final avatarUrl = user['avatar_url'] as String?;
                       final username = user['username'] ?? "Unknown";
+                      final email = user['email'] as String?; // Get Email
                       final signature = user['signature'] ?? "-";
                       final time =
                           DateTime.tryParse(user['updated_at'].toString()) ??
@@ -90,6 +93,8 @@ class _ManageUsersViewState extends State<ManageUsersView> {
                             () => AdminUserDetailView(
                               userId: user['id'],
                               username: username,
+                              email: email, // Pass Email
+                              avatarUrl: avatarUrl, // Pass Avatar
                             ),
                           );
                         },
@@ -137,6 +142,12 @@ class _ManageUsersViewState extends State<ManageUsersView> {
                                   overflow: TextOverflow.ellipsis,
                                 ),
                               ],
+                            ),
+                          ),
+                          DataCell(
+                            Text(
+                              email ?? "-",
+                              style: const TextStyle(color: Colors.grey),
                             ),
                           ),
                           DataCell(
@@ -223,37 +234,33 @@ class _ManageUsersViewState extends State<ManageUsersView> {
     String username,
     AdminController controller,
   ) {
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: Text("封禁用户: $username"),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              ListTile(
-                title: const Text("1 天"),
-                onTap: () => {Get.back(), controller.banUser(userId, 1)},
-              ),
-              ListTile(
-                title: const Text("7 天"),
-                onTap: () => {Get.back(), controller.banUser(userId, 7)},
-              ),
-              ListTile(
-                title: const Text("1 个月"),
-                onTap: () => {Get.back(), controller.banUser(userId, 30)},
-              ),
-              ListTile(
-                title: const Text("永久封禁"),
-                onTap: () => {Get.back(), controller.banUser(userId, 36500)},
-              ),
-            ],
+    CommonDialog.show(
+      title: "封禁用户: $username",
+      contentWidget: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          ListTile(
+            title: const Text("1 天"),
+            onTap: () => {Get.back(), controller.banUser(userId, 1)},
           ),
-          actions: [
-            TextButton(onPressed: () => Get.back(), child: const Text("取消")),
-          ],
-        );
-      },
+          ListTile(
+            title: const Text("7 天"),
+            onTap: () => {Get.back(), controller.banUser(userId, 7)},
+          ),
+          ListTile(
+            title: const Text("1 个月"),
+            onTap: () => {Get.back(), controller.banUser(userId, 30)},
+          ),
+          ListTile(
+            title: const Text("永久封禁"),
+            onTap: () => {Get.back(), controller.banUser(userId, 36500)},
+          ),
+        ],
+      ),
+      confirmText:
+          "取消", // Only cancel button needed as actions are inside list tiles
+      isDestructive: true,
+      onConfirm: () => Get.back(),
     );
   }
 
@@ -263,27 +270,16 @@ class _ManageUsersViewState extends State<ManageUsersView> {
     String username,
     AdminController controller,
   ) {
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: const Text("⚠️ 危险操作", style: TextStyle(color: Colors.red)),
-          content: Text("确定要清空用户 [$username] 的所有内容吗？\n包括文章、评论、动态等。\n此操作不可恢复！"),
-          actions: [
-            TextButton(onPressed: () => Get.back(), child: const Text("取消")),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.red,
-                foregroundColor: Colors.white,
-              ),
-              onPressed: () {
-                Get.back();
-                controller.clearUserContent(userId);
-              },
-              child: const Text("确认清空"),
-            ),
-          ],
-        );
+    CommonDialog.show(
+      title: "⚠️ 危险操作",
+      content: "确定要清空用户 [$username] 的所有内容吗？\n包括文章、评论、动态等。\n此操作不可恢复！",
+      confirmText: "确认清空",
+      cancelText: "取消",
+      isDestructive: true,
+      confirmColor: Colors.red,
+      onConfirm: () {
+        Get.back();
+        controller.clearUserContent(userId);
       },
     );
   }

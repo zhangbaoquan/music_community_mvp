@@ -143,8 +143,8 @@ class AuthController extends GetxController {
       // Listener will handle redirection
     } on AuthException catch (e) {
       Get.snackbar(
-        'Error',
-        e.message,
+        '登录失败',
+        e.message.contains('Invalid login credentials') ? '账号或密码错误' : e.message,
         backgroundColor: Colors.redAccent,
         colorText: Colors.white,
       );
@@ -173,8 +173,8 @@ class AuthController extends GetxController {
       );
     } on AuthException catch (e) {
       Get.snackbar(
-        'Error',
-        e.message,
+        '登录失败',
+        e.message.contains('Invalid login credentials') ? '账号或密码错误' : e.message,
         backgroundColor: Colors.redAccent,
         colorText: Colors.white,
       );

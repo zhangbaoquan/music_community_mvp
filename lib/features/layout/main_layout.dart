@@ -14,6 +14,7 @@ import '../notifications/notification_service.dart';
 import '../profile/profile_controller.dart';
 import '../about/about_view.dart';
 import '../sponsor/sponsor_dialog.dart';
+import 'package:music_community_mvp/core/widgets/common_dialog.dart';
 
 class NavigationController extends GetxController {
   final RxInt selectedIndex = 0.obs;
@@ -275,11 +276,22 @@ class MainLayout extends StatelessWidget {
                 if (isGuest) {
                   Get.toNamed('/login');
                 } else {
-                  if (Get.isRegistered<AuthController>()) {
-                    Get.find<AuthController>().signOut();
-                  } else {
-                    Get.offAllNamed('/login');
-                  }
+                  CommonDialog.show(
+                    title: "退出登录",
+                    content: "确定要退出当前账号吗？",
+                    confirmText: "确认退出",
+                    cancelText: "取消",
+                    isDestructive: true,
+                    onConfirm: () {
+                      Get.back(); // Close dialog
+                      if (Get.isRegistered<AuthController>()) {
+                        Get.find<AuthController>().signOut();
+                      } else {
+                        Get.offAllNamed('/login');
+                      }
+                      Get.snackbar('已退出', '您已安全退出登录');
+                    },
+                  );
                 }
               },
             );

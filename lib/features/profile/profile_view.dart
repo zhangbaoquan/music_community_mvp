@@ -10,6 +10,7 @@ import 'edit_profile_dialog.dart';
 import '../content/article_controller.dart';
 import '../gamification/premium_badge_widget.dart';
 import '../gamification/badge_service.dart';
+import 'package:music_community_mvp/core/widgets/common_dialog.dart';
 
 class ProfileView extends StatelessWidget {
   const ProfileView({super.key});
@@ -567,23 +568,13 @@ class ProfileView extends StatelessWidget {
                                                         '删除文章',
                                                       ))
                                                     return;
-                                                  Get.defaultDialog(
+                                                  CommonDialog.show(
                                                     title: "确认删除",
-                                                    titlePadding:
-                                                        const EdgeInsets.only(
-                                                          top: 24,
-                                                        ),
-                                                    contentPadding:
-                                                        const EdgeInsets.all(
-                                                          24,
-                                                        ),
-                                                    middleText:
+                                                    content:
                                                         "确定要删除这篇文章吗？操作不可恢复。",
-                                                    textConfirm: "删除",
-                                                    textCancel: "取消",
-                                                    confirmTextColor:
-                                                        Colors.white,
-                                                    buttonColor: Colors.red,
+                                                    confirmText: "删除",
+                                                    cancelText: "取消",
+                                                    isDestructive: true,
                                                     onConfirm: () async {
                                                       final success =
                                                           await articleController
@@ -845,42 +836,17 @@ class ProfileView extends StatelessWidget {
                                   ))
                                     return;
 
-                                  showDialog(
-                                    context: context,
-                                    builder: (BuildContext context) {
-                                      return AlertDialog(
-                                        title: const Text("确认删除"),
-                                        content: const Text(
-                                          "确定要删除这首歌曲吗？操作不可恢复。",
-                                        ),
-                                        actions: [
-                                          TextButton(
-                                            onPressed: () =>
-                                                Navigator.of(context).pop(),
-                                            child: const Text(
-                                              "取消",
-                                              style: TextStyle(
-                                                color: Colors.grey,
-                                              ),
-                                            ),
-                                          ),
-                                          TextButton(
-                                            onPressed: () async {
-                                              Navigator.of(context).pop();
-                                              await musicController.deleteSong(
-                                                song.id,
-                                              );
-                                            },
-                                            child: const Text(
-                                              "删除",
-                                              style: TextStyle(
-                                                color: Colors.red,
-                                              ),
-                                            ),
-                                          ),
-                                        ],
-                                      );
+                                  CommonDialog.show(
+                                    title: "确认删除",
+                                    content: "确定要删除这首歌曲吗？操作不可恢复。",
+                                    confirmText: "删除",
+                                    cancelText: "取消",
+                                    isDestructive: true,
+                                    onConfirm: () async {
+                                      Get.back(); // Close dialog
+                                      await musicController.deleteSong(song.id);
                                     },
+                                    onCancel: () => Get.back(),
                                   );
                                 },
                                 icon: Icon(

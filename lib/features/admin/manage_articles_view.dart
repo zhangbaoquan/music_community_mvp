@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../core/shim_google_fonts.dart';
+import '../../core/widgets/common_dialog.dart';
 import '../content/article_controller.dart';
 import '../content/article_detail_view.dart';
 
@@ -120,13 +121,12 @@ class ManageArticlesView extends StatelessWidget {
                               ),
                               tooltip: "删除",
                               onPressed: () {
-                                Get.defaultDialog(
+                                CommonDialog.show(
                                   title: "确认删除",
-                                  middleText: "确定要删除文章 '${article.title}' 吗？",
-                                  textConfirm: "删除",
-                                  textCancel: "取消",
-                                  confirmTextColor: Colors.white,
-                                  buttonColor: Colors.red,
+                                  content: "确定要删除文章 '${article.title}' 吗？",
+                                  confirmText: "删除",
+                                  cancelText: "取消",
+                                  isDestructive: true,
                                   onConfirm: () async {
                                     Get.back(); // close dialog
                                     await articleController.deleteArticle(

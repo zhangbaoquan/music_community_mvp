@@ -382,4 +382,17 @@ class AdminController extends GetxController {
       Get.snackbar('错误', '清空失败: $e');
     }
   }
+
+  Future<void> resetUserPassword(String userId, String newPassword) async {
+    try {
+      await Supabase.instance.client.rpc(
+        'admin_reset_password',
+        params: {'target_user_id': userId, 'new_password': newPassword},
+      );
+      Get.snackbar('成功', '用户密码已重置');
+    } catch (e) {
+      print("Reset Password Error: $e");
+      Get.snackbar('错误', '重置密码失败: $e');
+    }
+  }
 }
