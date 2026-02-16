@@ -194,48 +194,103 @@ class ProfileView extends StatelessWidget {
 
             const SizedBox(height: 24),
 
-            // Social & Stats Row (Clean Design)
+            // Social & Stats Row (Clean Design - Single Line)
             Container(
-              padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
               decoration: BoxDecoration(
                 color: Colors.white,
-                // borderRadius: BorderRadius.circular(16),
-                // border: Border.all(color: Colors.grey[100]!),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: Colors.grey[100]!),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.02),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
               ),
               child: Obx(
-                () => Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  children: [
-                    InkWell(
-                      onTap: () => Get.toNamed(
-                        '/follows/${Supabase.instance.client.auth.currentUser!.id}/following',
+                () => SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      // Social Graph
+                      InkWell(
+                        onTap: () => Get.toNamed(
+                          '/follows/${Supabase.instance.client.auth.currentUser!.id}/following',
+                        ),
+                        child: _buildStatItem(
+                          "关注",
+                          "${controller.followingCount.value}",
+                          icon: Icons.person_add_alt_1_outlined,
+                        ),
                       ),
-                      child: _buildStatItem(
-                        "关注",
-                        "${controller.followingCount.value}",
+                      const SizedBox(width: 32),
+                      InkWell(
+                        onTap: () => Get.toNamed(
+                          '/follows/${Supabase.instance.client.auth.currentUser!.id}/followers',
+                        ),
+                        child: _buildStatItem(
+                          "粉丝",
+                          "${controller.followersCount.value}",
+                          icon: Icons.group_outlined,
+                        ),
                       ),
-                    ),
-                    InkWell(
-                      onTap: () => Get.toNamed(
-                        '/follows/${Supabase.instance.client.auth.currentUser!.id}/followers',
+                      const SizedBox(width: 32),
+                      InkWell(
+                        onTap: () => Get.toNamed('/visitors'),
+                        child: _buildStatItem(
+                          "访客",
+                          "${controller.visitorsCount.value}",
+                          isHighlight: true,
+                          icon: Icons.visibility_outlined,
+                        ),
                       ),
-                      child: _buildStatItem(
-                        "粉丝",
-                        "${controller.followersCount.value}",
+
+                      const SizedBox(width: 32),
+                      _buildVerticalDivider(),
+                      const SizedBox(width: 32),
+
+                      // Received Stats
+                      _buildStatItem(
+                        "获赞",
+                        "${controller.receivedLikesCount.value}",
+                        icon: Icons.thumb_up_alt_outlined,
                       ),
-                    ),
-                    InkWell(
-                      onTap: () => Get.toNamed('/visitors'),
-                      child: _buildStatItem(
-                        "访客",
-                        "${controller.visitorsCount.value}",
-                        isHighlight: true,
+                      const SizedBox(width: 32),
+                      _buildStatItem(
+                        "评论",
+                        "${controller.receivedCommentsCount.value}",
+                        icon: Icons.comment_outlined,
                       ),
-                    ),
-                    _buildVerticalDivider(),
-                    _buildStatItem("日记", "${controller.diaryCount.value}"),
-                    _buildStatItem("心情", "${controller.moodIndex.value}"),
-                  ],
+                      const SizedBox(width: 32),
+                      _buildStatItem(
+                        "收藏",
+                        "${controller.receivedCollectionsCount.value}",
+                        icon: Icons.bookmark_border,
+                      ),
+
+                      const SizedBox(width: 32),
+                      _buildVerticalDivider(),
+                      const SizedBox(width: 32),
+
+                      // Personal Stats
+                      _buildStatItem(
+                        "日记",
+                        "${controller.diaryCount.value}",
+                        icon: Icons.edit_note,
+                      ),
+                      const SizedBox(width: 32),
+                      _buildStatItem(
+                        "心情",
+                        "${controller.moodIndex.value}",
+                        icon: Icons.mood,
+                      ),
+                      const SizedBox(width: 16),
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -268,351 +323,336 @@ class ProfileView extends StatelessWidget {
     final currentUser = Supabase.instance.client.auth.currentUser;
     if (currentUser != null) {
       articleController.fetchUserArticles(currentUser.id);
+      // collectedArticles are fetched in ProfileController.loadProfile
     }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Obx(() {
-          final allArticles = articleController.userArticles;
-          // Sort by likes descending
-          final sortedArticles = List<Article>.from(allArticles)
-            ..sort((a, b) => b.likesCount.compareTo(a.likesCount));
+        Text(
+          "我的文章",
+          style: GoogleFonts.outfit(
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+            color: const Color(0xFF1A1A1A),
+          ),
+        ),
+        const SizedBox(height: 24),
 
-          // Take top 5
-          final displayArticles = sortedArticles.take(5).toList();
-          final totalCount = allArticles.length;
-
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+        // DefaultTabController for Published / Collected
+        DefaultTabController(
+          length: 2,
+          child: Column(
             children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    "我的文章 ($totalCount)",
-                    style: GoogleFonts.outfit(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                      color: const Color(0xFF1A1A1A),
-                    ),
-                  ),
-                  Row(
-                    children: [
-                      if (totalCount > 5)
-                        InkWell(
-                          onTap: () => Get.toNamed('/user_articles'),
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 4,
-                            ),
-                            child: Row(
-                              children: [
-                                Text(
-                                  "查看全部",
-                                  style: GoogleFonts.outfit(
-                                    fontSize: 14,
-                                    color: Colors.grey,
-                                  ),
-                                ),
-                                const Icon(
-                                  Icons.chevron_right,
-                                  size: 16,
-                                  color: Colors.grey,
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      const SizedBox(width: 8),
-                      ElevatedButton.icon(
-                        onPressed: () async {
-                          if (await controller.checkActionAllowed('发布文章')) {
-                            Get.toNamed('/editor');
-                          }
-                        },
-                        icon: const Icon(Icons.edit_note, size: 18),
-                        label: const Text("写文章"),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.black87,
-                          foregroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 20,
-                            vertical: 12,
-                          ),
-                        ),
+              Container(
+                decoration: BoxDecoration(
+                  color: Colors.grey[100],
+                  borderRadius: BorderRadius.circular(25),
+                ),
+                padding: const EdgeInsets.all(4),
+                child: TabBar(
+                  indicator: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(21),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.05),
+                        blurRadius: 4,
+                        offset: const Offset(0, 2),
                       ),
                     ],
                   ),
-                ],
+                  labelColor: const Color(0xFF1A1A1A),
+                  unselectedLabelColor: Colors.grey[600],
+                  labelStyle: const TextStyle(fontWeight: FontWeight.bold),
+                  indicatorSize: TabBarIndicatorSize.tab,
+                  dividerColor: Colors.transparent,
+                  tabs: [
+                    Tab(
+                      child: Obx(
+                        () => Text(
+                          "我发布的 (${articleController.userArticles.length})",
+                        ),
+                      ),
+                    ),
+                    Tab(
+                      child: Obx(
+                        () => Text(
+                          "我收藏的 (${controller.collectedArticles.length})",
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
               const SizedBox(height: 24),
+              SizedBox(
+                height: 400, // Fixed height for tab view area
+                child: TabBarView(
+                  children: [
+                    _buildArticleList(
+                      articleController.userArticles,
+                      isMine: true,
+                      controller: controller,
+                      articleController: articleController,
+                    ),
+                    _buildArticleList(
+                      controller.collectedArticles,
+                      isMine: false,
+                      controller: controller,
+                      articleController: articleController,
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
 
-              if (displayArticles.isEmpty)
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(40),
-                  decoration: BoxDecoration(
-                    color: Colors.grey[50],
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(
-                      color: Colors.grey[200]!,
-                      style: BorderStyle.solid,
+  Widget _buildArticleList(
+    List<Article> articles, {
+    required bool isMine,
+    required ProfileController controller,
+    required ArticleController articleController,
+  }) {
+    return Obx(() {
+      if (articles.isEmpty) {
+        return Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                isMine ? Icons.article_outlined : Icons.bookmark_border,
+                size: 48,
+                color: Colors.grey[300],
+              ),
+              const SizedBox(height: 16),
+              Text(
+                isMine ? "还没有发布过文章" : "还没有收藏文章",
+                style: TextStyle(color: Colors.grey[500], fontSize: 16),
+              ),
+              if (isMine) ...[
+                const SizedBox(height: 12),
+                ElevatedButton(
+                  onPressed: () async {
+                    if (await controller.checkActionAllowed('发布文章')) {
+                      Get.toNamed('/editor');
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF1A1A1A),
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20),
                     ),
                   ),
-                  child: Column(
+                  child: const Text("去写第一篇"),
+                ),
+              ],
+            ],
+          ),
+        );
+      }
+
+      return ListView.separated(
+        itemCount: articles.length,
+        separatorBuilder: (context, index) => const SizedBox(height: 16),
+        itemBuilder: (context, index) {
+          final article = articles[index];
+          return Container(
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.grey[200]!),
+            ),
+            child: Material(
+              color: Colors.transparent,
+              borderRadius: BorderRadius.circular(12),
+              clipBehavior: Clip.antiAlias,
+              child: InkWell(
+                onTap: () =>
+                    Get.toNamed('/article/${article.id}', arguments: article),
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Row(
                     children: [
-                      Icon(
-                        Icons.article_outlined,
-                        size: 48,
-                        color: Colors.grey[400],
+                      // Cover Image
+                      Container(
+                        width: 80,
+                        height: 80,
+                        margin: const EdgeInsets.only(right: 16),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(8),
+                          color: Colors.grey[100],
+                          image: article.coverUrl != null
+                              ? DecorationImage(
+                                  image: NetworkImage(article.coverUrl!),
+                                  fit: BoxFit.cover,
+                                )
+                              : null,
+                        ),
+                        child: article.coverUrl == null
+                            ? Icon(
+                                Icons.article,
+                                color: Colors.grey[300],
+                                size: 32,
+                              )
+                            : null,
                       ),
-                      const SizedBox(height: 16),
-                      Text(
-                        "还没有发布过文章",
-                        style: TextStyle(color: Colors.grey[500], fontSize: 16),
-                      ),
-                      const SizedBox(height: 8),
-                      TextButton(
-                        onPressed: () async {
-                          if (await controller.checkActionAllowed('发布文章')) {
-                            Get.toNamed('/editor');
-                          }
-                        },
-                        child: const Text("去写第一篇"),
-                      ),
-                    ],
-                  ),
-                )
-              else
-                LayoutBuilder(
-                  builder: (context, constraints) {
-                    final isWide = constraints.maxWidth > 800;
-                    return GridView.builder(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: isWide ? 2 : 1,
-                        crossAxisSpacing: 16,
-                        mainAxisSpacing: 16,
-                        mainAxisExtent:
-                            140, // Slightly taller for interaction stats
-                      ),
-                      itemCount: displayArticles.length,
-                      itemBuilder: (context, index) {
-                        final article = displayArticles[index];
-                        return Container(
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: Colors.grey[200]!),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.02),
-                                blurRadius: 8,
-                                offset: const Offset(0, 2),
+
+                      // Content Column
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              article.title,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFF1A1A1A),
+                              ),
+                            ),
+                            if (article.summary != null &&
+                                article.summary!.isNotEmpty) ...[
+                              const SizedBox(height: 4),
+                              Text(
+                                article.summary!,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  color: Colors.grey[500],
+                                  fontSize: 13,
+                                ),
                               ),
                             ],
-                          ),
-                          child: Material(
-                            color: Colors.transparent,
-                            borderRadius: BorderRadius.circular(12),
-                            clipBehavior: Clip.antiAlias,
-                            child: InkWell(
-                              onTap: () => Get.toNamed(
-                                '/article/${article.id}',
-                                arguments: article,
-                              ),
-                              child: Padding(
-                                padding: const EdgeInsets.all(16),
-                                child: Row(
-                                  children: [
-                                    // Cover Image
-                                    Container(
-                                      width: 90,
-                                      height: 90,
-                                      margin: const EdgeInsets.only(right: 16),
-                                      decoration: BoxDecoration(
-                                        borderRadius: BorderRadius.circular(8),
-                                        color: Colors.grey[100],
-                                        image: article.coverUrl != null
-                                            ? DecorationImage(
-                                                image: NetworkImage(
-                                                  article.coverUrl!,
-                                                ),
-                                                fit: BoxFit.cover,
-                                              )
-                                            : null,
-                                      ),
-                                      child: article.coverUrl == null
-                                          ? Icon(
-                                              Icons.article,
-                                              color: Colors.grey[300],
-                                              size: 32,
-                                            )
-                                          : null,
-                                    ),
 
-                                    // Content Column
-                                    Expanded(
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.center,
-                                        children: [
-                                          Text(
-                                            article.title,
-                                            maxLines: 1,
-                                            overflow: TextOverflow.ellipsis,
-                                            style: const TextStyle(
-                                              fontSize: 16,
-                                              fontWeight: FontWeight.bold,
-                                              color: Color(0xFF1A1A1A),
-                                            ),
+                            const SizedBox(height: 8),
+
+                            // Bottom Row: Stats + Actions
+                            Row(
+                              children: [
+                                Icon(
+                                  Icons.favorite_border,
+                                  size: 14,
+                                  color: Colors.grey[400],
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  "${article.likesCount}",
+                                  style: TextStyle(
+                                    color: Colors.grey[400],
+                                    fontSize: 12,
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Icon(
+                                  Icons.comment_outlined,
+                                  size: 14,
+                                  color: Colors.grey[400],
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  "${article.commentsCount}",
+                                  style: TextStyle(
+                                    color: Colors.grey[400],
+                                    fontSize: 12,
+                                  ),
+                                ),
+                                const Spacer(),
+                                if (isMine) ...[
+                                  _CompactActionButton(
+                                    icon: Icons.edit,
+                                    tooltip: "编辑",
+                                    onTap: () async {
+                                      if (await controller.checkActionAllowed(
+                                        '编辑文章',
+                                      )) {
+                                        Get.toNamed(
+                                          '/editor',
+                                          arguments: article,
+                                        );
+                                      }
+                                    },
+                                  ),
+                                  const SizedBox(width: 8),
+                                  _CompactActionButton(
+                                    icon: Icons.delete_outline,
+                                    tooltip: "删除",
+                                    color: Colors.red[300],
+                                    onTap: () async {
+                                      if (!await controller.checkActionAllowed(
+                                        '删除文章',
+                                      ))
+                                        return;
+
+                                      // Using Get.dialog or CommonDialog wrapper
+                                      Get.dialog(
+                                        AlertDialog(
+                                          title: const Text("确认删除"),
+                                          content: const Text(
+                                            "确定要删除这篇文章吗？操作不可恢复。",
                                           ),
-                                          if (article.summary != null &&
-                                              article.summary!.isNotEmpty) ...[
-                                            const SizedBox(height: 4),
-                                            Text(
-                                              article.summary!,
-                                              maxLines: 1,
-                                              overflow: TextOverflow.ellipsis,
-                                              style: TextStyle(
-                                                color: Colors.grey[500],
-                                                fontSize: 13,
+                                          actions: [
+                                            TextButton(
+                                              onPressed: () => Get.back(),
+                                              child: const Text("取消"),
+                                            ),
+                                            TextButton(
+                                              onPressed: () async {
+                                                final success =
+                                                    await articleController
+                                                        .deleteArticle(
+                                                          article.id,
+                                                        );
+                                                if (success) {
+                                                  Get.back();
+                                                  Get.snackbar("删除成功", "文章已删除");
+                                                }
+                                              },
+                                              child: const Text(
+                                                "删除",
+                                                style: TextStyle(
+                                                  color: Colors.red,
+                                                ),
                                               ),
                                             ),
                                           ],
-
-                                          const Spacer(),
-
-                                          // Bottom Row: Likes/Comments + Date + Actions
-                                          Row(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.center,
-                                            children: [
-                                              // Interaction Stats
-                                              Icon(
-                                                Icons.thumb_up_alt_outlined,
-                                                size: 14,
-                                                color: Colors.grey[400],
-                                              ),
-                                              const SizedBox(width: 4),
-                                              Text(
-                                                "${article.likesCount}",
-                                                style: TextStyle(
-                                                  color: Colors.grey[400],
-                                                  fontSize: 12,
-                                                ),
-                                              ),
-                                              const SizedBox(width: 12),
-                                              Icon(
-                                                Icons.comment_outlined,
-                                                size: 14,
-                                                color: Colors.grey[400],
-                                              ),
-                                              const SizedBox(width: 4),
-                                              Text(
-                                                "${article.commentsCount}",
-                                                style: TextStyle(
-                                                  color: Colors.grey[400],
-                                                  fontSize: 12,
-                                                ),
-                                              ),
-
-                                              const Spacer(),
-
-                                              // Date
-                                              Text(
-                                                article.createdAt
-                                                    .toString()
-                                                    .split(' ')
-                                                    .first,
-                                                style: TextStyle(
-                                                  color: Colors.grey[400],
-                                                  fontSize: 12,
-                                                ),
-                                              ),
-
-                                              const SizedBox(width: 8),
-
-                                              // Actions
-                                              _CompactActionButton(
-                                                icon: Icons.edit,
-                                                tooltip: "编辑",
-                                                onTap: () async {
-                                                  if (await controller
-                                                      .checkActionAllowed(
-                                                        '编辑文章',
-                                                      )) {
-                                                    Get.toNamed(
-                                                      '/editor',
-                                                      arguments: article,
-                                                    );
-                                                  }
-                                                },
-                                              ),
-                                              const SizedBox(width: 4),
-                                              _CompactActionButton(
-                                                icon: Icons.delete_outline,
-                                                tooltip: "删除",
-                                                color: Colors.red[300],
-                                                onTap: () async {
-                                                  if (!await controller
-                                                      .checkActionAllowed(
-                                                        '删除文章',
-                                                      ))
-                                                    return;
-                                                  CommonDialog.show(
-                                                    title: "确认删除",
-                                                    content:
-                                                        "确定要删除这篇文章吗？操作不可恢复。",
-                                                    confirmText: "删除",
-                                                    cancelText: "取消",
-                                                    isDestructive: true,
-                                                    onConfirm: () async {
-                                                      final success =
-                                                          await articleController
-                                                              .deleteArticle(
-                                                                article.id,
-                                                              );
-                                                      if (success) {
-                                                        Get.back();
-                                                        Get.snackbar(
-                                                          "删除成功",
-                                                          "文章已删除",
-                                                          maxWidth: 400,
-                                                        );
-                                                      }
-                                                    },
-                                                  );
-                                                },
-                                              ),
-                                            ],
-                                          ),
-                                        ],
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                ] else ...[
+                                  // For collected articles, show Author
+                                  if (article.authorName != null)
+                                    Text(
+                                      "@${article.authorName}",
+                                      style: TextStyle(
+                                        color: Colors.grey[500],
+                                        fontSize: 12,
                                       ),
                                     ),
-                                  ],
-                                ),
-                              ),
+                                ],
+                              ],
                             ),
-                          ),
-                        );
-                      },
-                    );
-                  },
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-            ],
+              ),
+            ),
           );
-        }),
-      ],
-    );
+        },
+      );
+    });
   }
 
   Widget _buildMyMusicSection() {
@@ -875,17 +915,22 @@ class ProfileView extends StatelessWidget {
     String label,
     String value, {
     bool isHighlight = false,
+    IconData? icon,
   }) {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
+        if (icon != null) ...[
+          Icon(icon, size: 20, color: Colors.grey[400]),
+          const SizedBox(height: 4),
+        ],
         Text(
           value,
           style: GoogleFonts.outfit(
             fontSize: 20,
             fontWeight: FontWeight.bold,
             color: isHighlight
-                ? const Color(0xFFFF6B6B)
+                ? const Color(0xFFFF9800)
                 : const Color(0xFF1A1A1A),
           ),
         ),

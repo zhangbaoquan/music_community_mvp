@@ -203,6 +203,12 @@ class ArticleController extends GetxController {
         article.collectionsCount++;
       }
       articles.refresh(); // Update UI
+
+      // Sync with ProfileController if it's alive
+      if (Get.isRegistered<ProfileController>()) {
+        Get.find<ProfileController>().fetchCollectedArticles();
+      }
+
       return true;
     } catch (e) {
       print('Error toggling collection: $e');

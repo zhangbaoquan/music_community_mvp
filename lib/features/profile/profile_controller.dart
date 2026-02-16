@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../data/models/badge.dart';
+import '../../data/models/article.dart'; // Import Article Model
 import '../gamification/badge_service.dart';
 
 class ProfileController extends GetxController {
@@ -73,7 +74,15 @@ class ProfileController extends GetxController {
   final followingCount = 0.obs;
   final followersCount = 0.obs;
   final visitorsCount = 0.obs;
-  final moodIndex = 85.obs; // Mock value for existing stat
+  final moodIndex = 85.obs; // Mock value
+
+  // New: Received Stats (Passive interactions)
+  final receivedLikesCount = 0.obs;
+  final receivedCommentsCount = 0.obs;
+  final receivedCollectionsCount = 0.obs;
+
+  // New: Collected Articles
+  final collectedArticles = <Article>[].obs;
 
   final email = ''.obs;
   final joinDate = ''.obs;
@@ -96,7 +105,7 @@ class ProfileController extends GetxController {
             .from('profiles')
             .select(
               'username, avatar_url, signature, is_admin, status, banned_until',
-            ) // Updated selection
+            )
             .eq('id', user.id)
             .single();
 
@@ -123,8 +132,14 @@ class ProfileController extends GetxController {
         final List data = statsResponse;
         diaryCount.value = data.length;
 
-        // Fetch Social Stats
+        // Fetch Social Stats (Active)
         await fetchUserStats(user.id);
+
+        // Fetch Received Stats (Passive)
+        await fetchUserReceivedStats(user.id);
+
+        // Fetch Collected Articles
+        await fetchCollectedArticles();
 
         // Fetch Badges
         await fetchBadges(user.id);
@@ -173,6 +188,56 @@ class ProfileController extends GetxController {
       visitorsCount.value = visitorsRes.count;
     } catch (e) {
       print('Error fetching user stats: $e');
+    }
+  }
+
+  /// Fetch stats received by the user (Likes, Comments, Collections on their articles)
+  Future<void> fetchUserReceivedStats(String userId) async {
+    try {
+      final res = await _supabase.rpc(
+        'get_user_article_stats',
+        params: {'target_user_id': userId},
+      );
+      // res is { "likes_received": int, ... }
+      if (res != null) {
+        receivedLikesCount.value = res['likes_received'] as int? ?? 0;
+        receivedCommentsCount.value = res['comments_received'] as int? ?? 0;
+        receivedCollectionsCount.value =
+            res['collections_received'] as int? ?? 0;
+      }
+    } catch (e) {
+      print('Error fetching received stats: $e');
+    }
+  }
+
+  /// Fetch Articles collected by the current user
+  Future<void> fetchCollectedArticles() async {
+    final user = _supabase.auth.currentUser;
+    if (user == null) return;
+
+    try {
+      // Join article_collections -> articles -> profiles
+      // We need the article details.
+      final response = await _supabase
+          .from('article_collections')
+          .select(
+            'articles(*, profiles(username, avatar_url), songs(title), likes:article_likes(count), collections:article_collections(count), comments:article_comments(count))',
+          )
+          .eq('user_id', user.id)
+          .order('created_at', ascending: false);
+
+      final data = response as List<dynamic>;
+      // Map inner article object
+      collectedArticles.value = data
+          .map((e) => Article.fromMap(e['articles']))
+          .toList();
+
+      // We should also set isCollected = true for these since they are in the collection
+      for (var article in collectedArticles) {
+        article.isCollected = true;
+      }
+    } catch (e) {
+      print('Error fetching collected articles: $e');
     }
   }
 
