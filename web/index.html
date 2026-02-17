@@ -21,6 +21,10 @@
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
   <meta name="description" content="亲亲心情笔记 - 你的音乐心情日记">
 
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
+
   <!-- iOS meta tags & icons -->
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
@@ -100,8 +104,21 @@
     };
   </script>
   <!-- Fixed on-load to onload -->
-  <script src="flutter_bootstrap.js" async
-    onload="if(document.getElementById('loading')) document.getElementById('loading').style.display='none'"></script>
+  <!-- Anti-Caching: Version fix_cache_2 -->
+  <script src="flutter_bootstrap.js?v=fix_cache_2" async
+    onload="if(document.getElementById('loading')) document.getElementById('loading').style.display='none'">
+    </script>
+  <script>
+    // Force unregister service workers to clear stale cache
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistrations().then(function (registrations) {
+        for (var i = 0; i < registrations.length; i++) {
+          console.log('Unregistering found service worker to fix caching issues');
+          registrations[i].unregister();
+        }
+      });
+    }
+  </script>
 </body>
 
 </html>

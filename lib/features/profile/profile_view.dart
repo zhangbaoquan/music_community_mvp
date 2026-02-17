@@ -89,7 +89,6 @@ class ProfileView extends StatelessWidget {
                       children: [
                         Obx(
                           () => Row(
-                            mainAxisSize: MainAxisSize.min,
                             children: [
                               Expanded(
                                 child: AutoSizeText(
