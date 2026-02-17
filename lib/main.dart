@@ -25,8 +25,9 @@ import 'features/profile/follow_list_view.dart';
 import 'data/models/article.dart'; // For Article model
 import 'features/about/about_view.dart'; // About and Feedback Data
 import 'features/safety/safety_service.dart';
+import 'features/player/player_controller.dart'; // Import PlayerController
 
-void main() {
+void main() async {
   // Ensure binding, but DO NOT await async calls that Block startup
   WidgetsFlutterBinding.ensureInitialized();
 
@@ -51,6 +52,25 @@ void main() {
       ),
     );
   };
+
+  // V14 Fix: Initialize Core Services BEFORE runApp
+  // This prevents race conditions where Routes (like /home) load before Controllers are ready.
+  try {
+    // Initialize Supabase synchronously (well, awaited)
+    await Supabase.initialize(
+      url: 'http://qinqinmusic.com', // Use Port 80 (Nginx Proxy)
+      anonKey:
+          'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyAgCiAgICAicm9sZSI6ICJhbm9uIiwKICAgICJpc3MiOiAic3VwYWJhc2UtZGVtbyIsCiAgICAiaWF0IjogMTY0MTc2OTIwMCwKICAgICJleHAiOiAxNzk5NTM1NjAwCn0.dc_X5iR_VP_qT0zsiyj_I_OZ2T9FtRU2BBNWN8Bu4GE',
+    );
+
+    // Inject Core Controllers permanently
+    Get.put(AuthController(), permanent: true);
+    Get.put(SafetyService());
+    Get.put(PlayerController(), permanent: true);
+  } catch (e) {
+    print("Critical Init Error: $e");
+    // We can't do much here if Supabase fails, but the App will launch and probably show error UI later
+  }
 
   runApp(const MusicCommunityApp());
 }
@@ -162,34 +182,26 @@ class AppStartupScreen extends StatefulWidget {
 }
 
 class _AppStartupScreenState extends State<AppStartupScreen> {
-  String status = "正在启动引擎... (Initializing)";
+  String status = "正在连接云端... (Connecting)";
 
   @override
   void initState() {
     super.initState();
-    _initializeApp();
+    // Use a slight delay to let the UI render once before routing
+    Future.delayed(const Duration(milliseconds: 500), () {
+      _checkAuthAndRedirect();
+    });
   }
 
-  Future<void> _initializeApp() async {
-    try {
-      setState(() => status = "正在连接云端... (Connecting)");
-
-      // Initialize Supabase asynchronously
-      await Supabase.initialize(
-        url: 'http://qinqinmusic.com', // Use Port 80 (Nginx Proxy)
-        anonKey:
-            'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyAgCiAgICAicm9sZSI6ICJhbm9uIiwKICAgICJpc3MiOiAic3VwYWJhc2UtZGVtbyIsCiAgICAiaWF0IjogMTY0MTc2OTIwMCwKICAgICJleHAiOiAxNzk5NTM1NjAwCn0.dc_X5iR_VP_qT0zsiyj_I_OZ2T9FtRU2BBNWN8Bu4GE',
-      );
-
-      setState(() => status = "准备就绪 (Ready)");
-
-      // Inject AuthController to handle navigation logic (Auto-login / Redirect)
-      Get.put(AuthController(), permanent: true);
-      // Inject SafetyService for content filtering and rate limiting
-      Get.put(SafetyService());
-    } catch (e) {
-      setState(() => status = "初始化失败 (Error): $e");
-    }
+  void _checkAuthAndRedirect() {
+    // Because we initialized AuthController in main(), it's safe to use here
+    final authCtrl = Get.find<AuthController>();
+    // Logic: If logged in? Or just go to home?
+    // Current logic seems to imply we always go to /home or /login depending on requirement.
+    // The previous implementation didn't strictly redirect, it just sat there?
+    // Wait, the routing table has "/home".
+    // Let's just forward to /home. MainLayout handles guest/user state.
+    Get.offAllNamed('/home');
   }
 
   @override

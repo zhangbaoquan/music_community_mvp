@@ -29,7 +29,7 @@ class MainLayout extends StatelessWidget {
 
   final NavigationController navCtrl = Get.put(NavigationController());
   // Removed explicit authCtrl to avoid Get.find error on refresh if not yet initialized
-  final PlayerController playerCtrl = Get.put(PlayerController());
+  final PlayerController playerCtrl = Get.find<PlayerController>();
   final ProfileController profileCtrl = Get.put(ProfileController());
   final NotificationService notificationService = Get.put(
     NotificationService(),
