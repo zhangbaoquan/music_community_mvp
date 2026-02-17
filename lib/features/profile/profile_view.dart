@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:auto_size_text/auto_size_text.dart';
 import 'package:get/get.dart';
 import 'package:music_community_mvp/data/models/article.dart';
 import 'package:music_community_mvp/core/shim_google_fonts.dart';
@@ -45,146 +46,141 @@ class ProfileView extends StatelessWidget {
                 borderRadius: BorderRadius.circular(24),
                 border: Border.all(color: Colors.grey[200]!),
               ),
-              child: Stack(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
-                    children: [
-                      // Avatar Placeholder
-                      Obx(
-                        () => Container(
-                          width: 80,
-                          height: 80,
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF1A1A1A),
-                            shape: BoxShape.circle,
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.1),
-                                blurRadius: 20,
-                                offset: const Offset(0, 10),
-                              ),
-                            ],
-                            image: controller.avatarUrl.value.isNotEmpty
-                                ? DecorationImage(
-                                    image: NetworkImage(
-                                      controller.avatarUrl.value,
-                                    ),
-                                    fit: BoxFit.cover,
-                                  )
-                                : null,
+                  // Avatar Placeholder
+                  Obx(
+                    () => Container(
+                      width: 80,
+                      height: 80,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF1A1A1A),
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.1),
+                            blurRadius: 20,
+                            offset: const Offset(0, 10),
                           ),
-                          child: controller.avatarUrl.value.isEmpty
-                              ? const Icon(
-                                  Icons.person,
-                                  color: Colors.white,
-                                  size: 40,
-                                )
-                              : null,
-                        ),
+                        ],
+                        image: controller.avatarUrl.value.isNotEmpty
+                            ? DecorationImage(
+                                image: NetworkImage(controller.avatarUrl.value),
+                                fit: BoxFit.cover,
+                              )
+                            : null,
                       ),
-                      const SizedBox(width: 24),
+                      child: controller.avatarUrl.value.isEmpty
+                          ? const Icon(
+                              Icons.person,
+                              color: Colors.white,
+                              size: 40,
+                            )
+                          : null,
+                    ),
+                  ),
+                  const SizedBox(width: 24),
 
-                      // Info
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Obx(
-                              () => Row(
-                                children: [
-                                  Text(
-                                    controller.username.value.isNotEmpty
-                                        ? controller.username.value
-                                        : '未设置昵称',
-                                    style: GoogleFonts.outfit(
-                                      fontSize: 24,
-                                      fontWeight: FontWeight.w600,
-                                      color: const Color(0xFF1A1A1A),
-                                    ),
+                  // Info
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Obx(
+                          () => Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Expanded(
+                                child: AutoSizeText(
+                                  controller.username.value.isNotEmpty
+                                      ? controller.username.value
+                                      : '未设置昵称',
+                                  style: GoogleFonts.outfit(
+                                    fontSize: 24,
+                                    fontWeight: FontWeight.w600,
+                                    color: const Color(0xFF1A1A1A),
                                   ),
-                                  if (controller.isBanned) ...[
-                                    const SizedBox(width: 8),
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 8,
-                                        vertical: 2,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color: Colors.red[50],
-                                        borderRadius: BorderRadius.circular(4),
-                                        border: Border.all(
-                                          color: Colors.red[200]!,
-                                        ),
-                                      ),
-                                      child: const Text(
-                                        "违规封禁中",
-                                        style: TextStyle(
-                                          color: Colors.red,
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ],
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            Obx(
-                              () => Text(
-                                controller.signature.value.isNotEmpty
-                                    ? controller.signature.value
-                                    : "还没有个性签名...",
-                                style: GoogleFonts.outfit(
-                                  fontSize: 14,
-                                  color: Colors.grey[500],
-                                  fontStyle:
-                                      controller.signature.value.isNotEmpty
-                                      ? FontStyle.normal
-                                      : FontStyle.italic,
+                                  maxLines: 1,
+                                  minFontSize: 16,
+                                  overflow: TextOverflow.ellipsis,
                                 ),
                               ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-
-                  // Edit Button
-                  Positioned(
-                    top: 0,
-                    right: 0,
-                    child: Container(
-                      height: 32,
-                      decoration: BoxDecoration(
-                        color: Colors.grey[200],
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: TextButton.icon(
-                        onPressed: () async {
-                          if (await controller.checkActionAllowed('编辑资料')) {
-                            Get.dialog(const EditProfileDialog());
-                          }
-                        },
-                        icon: const Icon(
-                          Icons.edit,
-                          size: 14,
-                          color: Colors.black54,
-                        ),
-                        label: const Text(
-                          "编辑资料",
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.black87,
-                            fontWeight: FontWeight.w500,
+                              if (controller.isBanned) ...[
+                                const SizedBox(width: 8),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 2,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: Colors.red[50],
+                                    borderRadius: BorderRadius.circular(4),
+                                    border: Border.all(color: Colors.red[200]!),
+                                  ),
+                                  child: const Text(
+                                    "违规封禁中",
+                                    style: TextStyle(
+                                      color: Colors.red,
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ],
                           ),
                         ),
-                        style: TextButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(horizontal: 12),
-                          minimumSize: Size.zero,
-                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        const SizedBox(height: 8),
+                        Obx(
+                          () => Text(
+                            controller.signature.value.isNotEmpty
+                                ? controller.signature.value
+                                : "还没有个性签名...",
+                            style: GoogleFonts.outfit(
+                              fontSize: 14,
+                              color: Colors.grey[500],
+                              fontStyle: controller.signature.value.isNotEmpty
+                                  ? FontStyle.normal
+                                  : FontStyle.italic,
+                            ),
+                          ),
                         ),
+                      ],
+                    ),
+                  ),
+
+                  // Edit Button (Now in flow, no overlap)
+                  const SizedBox(width: 16),
+                  Container(
+                    height: 32,
+                    decoration: BoxDecoration(
+                      color: Colors.grey[200],
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: TextButton.icon(
+                      onPressed: () async {
+                        if (await controller.checkActionAllowed('编辑资料')) {
+                          Get.dialog(const EditProfileDialog());
+                        }
+                      },
+                      icon: const Icon(
+                        Icons.edit,
+                        size: 14,
+                        color: Colors.black54,
+                      ),
+                      label: const Text(
+                        "编辑资料",
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.black87,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      style: TextButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        minimumSize: Size.zero,
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                       ),
                     ),
                   ),
