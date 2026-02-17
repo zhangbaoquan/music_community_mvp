@@ -302,23 +302,37 @@ class MainLayout extends StatelessWidget {
   }
 
   Widget _buildBottomNav() {
-    return Obx(
-      () => BottomNavigationBar(
-        currentIndex: navCtrl.selectedIndex.value,
-        onTap: (index) async {
-          // Intercept Profile (2) and Messages (3 in items list, but 3 is Messages?)
-          // Items: 0:Home, 1:Diary, 2:Profile, 3:Messages
-          // NavCtrl Indices: 0:Home, 1:Diary, 2:Profile, 3:Search(Hidden on mobile nav), 4:Messages
-          // Wait, BottomNav items map to: 0->0, 1->1, 2->2, 3->4 (Messages)
+    return Obx(() {
+      // Fix: Map global page index to BottomNav index to avoid OutOfBounds and mismatch
+      // Pages: 0:Home, 1:Diary, 2:Profile, 3:Search, 4:Messages, 5:About
+      // NavItems: 0:Home, 1:Diary, 2:Profile, 3:Messages
+      int currentIndex = 0;
+      final pageIndex = navCtrl.selectedIndex.value;
 
+      if (pageIndex == 0)
+        currentIndex = 0;
+      else if (pageIndex == 1)
+        currentIndex = 1;
+      else if (pageIndex == 2)
+        currentIndex = 2;
+      else if (pageIndex == 4)
+        currentIndex = 3; // Map Page 4 to Item 3
+      else {
+        // For Search (3) or About(5), they don't have a bottom tab.
+        // We can default to 0 (Home) or keep the previous valid selection?
+        // Defaulting to 0 is safest to avoid crash.
+        currentIndex = 0;
+      }
+
+      return BottomNavigationBar(
+        currentIndex: currentIndex,
+        onTap: (index) async {
           if (index == 2) {
             if (!await profileCtrl.requireLogin()) return;
             navCtrl.changePage(2);
           } else if (index == 3) {
             if (!await profileCtrl.requireLogin()) return;
-            navCtrl.changePage(4); // Map 3(UI) to 4(Page)
-          } else {
-            navCtrl.changePage(index);
+            navCtrl.changePage(4); // Map Item 3 to Page 4
           }
         },
         backgroundColor: Colors.white,
@@ -348,8 +362,8 @@ class MainLayout extends StatelessWidget {
             label: '消息',
           ),
         ],
-      ),
-    );
+      );
+    });
   }
 
   Widget _navItem({
