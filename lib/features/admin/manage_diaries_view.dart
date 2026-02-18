@@ -85,106 +85,195 @@ class _ManageDiariesViewState extends State<ManageDiariesView> {
                 return const Center(child: Text("暂无日记"));
               }
 
-              return SingleChildScrollView(
-                child: Container(
-                  width: double.infinity,
-                  decoration: BoxDecoration(
-                    border: Border.all(color: Colors.grey[200]!),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: DataTable(
-                    columnSpacing: 24,
-                    columns: const [
-                      DataColumn(label: Text("用户")),
-                      DataColumn(label: Text("心情")),
-                      DataColumn(label: Text("内容")),
-                      DataColumn(label: Text("发布时间")),
-                      DataColumn(label: Text("操作")),
-                    ],
-                    rows: diaries.map((diary) {
-                      final profile =
-                          diary['profiles'] as Map<String, dynamic>?;
-                      final username = profile?['username'] ?? "Unknown";
-                      final avatarUrl = profile?['avatar_url'];
-                      final content = diary['content'] as String? ?? "";
-                      final mood = diary['mood'] as String? ?? "-";
-                      // Assuming 'created_at' is standard
-                      final time =
-                          DateTime.tryParse(diary['created_at'].toString()) ??
-                          DateTime.now();
-
-                      return DataRow(
-                        cells: [
-                          DataCell(
-                            Row(
-                              children: [
-                                if (avatarUrl != null)
-                                  Container(
-                                    width: 24,
-                                    height: 24,
-                                    margin: const EdgeInsets.only(right: 8),
-                                    decoration: BoxDecoration(
-                                      shape: BoxShape.circle,
-                                      image: DecorationImage(
-                                        image: NetworkImage(avatarUrl),
-                                        fit: BoxFit.cover,
-                                      ),
-                                    ),
-                                  ),
-                                Text(
-                                  username,
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          DataCell(Text(mood)),
-                          DataCell(
-                            SizedBox(
-                              width: 300,
-                              child: Text(
-                                content,
-                                overflow: TextOverflow.ellipsis,
-                                maxLines: 2,
-                              ),
-                            ),
-                          ),
-                          DataCell(Text(timeago.format(time, locale: 'zh'))),
-                          DataCell(
-                            IconButton(
-                              icon: const Icon(
-                                Icons.delete,
-                                color: Colors.red,
-                                size: 20,
-                              ),
-                              tooltip: "删除",
-                              onPressed: () {
-                                CommonDialog.show(
-                                  title: "确认删除",
-                                  content: "确定要删除这条日记吗？",
-                                  confirmText: "删除",
-                                  cancelText: "取消",
-                                  isDestructive: true,
-                                  onConfirm: () async {
-                                    Get.back(); // close dialog
-                                    await deleteDiary(diary['id']);
-                                  },
-                                );
-                              },
-                            ),
-                          ),
-                        ],
-                      );
-                    }).toList(),
-                  ),
-                ),
+              return LayoutBuilder(
+                builder: (context, constraints) {
+                  if (constraints.maxWidth < 800) {
+                    return _buildMobileList();
+                  } else {
+                    return _buildDesktopTable();
+                  }
+                },
               );
             }),
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildDesktopTable() {
+    return SingleChildScrollView(
+      scrollDirection: Axis.vertical,
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Container(
+          width: MediaQuery.of(Get.context!).size.width > 800
+              ? MediaQuery.of(Get.context!).size.width - 250
+              : 800,
+          decoration: BoxDecoration(
+            border: Border.all(color: Colors.grey[200]!),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: DataTable(
+            columnSpacing: 24,
+            columns: const [
+              DataColumn(label: Text("用户")),
+              DataColumn(label: Text("心情")),
+              DataColumn(label: Text("内容")),
+              DataColumn(label: Text("发布时间")),
+              DataColumn(label: Text("操作")),
+            ],
+            rows: diaries.map((diary) => _buildDataRow(diary)).toList(),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMobileList() {
+    return ListView.builder(
+      itemCount: diaries.length,
+      itemBuilder: (context, index) {
+        final diary = diaries[index];
+        final profile = diary['profiles'] as Map<String, dynamic>?;
+        final username = profile?['username'] ?? "Unknown";
+        final avatarUrl = profile?['avatar_url'];
+        final content = diary['content'] as String? ?? "";
+        final mood = diary['mood'] as String? ?? "-";
+        final time =
+            DateTime.tryParse(diary['created_at'].toString()) ?? DateTime.now();
+
+        return Card(
+          elevation: 2,
+          margin: const EdgeInsets.only(bottom: 12),
+          child: ListTile(
+            contentPadding: const EdgeInsets.all(12),
+            leading: CircleAvatar(
+              backgroundImage: avatarUrl != null
+                  ? NetworkImage(avatarUrl)
+                  : null,
+              child: avatarUrl == null ? const Icon(Icons.person) : null,
+            ),
+            title: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    username,
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 2,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.purple[50],
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: Text(
+                    mood,
+                    style: TextStyle(fontSize: 10, color: Colors.purple[800]),
+                  ),
+                ),
+              ],
+            ),
+            subtitle: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const SizedBox(height: 4),
+                Text(content, maxLines: 3, overflow: TextOverflow.ellipsis),
+                const SizedBox(height: 4),
+                Text(
+                  timeago.format(time, locale: 'zh'),
+                  style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                ),
+              ],
+            ),
+            trailing: PopupMenuButton<String>(
+              onSelected: (value) {
+                if (value == 'delete') {
+                  _confirmDelete(diary);
+                }
+              },
+              itemBuilder: (context) => [
+                const PopupMenuItem(
+                  value: 'delete',
+                  child: Text('删除', style: TextStyle(color: Colors.red)),
+                ),
+              ],
+              icon: const Icon(Icons.more_vert),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  DataRow _buildDataRow(Map<String, dynamic> diary) {
+    final profile = diary['profiles'] as Map<String, dynamic>?;
+    final username = profile?['username'] ?? "Unknown";
+    final avatarUrl = profile?['avatar_url'];
+    final content = diary['content'] as String? ?? "";
+    final mood = diary['mood'] as String? ?? "-";
+    final time =
+        DateTime.tryParse(diary['created_at'].toString()) ?? DateTime.now();
+
+    return DataRow(
+      cells: [
+        DataCell(
+          Row(
+            children: [
+              if (avatarUrl != null)
+                Container(
+                  width: 24,
+                  height: 24,
+                  margin: const EdgeInsets.only(right: 8),
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    image: DecorationImage(
+                      image: NetworkImage(avatarUrl),
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                ),
+              Text(
+                username,
+                style: const TextStyle(fontWeight: FontWeight.bold),
+              ),
+            ],
+          ),
+        ),
+        DataCell(Text(mood)),
+        DataCell(
+          SizedBox(
+            width: 300,
+            child: Text(content, overflow: TextOverflow.ellipsis, maxLines: 2),
+          ),
+        ),
+        DataCell(Text(timeago.format(time, locale: 'zh'))),
+        DataCell(
+          IconButton(
+            icon: const Icon(Icons.delete, color: Colors.red, size: 20),
+            tooltip: "删除",
+            onPressed: () => _confirmDelete(diary),
+          ),
+        ),
+      ],
+    );
+  }
+
+  void _confirmDelete(Map<String, dynamic> diary) {
+    CommonDialog.show(
+      title: "确认删除",
+      content: "确定要删除这条日记吗？",
+      confirmText: "删除",
+      cancelText: "取消",
+      isDestructive: true,
+      onConfirm: () async {
+        Get.back(); // close dialog
+        await deleteDiary(diary['id']);
+      },
     );
   }
 }

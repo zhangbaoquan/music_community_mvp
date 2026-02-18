@@ -120,7 +120,7 @@ class MusicCommunityApp extends StatelessWidget {
         GetPage(name: '/login', page: () => const LoginView()),
         GetPage(
           name: '/admin',
-          page: () => const AdminLayout(),
+          page: () => AdminLayout(),
           middlewares: [AdminGuard()],
         ),
         // Named Routes for Core Pages
@@ -195,7 +195,7 @@ class _AppStartupScreenState extends State<AppStartupScreen> {
 
   void _checkAuthAndRedirect() {
     // Because we initialized AuthController in main(), it's safe to use here
-    final authCtrl = Get.find<AuthController>();
+    // final authCtrl = Get.find<AuthController>(); // Unused
     // Logic: If logged in? Or just go to home?
     // Current logic seems to imply we always go to /home or /login depending on requirement.
     // The previous implementation didn't strictly redirect, it just sat there?

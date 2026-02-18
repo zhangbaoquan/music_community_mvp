@@ -85,97 +85,166 @@ class _ManageCommentsViewState extends State<ManageCommentsView> {
                 return const Center(child: Text("暂无评论"));
               }
 
-              return SingleChildScrollView(
-                child: Container(
-                  width: double.infinity,
-                  decoration: BoxDecoration(
-                    border: Border.all(color: Colors.grey[200]!),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: DataTable(
-                    columnSpacing: 24,
-                    columns: const [
-                      DataColumn(label: Text("用户")),
-                      DataColumn(label: Text("所属文章")),
-                      DataColumn(label: Text("内容")),
-                      DataColumn(label: Text("时间")),
-                      DataColumn(label: Text("操作")),
-                    ],
-                    rows: comments.map((comment) {
-                      final profile =
-                          comment['profiles'] as Map<String, dynamic>?;
-                      final article =
-                          comment['articles'] as Map<String, dynamic>?;
-                      final username = profile?['username'] ?? "Unknown";
-                      final articleTitle = article?['title'] ?? "Unknown";
-                      final content = comment['content'] as String? ?? "";
-                      final time =
-                          DateTime.tryParse(comment['created_at'].toString()) ??
-                          DateTime.now();
-
-                      return DataRow(
-                        cells: [
-                          DataCell(
-                            Text(
-                              username,
-                              style: const TextStyle(
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                          DataCell(
-                            SizedBox(
-                              width: 150,
-                              child: Text(
-                                articleTitle,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                          ),
-                          DataCell(
-                            SizedBox(
-                              width: 300,
-                              child: Text(
-                                content,
-                                overflow: TextOverflow.ellipsis,
-                                maxLines: 2,
-                              ),
-                            ),
-                          ),
-                          DataCell(Text(timeago.format(time, locale: 'zh'))),
-                          DataCell(
-                            IconButton(
-                              icon: const Icon(
-                                Icons.delete,
-                                color: Colors.red,
-                                size: 20,
-                              ),
-                              tooltip: "删除",
-                              onPressed: () {
-                                CommonDialog.show(
-                                  title: "确认删除",
-                                  content: "确定要删除这条评论吗？",
-                                  confirmText: "删除",
-                                  cancelText: "取消",
-                                  isDestructive: true,
-                                  onConfirm: () async {
-                                    Get.back(); // close dialog
-                                    await deleteComment(comment['id']);
-                                  },
-                                );
-                              },
-                            ),
-                          ),
-                        ],
-                      );
-                    }).toList(),
-                  ),
-                ),
+              return LayoutBuilder(
+                builder: (context, constraints) {
+                  if (constraints.maxWidth < 800) {
+                    return _buildMobileList();
+                  } else {
+                    return _buildDesktopTable();
+                  }
+                },
               );
             }),
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildDesktopTable() {
+    return SingleChildScrollView(
+      scrollDirection: Axis.vertical,
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Container(
+          width: MediaQuery.of(Get.context!).size.width > 800
+              ? MediaQuery.of(Get.context!).size.width - 250
+              : 800,
+          decoration: BoxDecoration(
+            border: Border.all(color: Colors.grey[200]!),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: DataTable(
+            columnSpacing: 24,
+            columns: const [
+              DataColumn(label: Text("用户")),
+              DataColumn(label: Text("所属文章")),
+              DataColumn(label: Text("内容")),
+              DataColumn(label: Text("时间")),
+              DataColumn(label: Text("操作")),
+            ],
+            rows: comments.map((comment) => _buildDataRow(comment)).toList(),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMobileList() {
+    return ListView.builder(
+      itemCount: comments.length,
+      itemBuilder: (context, index) {
+        final comment = comments[index];
+        final profile = comment['profiles'] as Map<String, dynamic>?;
+        final article = comment['articles'] as Map<String, dynamic>?;
+        final username = profile?['username'] ?? "Unknown";
+        final avatarUrl = profile?['avatar_url'];
+        final articleTitle = article?['title'] ?? "Unknown";
+        final content = comment['content'] as String? ?? "";
+        final time =
+            DateTime.tryParse(comment['created_at'].toString()) ??
+            DateTime.now();
+
+        return Card(
+          elevation: 2,
+          margin: const EdgeInsets.only(bottom: 12),
+          child: ListTile(
+            contentPadding: const EdgeInsets.all(12),
+            leading: CircleAvatar(
+              backgroundImage: avatarUrl != null
+                  ? NetworkImage(avatarUrl)
+                  : null,
+              child: avatarUrl == null ? const Icon(Icons.person) : null,
+            ),
+            title: Text(
+              username,
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
+            subtitle: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  "回复: $articleTitle",
+                  style: TextStyle(fontSize: 12, color: Colors.blue[800]),
+                ),
+                const SizedBox(height: 4),
+                Text(content, maxLines: 2, overflow: TextOverflow.ellipsis),
+                const SizedBox(height: 4),
+                Text(
+                  timeago.format(time, locale: 'zh'),
+                  style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                ),
+              ],
+            ),
+            trailing: PopupMenuButton<String>(
+              onSelected: (value) {
+                if (value == 'delete') {
+                  _confirmDelete(comment);
+                }
+              },
+              itemBuilder: (context) => [
+                const PopupMenuItem(
+                  value: 'delete',
+                  child: Text('删除', style: TextStyle(color: Colors.red)),
+                ),
+              ],
+              icon: const Icon(Icons.more_vert),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  DataRow _buildDataRow(Map<String, dynamic> comment) {
+    final profile = comment['profiles'] as Map<String, dynamic>?;
+    final article = comment['articles'] as Map<String, dynamic>?;
+    final username = profile?['username'] ?? "Unknown";
+    final articleTitle = article?['title'] ?? "Unknown";
+    final content = comment['content'] as String? ?? "";
+    final time =
+        DateTime.tryParse(comment['created_at'].toString()) ?? DateTime.now();
+
+    return DataRow(
+      cells: [
+        DataCell(
+          Text(username, style: const TextStyle(fontWeight: FontWeight.bold)),
+        ),
+        DataCell(
+          SizedBox(
+            width: 150,
+            child: Text(articleTitle, overflow: TextOverflow.ellipsis),
+          ),
+        ),
+        DataCell(
+          SizedBox(
+            width: 300,
+            child: Text(content, overflow: TextOverflow.ellipsis, maxLines: 2),
+          ),
+        ),
+        DataCell(Text(timeago.format(time, locale: 'zh'))),
+        DataCell(
+          IconButton(
+            icon: const Icon(Icons.delete, color: Colors.red, size: 20),
+            tooltip: "删除",
+            onPressed: () => _confirmDelete(comment),
+          ),
+        ),
+      ],
+    );
+  }
+
+  void _confirmDelete(Map<String, dynamic> comment) {
+    CommonDialog.show(
+      title: "确认删除",
+      content: "确定要删除这条评论吗？",
+      confirmText: "删除",
+      cancelText: "取消",
+      isDestructive: true,
+      onConfirm: () async {
+        Get.back(); // close dialog
+        await deleteComment(comment['id']);
+      },
     );
   }
 }
