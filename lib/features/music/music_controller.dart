@@ -4,6 +4,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../data/models/song.dart';
 import '../profile/profile_controller.dart';
+import '../player/player_controller.dart'; // Import PlayerController
 
 class MusicController extends GetxController {
   final _supabase = Supabase.instance.client;
@@ -56,6 +57,50 @@ class MusicController extends GetxController {
     } finally {
       isLoading.value = false;
     }
+  }
+
+  // V14: Play a song based on Mood Tag (List of keywords for broader match)
+  Future<void> playMood(List<String> moodKeywords) async {
+    // 1. Ensure we have songs loaded (discovery list)
+    if (rxSongs.isEmpty) {
+      await fetchSongs();
+    }
+
+    // Helper function to check match
+    bool hasMatch(Song s) {
+      if (s.moodTags == null || s.moodTags!.isEmpty) return false;
+      // Check if ANY tag contains ANY keyword (Case Insensitive)
+      return s.moodTags!.any((tag) {
+        return moodKeywords.any(
+          (keyword) => tag.toLowerCase().contains(keyword.toLowerCase()),
+        );
+      });
+    }
+
+    // 2. Filter songs by mood (Fuzzy Match for better results)
+    var moodSongs = rxSongs.where(hasMatch).toList();
+
+    // If still empty, try force refresh once
+    if (moodSongs.isEmpty && rxSongs.isNotEmpty) {
+      await fetchSongs();
+      moodSongs = rxSongs.where(hasMatch).toList();
+    }
+
+    if (moodSongs.isEmpty) {
+      // Show the first keyword as the main one for the message
+      final mainMood = moodKeywords.isNotEmpty ? moodKeywords.first : '未知';
+      Get.snackbar('暂无音乐', '还没有找到"$mainMood"相关心情的音乐哦，去上传一首吧！');
+      return;
+    }
+
+    // 3. Pick a random song or the first one
+    // Let's pick random to make it feel like a radio
+    moodSongs.shuffle();
+    final songToPlay = moodSongs.first;
+
+    // 4. Play it
+    // Use PlayerController for actual playback logic
+    Get.find<PlayerController>().playSong(songToPlay);
   }
 
   Future<bool> uploadSong({

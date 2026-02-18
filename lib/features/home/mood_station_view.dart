@@ -4,6 +4,7 @@ import 'package:music_community_mvp/core/shim_google_fonts.dart';
 
 import '../diary/diary_controller.dart';
 import '../diary/diary_view.dart';
+import '../music/music_controller.dart'; // Import MusicController
 
 class MoodStationView extends StatelessWidget {
   const MoodStationView({super.key});
@@ -12,6 +13,8 @@ class MoodStationView extends StatelessWidget {
   Widget build(BuildContext context) {
     // Find or Put DiaryController to control the filtering
     final diaryCtrl = Get.put(DiaryController());
+    // Inject MusicController for mood playback
+    Get.put(MusicController());
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -52,7 +55,17 @@ class MoodStationView extends StatelessWidget {
                       color: Colors.orange[50]!,
                       iconColor: Colors.orange,
                       description: "元气满满 & 充满活力",
-                      onTap: () => diaryCtrl.setMoodFilter("开心"),
+                      onTap: () {
+                        diaryCtrl.setMoodFilter("开心");
+                        // Use multiple keywords: Happy, Joy, Energetic
+                        Get.find<MusicController>().playMood([
+                          "快乐",
+                          "开心",
+                          "活力",
+                          "Happy",
+                          "Joy",
+                        ]);
+                      },
                     ),
                     _buildMoodCard(
                       label: "忧郁",
@@ -60,7 +73,18 @@ class MoodStationView extends StatelessWidget {
                       color: Colors.blueGrey[50]!,
                       iconColor: Colors.blueGrey,
                       description: "悲伤 & 沉思",
-                      onTap: () => diaryCtrl.setMoodFilter("忧郁"),
+                      onTap: () {
+                        diaryCtrl.setMoodFilter("忧郁");
+                        // Use multiple keywords: Melancholy, Sad, Lonely
+                        Get.find<MusicController>().playMood([
+                          "忧郁",
+                          "伤感",
+                          "悲伤",
+                          "Melancholy",
+                          "Sad",
+                          "Lonely",
+                        ]);
+                      },
                     ),
                     _buildMoodCard(
                       label: "平静",
@@ -68,7 +92,18 @@ class MoodStationView extends StatelessWidget {
                       color: Colors.green[50]!,
                       iconColor: Colors.green,
                       description: "放松 & 治愈",
-                      onTap: () => diaryCtrl.setMoodFilter("平静"),
+                      onTap: () {
+                        diaryCtrl.setMoodFilter("平静");
+                        // Use multiple keywords: Calm, Sleep, Healing
+                        Get.find<MusicController>().playMood([
+                          "平静",
+                          "助眠",
+                          "治愈",
+                          "Calm",
+                          "Sleep",
+                          "Relax",
+                        ]);
+                      },
                     ),
                     _buildMoodCard(
                       label: "专注",
@@ -76,7 +111,18 @@ class MoodStationView extends StatelessWidget {
                       color: Colors.brown[50]!,
                       iconColor: Colors.brown,
                       description: "深度工作 & 学习",
-                      onTap: () => diaryCtrl.setMoodFilter("专注"),
+                      onTap: () {
+                        diaryCtrl.setMoodFilter("专注");
+                        // Use multiple keywords: Focus, Study
+                        Get.find<MusicController>().playMood([
+                          "专注",
+                          "学习",
+                          "工作",
+                          "Focus",
+                          "Study",
+                          "Concentrate",
+                        ]);
+                      },
                     ),
                   ],
                 );
