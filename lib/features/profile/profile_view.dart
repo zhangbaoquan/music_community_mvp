@@ -46,144 +46,60 @@ class ProfileView extends StatelessWidget {
                 borderRadius: BorderRadius.circular(24),
                 border: Border.all(color: Colors.grey[200]!),
               ),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Avatar Placeholder
-                  Obx(
-                    () => Container(
-                      width: 80,
-                      height: 80,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF1A1A1A),
-                        shape: BoxShape.circle,
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.1),
-                            blurRadius: 20,
-                            offset: const Offset(0, 10),
-                          ),
-                        ],
-                        image: controller.avatarUrl.value.isNotEmpty
-                            ? DecorationImage(
-                                image: NetworkImage(controller.avatarUrl.value),
-                                fit: BoxFit.cover,
-                              )
-                            : null,
-                      ),
-                      child: controller.avatarUrl.value.isEmpty
-                          ? const Icon(
-                              Icons.person,
-                              color: Colors.white,
-                              size: 40,
-                            )
-                          : null,
-                    ),
-                  ),
-                  const SizedBox(width: 24),
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  final isMobile = constraints.maxWidth < 600;
 
-                  // Info
-                  Expanded(
-                    child: Column(
+                  if (isMobile) {
+                    // Mobile Layout: Column
+                    return Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Obx(
-                          () => Row(
-                            children: [
-                              Expanded(
-                                child: AutoSizeText(
-                                  controller.username.value.isNotEmpty
-                                      ? controller.username.value
-                                      : '未设置昵称',
-                                  style: GoogleFonts.outfit(
-                                    fontSize: 24,
-                                    fontWeight: FontWeight.w600,
-                                    color: const Color(0xFF1A1A1A),
-                                  ),
-                                  maxLines: 1,
-                                  minFontSize: 16,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                              if (controller.isBanned) ...[
-                                const SizedBox(width: 8),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 8,
-                                    vertical: 2,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: Colors.red[50],
-                                    borderRadius: BorderRadius.circular(4),
-                                    border: Border.all(color: Colors.red[200]!),
-                                  ),
-                                  child: const Text(
-                                    "违规封禁中",
-                                    style: TextStyle(
-                                      color: Colors.red,
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ],
-                          ),
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _buildAvatar(controller),
+                            const SizedBox(width: 16),
+                            Expanded(child: _buildUserInfo(controller)),
+                          ],
                         ),
-                        const SizedBox(height: 8),
-                        Obx(
-                          () => Text(
-                            controller.signature.value.isNotEmpty
-                                ? controller.signature.value
-                                : "还没有个性签名...",
-                            style: GoogleFonts.outfit(
-                              fontSize: 14,
-                              color: Colors.grey[500],
-                              fontStyle: controller.signature.value.isNotEmpty
-                                  ? FontStyle.normal
-                                  : FontStyle.italic,
+                        const SizedBox(height: 24),
+                        SizedBox(
+                          width: double.infinity,
+                          child: OutlinedButton.icon(
+                            onPressed: () async {
+                              if (await controller.checkActionAllowed('编辑资料')) {
+                                Get.dialog(const EditProfileDialog());
+                              }
+                            },
+                            icon: const Icon(Icons.edit, size: 16),
+                            label: const Text("编辑资料"),
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: const Color(0xFF1A1A1A),
+                              side: BorderSide(color: Colors.grey[300]!),
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
                             ),
                           ),
                         ),
                       ],
-                    ),
-                  ),
-
-                  // Edit Button (Now in flow, no overlap)
-                  const SizedBox(width: 16),
-                  Container(
-                    height: 32,
-                    decoration: BoxDecoration(
-                      color: Colors.grey[200],
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: TextButton.icon(
-                      onPressed: () async {
-                        if (await controller.checkActionAllowed('编辑资料')) {
-                          Get.dialog(const EditProfileDialog());
-                        }
-                      },
-                      icon: const Icon(
-                        Icons.edit,
-                        size: 14,
-                        color: Colors.black54,
-                      ),
-                      label: const Text(
-                        "编辑资料",
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.black87,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                      style: TextButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(horizontal: 12),
-                        minimumSize: Size.zero,
-                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                      ),
-                    ),
-                  ),
-                ],
+                    );
+                  } else {
+                    // Desktop Layout: Row
+                    return Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildAvatar(controller),
+                        const SizedBox(width: 24),
+                        Expanded(child: _buildUserInfo(controller)),
+                        const SizedBox(width: 16),
+                        _buildEditButton(controller),
+                      ],
+                    );
+                  }
+                },
               ),
             ),
 
@@ -1041,6 +957,132 @@ class ProfileView extends StatelessWidget {
           );
         }),
       ],
+    );
+  }
+
+  Widget _buildAvatar(ProfileController controller) {
+    return Obx(
+      () => Container(
+        width: 80,
+        height: 80,
+        decoration: BoxDecoration(
+          color: const Color(0xFF1A1A1A),
+          shape: BoxShape.circle,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 20,
+              offset: const Offset(0, 10),
+            ),
+          ],
+          image: controller.avatarUrl.value.isNotEmpty
+              ? DecorationImage(
+                  image: NetworkImage(controller.avatarUrl.value),
+                  fit: BoxFit.cover,
+                )
+              : null,
+        ),
+        child: controller.avatarUrl.value.isEmpty
+            ? const Icon(Icons.person, color: Colors.white, size: 40)
+            : null,
+      ),
+    );
+  }
+
+  Widget _buildUserInfo(ProfileController controller) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Obx(
+          () => Row(
+            children: [
+              Expanded(
+                child: AutoSizeText(
+                  controller.username.value.isNotEmpty
+                      ? controller.username.value
+                      : '未设置昵称',
+                  style: GoogleFonts.outfit(
+                    fontSize: 24,
+                    fontWeight: FontWeight.w600,
+                    color: const Color(0xFF1A1A1A),
+                  ),
+                  maxLines: 1,
+                  minFontSize: 16,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              if (controller.isBanned) ...[
+                const SizedBox(width: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 2,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.red[50],
+                    borderRadius: BorderRadius.circular(4),
+                    border: Border.all(color: Colors.red[200]!),
+                  ),
+                  child: const Text(
+                    "违规封禁中",
+                    style: TextStyle(
+                      color: Colors.red,
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+        const SizedBox(height: 8),
+        Obx(
+          () => Text(
+            controller.signature.value.isNotEmpty
+                ? controller.signature.value
+                : "还没有个性签名...",
+            style: GoogleFonts.outfit(
+              fontSize: 14,
+              color: Colors.grey[500],
+              fontStyle: controller.signature.value.isNotEmpty
+                  ? FontStyle.normal
+                  : FontStyle.italic,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildEditButton(ProfileController controller) {
+    return Container(
+      height: 32,
+      decoration: BoxDecoration(
+        color: Colors.grey[200],
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: TextButton.icon(
+        onPressed: () async {
+          if (await controller.checkActionAllowed('编辑资料')) {
+            Get.dialog(const EditProfileDialog());
+          }
+        },
+        icon: const Icon(Icons.edit, size: 14, color: Colors.black54),
+        label: const Text(
+          "编辑资料",
+          style: TextStyle(
+            fontSize: 12,
+            color: Colors.black87,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        style: TextButton.styleFrom(
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          minimumSize: Size.zero,
+          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        ),
+      ),
     );
   }
 }

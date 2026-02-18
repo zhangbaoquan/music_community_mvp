@@ -168,91 +168,148 @@ class _UserProfileViewState extends State<UserProfileView> {
         borderRadius: BorderRadius.circular(24),
         border: Border.all(color: Colors.grey[200]!),
       ),
-      child: Row(
-        children: [
-          CircleAvatar(
-            radius: 40,
-            backgroundImage:
-                (_profileData!['avatar_url'] != null &&
-                    _profileData!['avatar_url'].isNotEmpty)
-                ? NetworkImage(_profileData!['avatar_url'])
-                : null,
-            child:
-                (_profileData!['avatar_url'] == null ||
-                    _profileData!['avatar_url'].isEmpty)
-                ? const Icon(Icons.person, size: 40, color: Colors.grey)
-                : null,
-          ),
-          const SizedBox(width: 24),
-          Expanded(
-            child: Column(
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final isMobile = constraints.maxWidth < 600;
+
+          if (isMobile) {
+            // Mobile Layout: Column
+            return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  _profileData!['username'] ?? 'Unknown',
-                  style: GoogleFonts.outfit(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                  ),
+                Row(
+                  children: [
+                    _buildAvatar(),
+                    const SizedBox(width: 16),
+                    Expanded(child: _buildUserInfo()),
+                  ],
                 ),
-                const SizedBox(height: 8),
-                Text(
-                  _profileData!['signature'] ?? '这个人很懒，什么都没写...',
-                  style: GoogleFonts.outfit(
-                    color: Colors.grey[600],
-                    fontStyle: FontStyle.italic,
-                  ),
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    if (!_isMe) ...[
+                      Expanded(
+                        child: _FollowButton(targetUserId: widget.userId),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed: () async {
+                            if (!await _profileCtrl.checkActionAllowed('发送私信'))
+                              return;
+                            Get.toNamed(
+                              '/chat/${widget.userId}',
+                              parameters: {
+                                'name': _profileData!['username'] ?? 'Unknown',
+                                'avatar': _profileData!['avatar_url'] ?? '',
+                              },
+                            );
+                          },
+                          icon: const Icon(Icons.mail_outline, size: 18),
+                          label: const Text("私信"),
+                          style: OutlinedButton.styleFrom(
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
                 ),
-                if (_profileData!['status'] == 'banned') ...[
-                  const SizedBox(height: 8),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 2,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.red[50],
-                      borderRadius: BorderRadius.circular(4),
-                      border: Border.all(color: Colors.red[200]!),
-                    ),
-                    child: const Text(
-                      "违规封禁中",
-                      style: TextStyle(
-                        color: Colors.red,
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
+              ],
+            );
+          } else {
+            // Desktop Layout: Row
+            return Row(
+              children: [
+                _buildAvatar(),
+                const SizedBox(width: 24),
+                Expanded(child: _buildUserInfo()),
+                if (!_isMe) ...[
+                  _FollowButton(targetUserId: widget.userId),
+                  const SizedBox(width: 12),
+                  OutlinedButton.icon(
+                    onPressed: () async {
+                      if (!await _profileCtrl.checkActionAllowed('发送私信'))
+                        return;
+                      Get.toNamed(
+                        '/chat/${widget.userId}',
+                        parameters: {
+                          'name': _profileData!['username'] ?? 'Unknown',
+                          'avatar': _profileData!['avatar_url'] ?? '',
+                        },
+                      );
+                    },
+                    icon: const Icon(Icons.mail_outline, size: 18),
+                    label: const Text("私信"),
+                    style: OutlinedButton.styleFrom(
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20),
                       ),
                     ),
                   ),
                 ],
               ],
-            ),
+            );
+          }
+        },
+      ),
+    );
+  }
+
+  Widget _buildAvatar() {
+    return CircleAvatar(
+      radius: 40,
+      backgroundImage:
+          (_profileData!['avatar_url'] != null &&
+              _profileData!['avatar_url'].isNotEmpty)
+          ? NetworkImage(_profileData!['avatar_url'])
+          : null,
+      child:
+          (_profileData!['avatar_url'] == null ||
+              _profileData!['avatar_url'].isEmpty)
+          ? const Icon(Icons.person, size: 40, color: Colors.grey)
+          : null,
+    );
+  }
+
+  Widget _buildUserInfo() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          _profileData!['username'] ?? 'Unknown',
+          style: GoogleFonts.outfit(fontSize: 24, fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          _profileData!['signature'] ?? '这个人很懒，什么都没写...',
+          style: GoogleFonts.outfit(
+            color: Colors.grey[600],
+            fontStyle: FontStyle.italic,
           ),
-          if (!_isMe) ...[
-            _FollowButton(targetUserId: widget.userId),
-            const SizedBox(width: 12),
-            OutlinedButton.icon(
-              onPressed: () async {
-                if (!await _profileCtrl.checkActionAllowed('发送私信')) return;
-                Get.toNamed(
-                  '/chat/${widget.userId}',
-                  parameters: {
-                    'name': _profileData!['username'] ?? 'Unknown',
-                    'avatar': _profileData!['avatar_url'] ?? '',
-                  },
-                );
-              },
-              icon: const Icon(Icons.mail_outline, size: 18),
-              label: const Text("私信"),
-              style: OutlinedButton.styleFrom(
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(20),
-                ),
+        ),
+        if (_profileData!['status'] == 'banned') ...[
+          const SizedBox(height: 8),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+            decoration: BoxDecoration(
+              color: Colors.red[50],
+              borderRadius: BorderRadius.circular(4),
+              border: Border.all(color: Colors.red[200]!),
+            ),
+            child: const Text(
+              "违规封禁中",
+              style: TextStyle(
+                color: Colors.red,
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
               ),
             ),
-          ],
+          ),
         ],
-      ),
+      ],
     );
   }
 
