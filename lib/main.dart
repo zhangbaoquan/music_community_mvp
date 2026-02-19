@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:js' as js; // Import dart:js for web interop
 import 'package:get/get.dart';
 import 'package:flutter_localizations/flutter_localizations.dart'; // Add this
 import 'package:flutter_quill/flutter_quill.dart'; // import for FlutterQuillLocalizations
@@ -28,7 +29,7 @@ import 'features/about/about_view.dart'; // About and Feedback Data
 import 'features/safety/safety_service.dart';
 import 'features/player/player_controller.dart'; // Import PlayerController
 
-void main() async {
+void main() {
   // Ensure binding, but DO NOT await async calls that Block startup
   WidgetsFlutterBinding.ensureInitialized();
 
@@ -54,26 +55,6 @@ void main() async {
     );
   };
 
-  // V14 Fix: Initialize Core Services BEFORE runApp
-  // This prevents race conditions where Routes (like /home) load before Controllers are ready.
-  try {
-    // Initialize Supabase synchronously (well, awaited)
-    await Supabase.initialize(
-      url: 'https://qinqinmusic.com', // Use HTTPS (Cloudflare Flexible)
-      anonKey:
-          'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyAgCiAgICAicm9sZSI6ICJhbm9uIiwKICAgICJpc3MiOiAic3VwYWJhc2UtZGVtbyIsCiAgICAiaWF0IjogMTY0MTc2OTIwMCwKICAgICJleHAiOiAxNzk5NTM1NjAwCn0.dc_X5iR_VP_qT0zsiyj_I_OZ2T9FtRU2BBNWN8Bu4GE',
-    );
-
-    // Inject Core Controllers permanently
-    Get.put(AuthController(), permanent: true);
-    Get.put(SafetyService());
-    Get.put(PlayerController(), permanent: true);
-    Get.put(LogService());
-  } catch (e) {
-    print("Critical Init Error: $e");
-    // We can't do much here if Supabase fails, but the App will launch and probably show error UI later
-  }
-
   runApp(const MusicCommunityApp());
 }
 
@@ -88,6 +69,14 @@ class MusicCommunityApp extends StatelessWidget {
       defaultTransition: Transition.fadeIn, // Smooth fade transition
       transitionDuration: const Duration(milliseconds: 300), // 300ms duration
       builder: (context, child) {
+        // Remove loading screen after first frame
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          try {
+            js.context.callMethod('removeLoading');
+          } catch (e) {
+            // Ignore error on non-web platforms
+          }
+        });
         return SelectionArea(child: child!);
       },
       theme: ThemeData(
@@ -185,24 +174,48 @@ class AppStartupScreen extends StatefulWidget {
 
 class _AppStartupScreenState extends State<AppStartupScreen> {
   String status = "正在连接云端... (Connecting)";
+  bool _hasError = false;
 
   @override
   void initState() {
     super.initState();
-    // Use a slight delay to let the UI render once before routing
-    Future.delayed(const Duration(milliseconds: 500), () {
+    // Start initialization immediately
+    _initServices();
+  }
+
+  Future<void> _initServices() async {
+    try {
+      // V14 Fix: Initialize Supabase inside UI to allow immediate rendering
+      // 1. Initialize Supabase
+      await Supabase.initialize(
+        url: 'https://qinqinmusic.com', // Use HTTPS (Cloudflare Flexible)
+        anonKey:
+            'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyAgCiAgICAicm9sZSI6ICJhbm9uIiwKICAgICJpc3MiOiAic3VwYWJhc2UtZGVtbyIsCiAgICAiaWF0IjogMTY0MTc2OTIwMCwKICAgICJleHAiOiAxNzk5NTM1NjAwCn0.dc_X5iR_VP_qT0zsiyj_I_OZ2T9FtRU2BBNWN8Bu4GE',
+      );
+
+      setState(() {
+        status = "服务加载中... (Initializing)";
+      });
+
+      // 2. Inject Controllers
+      Get.put(AuthController(), permanent: true);
+      Get.put(SafetyService());
+      Get.put(PlayerController(), permanent: true);
+      Get.put(LogService());
+
+      // 3. Check Auth and Redirect
       _checkAuthAndRedirect();
-    });
+    } catch (e) {
+      print("Critical Init Error: $e");
+      setState(() {
+        status = "连接失败，请刷新重试\nError: $e";
+        _hasError = true;
+      });
+    }
   }
 
   void _checkAuthAndRedirect() {
-    // Because we initialized AuthController in main(), it's safe to use here
-    // final authCtrl = Get.find<AuthController>(); // Unused
-    // Logic: If logged in? Or just go to home?
-    // Current logic seems to imply we always go to /home or /login depending on requirement.
-    // The previous implementation didn't strictly redirect, it just sat there?
-    // Wait, the routing table has "/home".
-    // Let's just forward to /home. MainLayout handles guest/user state.
+    // Proceed to Home
     Get.offAllNamed('/home');
   }
 
@@ -228,16 +241,32 @@ class _AppStartupScreenState extends State<AppStartupScreen> {
               ),
             ),
             const SizedBox(height: 24),
-            const CircularProgressIndicator(strokeWidth: 3),
+            if (!_hasError) const CircularProgressIndicator(strokeWidth: 3),
+            if (_hasError)
+              const Icon(Icons.error_outline, color: Colors.red, size: 32),
             const SizedBox(height: 24),
             Text(
               status,
+              textAlign: TextAlign.center,
               style: GoogleFonts.outfit(
-                color: Colors.grey[700],
+                color: _hasError ? Colors.red : Colors.grey[700],
                 fontSize: 16,
                 fontWeight: FontWeight.w500,
               ),
             ),
+            if (_hasError) ...[
+              const SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: () {
+                  setState(() {
+                    _hasError = false;
+                    status = "正在重试...";
+                  });
+                  _initServices();
+                },
+                child: const Text("重试"),
+              ),
+            ],
           ],
         ),
       ),

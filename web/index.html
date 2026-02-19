@@ -103,10 +103,22 @@
       renderer: 'html', // Force HTML renderer for better mobile performance and faster load times
     };
   </script>
+  <script>
+    // Global function to remove loading screen called from Flutter
+    window.removeLoading = function() {
+      var loadingDiv = document.getElementById('loading');
+      if (loadingDiv) {
+        loadingDiv.style.opacity = '0';
+        setTimeout(function() {
+          loadingDiv.remove();
+        }, 500); // Smooth fade out
+      }
+    };
+  </script>
+
   <!-- Fixed on-load to onload -->
-  <!-- Anti-Caching: Version fix_cache_2 -->
-  <script src="flutter_bootstrap.js?v=fix_cache_2" async
-    onload="if(document.getElementById('loading')) document.getElementById('loading').style.display='none'">
+  <!-- Anti-Caching: Version fix_cache_3 -->
+  <script src="flutter_bootstrap.js?v=fix_cache_3" async>
     </script>
   <script>
     // Force unregister service workers to clear stale cache
