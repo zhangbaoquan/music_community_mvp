@@ -8,6 +8,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'features/auth/auth_controller.dart';
 
 import 'package:timeago/timeago.dart' as timeago; // Import timeago
+import 'data/services/log_service.dart';
 
 import 'features/layout/main_layout.dart';
 import 'features/auth/login_view.dart';
@@ -67,6 +68,7 @@ void main() async {
     Get.put(AuthController(), permanent: true);
     Get.put(SafetyService());
     Get.put(PlayerController(), permanent: true);
+    Get.put(LogService());
   } catch (e) {
     print("Critical Init Error: $e");
     // We can't do much here if Supabase fails, but the App will launch and probably show error UI later
