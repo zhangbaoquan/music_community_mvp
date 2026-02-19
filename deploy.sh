@@ -27,6 +27,12 @@ echo "📤 Syncing files to server..."
 rsync -avz --progress "$LOCAL_DIR" "$REMOTE_USER@$REMOTE_HOST:$REMOTE_DIR"
 
 if [ $? -eq 0 ]; then
+    # 4. Update Nginx Config (Security Hardening)
+    echo "🛡️ Updating Nginx Configuration..."
+    scp nginx.conf "$REMOTE_USER@$REMOTE_HOST:/tmp/nginx.conf"
+    # Use -t to force pseudo-terminal allocation for sudo if needed
+    ssh -t "$REMOTE_USER@$REMOTE_HOST" "sudo mv /tmp/nginx.conf /etc/nginx/nginx.conf && sudo nginx -t && sudo systemctl reload nginx"
+
     echo "✅ Deployment Successful! 🎉"
     echo "🌍 Visit your site at http://$REMOTE_HOST"
 else
