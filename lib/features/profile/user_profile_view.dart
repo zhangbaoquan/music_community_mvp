@@ -4,6 +4,7 @@ import 'package:music_community_mvp/features/content/article_controller.dart';
 import 'package:music_community_mvp/features/profile/profile_controller.dart';
 import 'package:music_community_mvp/features/player/player_controller.dart';
 import 'package:music_community_mvp/features/music/music_controller.dart';
+import 'package:music_community_mvp/core/utils/string_extensions.dart';
 import 'package:music_community_mvp/core/shim_google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../safety/report_dialog.dart';
@@ -264,7 +265,7 @@ class _UserProfileViewState extends State<UserProfileView> {
       backgroundImage:
           (_profileData!['avatar_url'] != null &&
               _profileData!['avatar_url'].isNotEmpty)
-          ? NetworkImage(_profileData!['avatar_url'])
+          ? NetworkImage((_profileData!['avatar_url'] as String).toSecureUrl())
           : null,
       child:
           (_profileData!['avatar_url'] == null ||
@@ -444,7 +445,9 @@ class _UserProfileViewState extends State<UserProfileView> {
                                   borderRadius: BorderRadius.circular(12),
                                   image: song.coverUrl != null
                                       ? DecorationImage(
-                                          image: NetworkImage(song.coverUrl!),
+                                          image: NetworkImage(
+                                            song.coverUrl!.toSecureUrl(),
+                                          ),
                                           fit: BoxFit.cover,
                                         )
                                       : null,
@@ -565,7 +568,9 @@ class _UserProfileViewState extends State<UserProfileView> {
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(8),
                             image: DecorationImage(
-                              image: NetworkImage(article.coverUrl!),
+                              image: NetworkImage(
+                                article.coverUrl!.toSecureUrl(),
+                              ),
                               fit: BoxFit.cover,
                             ),
                           ),

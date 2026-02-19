@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:music_community_mvp/features/profile/profile_controller.dart';
 import 'dart:typed_data';
+import 'package:music_community_mvp/core/utils/string_extensions.dart';
 
 class EditProfileDialog extends StatefulWidget {
   const EditProfileDialog({super.key});
@@ -93,7 +94,8 @@ class _EditProfileDialogState extends State<EditProfileDialog> {
                             : (controller.avatarUrl.value.isNotEmpty
                                   ? DecorationImage(
                                       image: NetworkImage(
-                                        controller.avatarUrl.value,
+                                        controller.avatarUrl.value
+                                            .toSecureUrl(),
                                       ),
                                       fit: BoxFit.cover,
                                     )

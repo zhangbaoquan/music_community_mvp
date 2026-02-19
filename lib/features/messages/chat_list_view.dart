@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:music_community_mvp/features/messages/message_controller.dart';
+import 'package:music_community_mvp/core/utils/string_extensions.dart';
 
 import 'package:timeago/timeago.dart' as timeago;
 
@@ -64,7 +65,7 @@ class ChatListView extends StatelessWidget {
                 CircleAvatar(
                   backgroundImage:
                       partnerAvatar != null && partnerAvatar.isNotEmpty
-                      ? NetworkImage(partnerAvatar)
+                      ? NetworkImage(partnerAvatar.toSecureUrl()!)
                       : null,
                   child: partnerAvatar == null || partnerAvatar.isEmpty
                       ? const Icon(Icons.person)

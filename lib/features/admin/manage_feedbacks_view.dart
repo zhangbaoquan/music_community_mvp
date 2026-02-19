@@ -4,6 +4,7 @@ import 'package:timeago/timeago.dart' as timeago;
 import 'package:music_community_mvp/features/admin/admin_controller.dart';
 import 'package:music_community_mvp/data/models/feedback_model.dart';
 import 'feedback_detail_view.dart';
+import 'package:music_community_mvp/core/utils/string_extensions.dart';
 
 class ManageFeedbacksView extends StatelessWidget {
   const ManageFeedbacksView({super.key});
@@ -61,7 +62,7 @@ class _FeedbackItem extends StatelessWidget {
         child: CircleAvatar(
           backgroundImage:
               (feedback.avatarUrl != null && feedback.avatarUrl!.isNotEmpty)
-              ? NetworkImage(feedback.avatarUrl!)
+              ? NetworkImage(feedback.avatarUrl!.toSecureUrl())
               : null,
           child: (feedback.avatarUrl == null || feedback.avatarUrl!.isEmpty)
               ? const Icon(Icons.person)

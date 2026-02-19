@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:music_community_mvp/data/models/article.dart';
 import 'article_controller.dart';
+import 'package:music_community_mvp/core/utils/string_extensions.dart';
 import '../profile/profile_controller.dart';
 
 import 'package:timeago/timeago.dart' as timeago;
@@ -95,7 +96,7 @@ class _ArticleCard extends StatelessWidget {
                     topRight: Radius.circular(16),
                   ),
                   image: DecorationImage(
-                    image: NetworkImage(article.coverUrl!),
+                    image: NetworkImage(article.coverUrl!.toSecureUrl()),
                     fit: BoxFit.cover,
                   ),
                 ),
@@ -112,7 +113,7 @@ class _ArticleCard extends StatelessWidget {
                       CircleAvatar(
                         radius: 10,
                         backgroundImage: article.authorAvatar != null
-                            ? NetworkImage(article.authorAvatar!)
+                            ? NetworkImage(article.authorAvatar!.toSecureUrl())
                             : null,
                         child: article.authorAvatar == null
                             ? const Icon(Icons.person, size: 12)

@@ -5,6 +5,7 @@ import '../../core/widgets/common_dialog.dart';
 import 'package:timeago/timeago.dart' as timeago;
 import 'admin_user_detail_view.dart';
 import 'admin_controller.dart';
+import 'package:music_community_mvp/core/utils/string_extensions.dart';
 
 class ManageUsersView extends StatefulWidget {
   const ManageUsersView({super.key});
@@ -127,7 +128,7 @@ class _ManageUsersViewState extends State<ManageUsersView> {
             contentPadding: const EdgeInsets.all(12),
             leading: CircleAvatar(
               backgroundImage: avatarUrl != null
-                  ? NetworkImage(avatarUrl)
+                  ? NetworkImage(avatarUrl.toSecureUrl()!)
                   : null,
               child: avatarUrl == null ? const Icon(Icons.person) : null,
             ),
@@ -204,7 +205,7 @@ class _ManageUsersViewState extends State<ManageUsersView> {
               color: Colors.grey[200],
               image: avatarUrl != null
                   ? DecorationImage(
-                      image: NetworkImage(avatarUrl),
+                      image: NetworkImage(avatarUrl!.toSecureUrl()),
                       fit: BoxFit.cover,
                     )
                   : null,

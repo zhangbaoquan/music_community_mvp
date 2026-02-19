@@ -4,6 +4,7 @@ import '../../core/shim_google_fonts.dart';
 import '../../core/widgets/common_dialog.dart';
 import '../music/music_controller.dart';
 import '../../data/models/song.dart';
+import 'package:music_community_mvp/core/utils/string_extensions.dart';
 
 class ManageMusicView extends StatelessWidget {
   const ManageMusicView({super.key});
@@ -113,7 +114,7 @@ class ManageMusicView extends StatelessWidget {
                 color: Colors.grey[200],
                 image: song.coverUrl != null
                     ? DecorationImage(
-                        image: NetworkImage(song.coverUrl!),
+                        image: NetworkImage(song.coverUrl!.toSecureUrl()),
                         fit: BoxFit.cover,
                       )
                     : null,
@@ -193,7 +194,7 @@ class ManageMusicView extends StatelessWidget {
               color: Colors.grey[200],
               image: song.coverUrl != null
                   ? DecorationImage(
-                      image: NetworkImage(song.coverUrl!),
+                      image: NetworkImage(song.coverUrl!.toSecureUrl()),
                       fit: BoxFit.cover,
                     )
                   : null,
@@ -214,7 +215,7 @@ class ManageMusicView extends StatelessWidget {
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     image: DecorationImage(
-                      image: NetworkImage(song.uploaderAvatar!),
+                      image: NetworkImage(song.uploaderAvatar!.toSecureUrl()),
                     ),
                   ),
                 ),

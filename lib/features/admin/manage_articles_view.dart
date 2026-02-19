@@ -5,6 +5,7 @@ import '../../core/widgets/common_dialog.dart';
 import '../content/article_controller.dart';
 import '../content/article_detail_view.dart';
 import '../../data/models/article.dart';
+import 'package:music_community_mvp/core/utils/string_extensions.dart';
 
 class ManageArticlesView extends StatelessWidget {
   const ManageArticlesView({super.key});
@@ -124,7 +125,7 @@ class ManageArticlesView extends StatelessWidget {
                 color: Colors.grey[200],
                 image: article.coverUrl != null && article.coverUrl!.isNotEmpty
                     ? DecorationImage(
-                        image: NetworkImage(article.coverUrl!),
+                        image: NetworkImage(article.coverUrl!.toSecureUrl()),
                         fit: BoxFit.cover,
                       )
                     : null,
@@ -201,7 +202,7 @@ class ManageArticlesView extends StatelessWidget {
               color: Colors.grey[200],
               image: article.coverUrl != null && article.coverUrl!.isNotEmpty
                   ? DecorationImage(
-                      image: NetworkImage(article.coverUrl!),
+                      image: NetworkImage(article.coverUrl!.toSecureUrl()),
                       fit: BoxFit.cover,
                     )
                   : null,

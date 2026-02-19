@@ -12,6 +12,7 @@ import '../content/article_controller.dart';
 import '../gamification/premium_badge_widget.dart';
 import '../gamification/badge_service.dart';
 import 'package:music_community_mvp/core/widgets/common_dialog.dart';
+import 'package:music_community_mvp/core/utils/string_extensions.dart';
 
 class ProfileView extends StatelessWidget {
   const ProfileView({super.key});
@@ -400,7 +401,9 @@ class ProfileView extends StatelessWidget {
                           color: Colors.grey[100],
                           image: article.coverUrl != null
                               ? DecorationImage(
-                                  image: NetworkImage(article.coverUrl!),
+                                  image: NetworkImage(
+                                    article.coverUrl!.toSecureUrl(),
+                                  ),
                                   fit: BoxFit.cover,
                                 )
                               : null,
@@ -723,7 +726,9 @@ class ProfileView extends StatelessWidget {
                                   borderRadius: BorderRadius.circular(12),
                                   image: song.coverUrl != null
                                       ? DecorationImage(
-                                          image: NetworkImage(song.coverUrl!),
+                                          image: NetworkImage(
+                                            song.coverUrl!.toSecureUrl(),
+                                          ),
                                           fit: BoxFit.cover,
                                         )
                                       : null,
@@ -977,7 +982,7 @@ class ProfileView extends StatelessWidget {
           ],
           image: controller.avatarUrl.value.isNotEmpty
               ? DecorationImage(
-                  image: NetworkImage(controller.avatarUrl.value),
+                  image: NetworkImage(controller.avatarUrl.value.toSecureUrl()),
                   fit: BoxFit.cover,
                 )
               : null,

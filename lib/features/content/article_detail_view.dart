@@ -13,6 +13,7 @@ import 'package:music_community_mvp/features/profile/profile_controller.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter_quill_extensions/flutter_quill_extensions.dart';
 import 'package:timeago/timeago.dart' as timeago;
+import 'package:music_community_mvp/core/utils/string_extensions.dart';
 
 class ArticleDetailView extends StatefulWidget {
   final Article article;
@@ -319,7 +320,10 @@ class _ArticleDetailViewState extends State<ArticleDetailView> {
               background:
                   _currentArticle.coverUrl != null &&
                       _currentArticle.coverUrl!.isNotEmpty
-                  ? Image.network(_currentArticle.coverUrl!, fit: BoxFit.cover)
+                  ? Image.network(
+                      _currentArticle.coverUrl!.toSecureUrl(),
+                      fit: BoxFit.cover,
+                    )
                   : null,
             ),
             backgroundColor: Colors.white,
@@ -390,7 +394,9 @@ class _ArticleDetailViewState extends State<ArticleDetailView> {
                         backgroundImage:
                             _currentArticle.authorAvatar != null &&
                                 _currentArticle.authorAvatar!.isNotEmpty
-                            ? NetworkImage(_currentArticle.authorAvatar!)
+                            ? NetworkImage(
+                                _currentArticle.authorAvatar!.toSecureUrl(),
+                              )
                             : null,
                         child:
                             _currentArticle.authorAvatar == null ||
@@ -787,7 +793,7 @@ class _CommentPreviewItem extends StatelessWidget {
               radius: 16,
               backgroundImage:
                   comment.userAvatar != null && comment.userAvatar!.isNotEmpty
-                  ? NetworkImage(comment.userAvatar!)
+                  ? NetworkImage(comment.userAvatar!.toSecureUrl())
                   : null,
               child: comment.userAvatar == null || comment.userAvatar!.isEmpty
                   ? const Icon(Icons.person, size: 16)
@@ -921,7 +927,7 @@ class _MusicPlayerCard extends StatelessWidget {
                     borderRadius: BorderRadius.circular(8),
                     image: song.coverUrl != null && song.coverUrl!.isNotEmpty
                         ? DecorationImage(
-                            image: NetworkImage(song.coverUrl!),
+                            image: NetworkImage(song.coverUrl!.toSecureUrl()),
                             fit: BoxFit.cover,
                           )
                         : null,

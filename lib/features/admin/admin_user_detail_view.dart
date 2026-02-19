@@ -6,6 +6,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/shim_google_fonts.dart';
 import 'package:music_community_mvp/core/widgets/common_dialog.dart';
 import 'admin_controller.dart'; // Import AdminController
+import 'package:music_community_mvp/core/utils/string_extensions.dart';
 
 class AdminUserDetailView extends StatefulWidget {
   final String userId;
@@ -260,7 +261,7 @@ class _AdminUserDetailViewState extends State<AdminUserDetailView>
               color: Colors.grey[200],
               image: widget.avatarUrl != null
                   ? DecorationImage(
-                      image: NetworkImage(widget.avatarUrl!),
+                      image: NetworkImage(widget.avatarUrl.toSecureUrl()!),
                       fit: BoxFit.cover,
                     )
                   : null,
@@ -357,7 +358,7 @@ class _AdminUserDetailViewState extends State<AdminUserDetailView>
         return ListTile(
           leading: item['cover_url'] != null
               ? Image.network(
-                  item['cover_url'],
+                  (item['cover_url'] as String).toSecureUrl(),
                   width: 40,
                   height: 40,
                   fit: BoxFit.cover,

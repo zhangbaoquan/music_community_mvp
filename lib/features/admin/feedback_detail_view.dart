@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:music_community_mvp/data/models/feedback_model.dart';
 import 'package:music_community_mvp/features/admin/admin_controller.dart';
+import 'package:music_community_mvp/core/utils/string_extensions.dart';
 
 class FeedbackDetailView extends StatelessWidget {
   final FeedbackModel feedback;
@@ -111,7 +112,7 @@ class FeedbackDetailView extends StatelessWidget {
                               child: ClipRRect(
                                 borderRadius: BorderRadius.circular(12),
                                 child: Image.network(
-                                  url,
+                                  url.toSecureUrl(),
                                   width: 120,
                                   height: 120,
                                   fit: BoxFit.cover,
@@ -243,7 +244,7 @@ class FeedbackDetailView extends StatelessWidget {
         body: Center(
           child: Hero(
             tag: url,
-            child: InteractiveViewer(child: Image.network(url)),
+            child: InteractiveViewer(child: Image.network(url.toSecureUrl())),
           ),
         ),
       ),

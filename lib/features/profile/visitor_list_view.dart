@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:music_community_mvp/features/profile/profile_controller.dart';
 import 'package:timeago/timeago.dart' as timeago;
+import 'package:music_community_mvp/core/utils/string_extensions.dart';
 
 class VisitorListView extends StatefulWidget {
   const VisitorListView({super.key});
@@ -109,7 +110,7 @@ class _VisitorItem extends StatelessWidget {
             CircleAvatar(
               radius: 24,
               backgroundImage: avatarUrl.isNotEmpty
-                  ? NetworkImage(avatarUrl)
+                  ? NetworkImage(avatarUrl.toSecureUrl())
                   : null,
               child: avatarUrl.isEmpty
                   ? const Icon(Icons.person, color: Colors.grey)

@@ -4,6 +4,7 @@ import '../../core/shim_google_fonts.dart';
 import '../../core/widgets/common_dialog.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:timeago/timeago.dart' as timeago;
+import 'package:music_community_mvp/core/utils/string_extensions.dart';
 
 class ManageDiariesView extends StatefulWidget {
   const ManageDiariesView({super.key});
@@ -150,7 +151,7 @@ class _ManageDiariesViewState extends State<ManageDiariesView> {
             contentPadding: const EdgeInsets.all(12),
             leading: CircleAvatar(
               backgroundImage: avatarUrl != null
-                  ? NetworkImage(avatarUrl)
+                  ? NetworkImage((avatarUrl as String?).toSecureUrl()!)
                   : null,
               child: avatarUrl == null ? const Icon(Icons.person) : null,
             ),
@@ -232,7 +233,9 @@ class _ManageDiariesViewState extends State<ManageDiariesView> {
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     image: DecorationImage(
-                      image: NetworkImage(avatarUrl),
+                      image: NetworkImage(
+                        (avatarUrl as String?).toSecureUrl()!,
+                      ),
                       fit: BoxFit.cover,
                     ),
                   ),

@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:music_community_mvp/core/shim_google_fonts.dart';
 import 'package:music_community_mvp/features/profile/profile_controller.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:music_community_mvp/core/utils/string_extensions.dart';
 
 class FollowListView extends StatefulWidget {
   final String userId;
@@ -102,7 +103,9 @@ class _FollowListViewState extends State<FollowListView> {
                         backgroundImage:
                             (user['avatar_url'] != null &&
                                 user['avatar_url'].isNotEmpty)
-                            ? NetworkImage(user['avatar_url'])
+                            ? NetworkImage(
+                                (user['avatar_url'] as String).toSecureUrl(),
+                              )
                             : null,
                         child:
                             (user['avatar_url'] == null ||

@@ -4,6 +4,7 @@ import 'package:music_community_mvp/features/messages/message_controller.dart';
 import 'package:timeago/timeago.dart' as timeago;
 import 'package:flutter_chat_bubble/chat_bubble.dart';
 import 'package:music_community_mvp/features/profile/profile_controller.dart';
+import 'package:music_community_mvp/core/utils/string_extensions.dart';
 
 class ChatDetailView extends StatefulWidget {
   final String partnerId;
@@ -68,7 +69,7 @@ class _ChatDetailViewState extends State<ChatDetailView> {
               backgroundImage:
                   widget.partnerAvatar != null &&
                       widget.partnerAvatar!.isNotEmpty
-                  ? NetworkImage(widget.partnerAvatar!)
+                  ? NetworkImage(widget.partnerAvatar!.toSecureUrl())
                   : null,
               child:
                   widget.partnerAvatar == null || widget.partnerAvatar!.isEmpty
@@ -161,7 +162,9 @@ class _ChatDetailViewState extends State<ChatDetailView> {
                                     backgroundImage:
                                         widget.partnerAvatar != null &&
                                             widget.partnerAvatar!.isNotEmpty
-                                        ? NetworkImage(widget.partnerAvatar!)
+                                        ? NetworkImage(
+                                            widget.partnerAvatar!.toSecureUrl(),
+                                          )
                                         : null,
                                     child:
                                         widget.partnerAvatar == null ||
@@ -255,7 +258,7 @@ class _ChatDetailViewState extends State<ChatDetailView> {
                                     return CircleAvatar(
                                       radius: 18,
                                       backgroundImage: myAvatar.isNotEmpty
-                                          ? NetworkImage(myAvatar)
+                                          ? NetworkImage(myAvatar.toSecureUrl())
                                           : null,
                                       child: myAvatar.isEmpty
                                           ? const Icon(

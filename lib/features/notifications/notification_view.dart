@@ -6,6 +6,7 @@ import 'package:music_community_mvp/features/profile/user_profile_view.dart';
 import 'package:music_community_mvp/data/models/article.dart'; // Needed for navigation if we fetch article, or we pass ID
 import 'package:supabase_flutter/supabase_flutter.dart'; // To fetch article details if needed
 import 'package:timeago/timeago.dart' as timeago;
+import 'package:music_community_mvp/core/utils/string_extensions.dart';
 
 class NotificationView extends StatelessWidget {
   const NotificationView({super.key});
@@ -299,7 +300,7 @@ class _NotificationItemState extends State<_NotificationItem> {
                   CircleAvatar(
                     radius: 24,
                     backgroundImage: displayAvatar.isNotEmpty
-                        ? NetworkImage(displayAvatar)
+                        ? NetworkImage(displayAvatar.toSecureUrl())
                         : null,
                     backgroundColor: isSystemReply ? Colors.orange[100] : null,
                     child: displayAvatar.isEmpty
