@@ -38,44 +38,53 @@ class AuthController extends GetxController {
   Future<void> _handleAuthRedirect(Session? session) async {
     currentUser.value = session?.user;
 
-    if (session != null) {
-      // Logged in
-      var targetRoute = Get.currentRoute;
+    // Use microtask to ensure GetX is ready for navigation
+    Future.microtask(() {
+      try {
+        if (session != null) {
+          // Logged in
+          var targetRoute = Get.currentRoute;
 
-      // Handle deep links logic (as before)
-      if (targetRoute == '/' || targetRoute.isEmpty) {
-        try {
-          final fragment = Uri.base.fragment;
-          if (fragment.isNotEmpty && fragment != '/') {
-            targetRoute = fragment.startsWith('/') ? fragment : '/$fragment';
+          // Handle deep links logic
+          if (targetRoute == '/' ||
+              targetRoute.isEmpty ||
+              targetRoute == '/login') {
+            final fragment = Uri.base.fragment;
+            if (fragment.isNotEmpty && fragment != '/') {
+              targetRoute = fragment.startsWith('/') ? fragment : '/$fragment';
+            }
           }
-        } catch (_) {}
-      }
 
-      // print('Auth Redirect: Logged In. Target: $targetRoute');
-
-      if (targetRoute == '/' ||
-          targetRoute == '/login' ||
-          targetRoute.isEmpty) {
-        if (Get.currentRoute != '/home') {
-          Get.offAllNamed('/home');
+          if (targetRoute == '/' ||
+              targetRoute == '/login' ||
+              targetRoute.isEmpty) {
+            if (Get.currentRoute != '/home') {
+              Get.offAllNamed('/home');
+            }
+          } else {
+            // Ensure route starts with /
+            if (!targetRoute.startsWith('/')) {
+              targetRoute = '/$targetRoute';
+            }
+            if (Get.currentRoute != targetRoute) {
+              Get.offAllNamed(targetRoute);
+            }
+          }
+        } else {
+          // Logged out
+          final current = Get.currentRoute;
+          if (current == '/' || current == '/login' || current.isEmpty) {
+            if (Get.currentRoute != '/home') {
+              Get.offAllNamed('/home');
+            }
+          }
         }
-      } else {
-        // Ensure route starts with /
-        if (!targetRoute.startsWith('/')) {
-          targetRoute = '/$targetRoute';
-        }
-        if (Get.currentRoute != targetRoute) {
-          Get.offAllNamed(targetRoute);
-        }
+      } catch (e) {
+        print(
+          'Navigation Redirect Error (Safe to ignore if app is usable): $e',
+        );
       }
-    } else {
-      // Logged out
-      var targetRoute = Get.currentRoute;
-      if (targetRoute == '/' || targetRoute.isEmpty) {
-        Get.offAllNamed('/home');
-      }
-    }
+    });
   }
 
   // -------------------------
