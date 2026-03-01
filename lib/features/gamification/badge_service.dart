@@ -45,11 +45,12 @@ class BadgeService extends GetxService {
     if (allBadges.isEmpty) await _loadBadges();
 
     try {
-      // 1. Get current count
-      final count = await _supabase
+      final countRes = await _supabase
           .from('articles')
-          .count(CountOption.exact)
-          .eq('user_id', user.id); // Corrected to user_id
+          .select('id')
+          .eq('user_id', user.id);
+
+      final count = (countRes as List).length;
 
       print('DEBUG: Article Count for ${user.id}: $count');
 
@@ -67,10 +68,12 @@ class BadgeService extends GetxService {
     if (allBadges.isEmpty) await _loadBadges();
 
     try {
-      final count = await _supabase
+      final countRes = await _supabase
           .from('comments')
-          .count(CountOption.exact)
+          .select('id')
           .eq('user_id', user.id);
+
+      final count = (countRes as List).length;
       print('DEBUG: Comment Count for ${user.id}: $count');
       await _checkAndAward(user.id, 'comment_count', count);
     } catch (e) {
@@ -110,10 +113,12 @@ class BadgeService extends GetxService {
     if (allBadges.isEmpty) await _loadBadges();
 
     try {
-      final count = await _supabase
+      final countRes = await _supabase
           .from('follows')
-          .count(CountOption.exact)
+          .select('follower_id')
           .eq('following_id', user.id);
+
+      final count = (countRes as List).length;
 
       print('DEBUG: Follower Count for ${user.id}: $count');
       await _checkAndAward(user.id, 'follower_count', count);
@@ -186,7 +191,10 @@ class BadgeService extends GetxService {
           .eq('user_id', userId);
 
       final List<dynamic> data = response;
-      return data.map((e) => BadgeModel.fromMap(e['badges'])).toList();
+      return data
+          .where((e) => e != null && e['badges'] != null)
+          .map((e) => BadgeModel.fromMap(e['badges']))
+          .toList();
     } catch (e) {
       print("Error loading earned badges: $e");
       return [];

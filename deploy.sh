@@ -10,7 +10,7 @@ echo "🚀 Starting Deployment..."
 
 # 1. Build Flutter Web App
 echo "📦 Building Flutter Web App..."
-flutter build web --release --pwa-strategy=none
+flutter build web --release --source-maps --pwa-strategy=none
 
 if [ $? -ne 0 ]; then
     echo "❌ Build failed! Aborting deployment."

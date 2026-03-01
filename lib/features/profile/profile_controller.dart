@@ -4,10 +4,12 @@ import 'package:file_picker/file_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../data/models/badge.dart';
 import '../../data/models/article.dart'; // Import Article Model
+import '../../data/services/log_service.dart';
 import '../gamification/badge_service.dart';
 
 class ProfileController extends GetxController {
   final _supabase = Supabase.instance.client;
+  final LogService _logService = Get.find<LogService>();
 
   final userEmail = ''.obs;
   final username = ''.obs;
@@ -25,7 +27,9 @@ class ProfileController extends GetxController {
     // If banned_until is null, assume permanent ban
     // If it has a date, check if it's in the future
     if (bannedUntil.value == null) return true;
-    return bannedUntil.value!.isAfter(DateTime.now());
+    final until = bannedUntil.value;
+    if (until == null) return false;
+    return until.isAfter(DateTime.now());
   }
 
   bool get isGuest => _supabase.auth.currentUser == null;
@@ -94,10 +98,14 @@ class ProfileController extends GetxController {
   }
 
   Future<void> loadProfile() async {
+    _logService.uploadLog(content: 'loadProfile');
     final user = _supabase.auth.currentUser;
     if (user != null) {
-      userEmail.value = user.email ?? 'files@example.com';
-      joinDate.value = user.createdAt.split('T')[0];
+      userEmail.value = user.email ?? '';
+      final createdAt = user.createdAt;
+      joinDate.value = createdAt.contains('T')
+          ? createdAt.split('T')[0]
+          : createdAt;
 
       try {
         // Fetch Profile Data
@@ -129,8 +137,12 @@ class ProfileController extends GetxController {
             .select('id')
             .eq('user_id', user.id);
 
-        final List data = statsResponse;
-        diaryCount.value = data.length;
+        if (statsResponse == null) {
+          diaryCount.value = 0;
+        } else {
+          final List data = statsResponse as List<dynamic>;
+          diaryCount.value = data.length;
+        }
 
         // Fetch Social Stats (Active)
         await fetchUserStats(user.id);
@@ -145,6 +157,7 @@ class ProfileController extends GetxController {
         await fetchBadges(user.id);
       } catch (e) {
         print('Error loading profile: $e');
+        _logService.uploadLog(content: 'Error loading profile: $e');
       }
     }
   }
@@ -163,31 +176,27 @@ class ProfileController extends GetxController {
       final followersRes = await _supabase
           .from('follows')
           .select('follower_id')
-          .eq('following_id', userId)
-          .count(CountOption.exact);
+          .eq('following_id', userId);
 
       // Fetch Following (how many people I follow)
       final followingRes = await _supabase
           .from('follows')
           .select('following_id')
-          .eq('follower_id', userId)
-          .count(CountOption.exact);
-
-      followersCount.value = followersRes.count;
-      followingCount.value = followingRes.count;
+          .eq('follower_id', userId);
 
       // Fetch Visitors Count
       final visitorsRes = await _supabase
           .from('profile_visits')
           .select('visitor_id')
-          .eq('visited_id', userId)
-          .count(CountOption.exact);
+          .eq('visited_id', userId);
 
-      followersCount.value = followersRes.count;
-      followingCount.value = followingRes.count;
-      visitorsCount.value = visitorsRes.count;
-    } catch (e) {
+      followersCount.value = (followersRes as List).length;
+      followingCount.value = (followingRes as List).length;
+      visitorsCount.value = (visitorsRes as List).length;
+    } catch (e, stack) {
       print('Error fetching user stats: $e');
+      print('Stack Trace: $stack');
+      _logService.uploadLog(content: 'Error fetching user stats: $e\n$stack');
     }
   }
 
@@ -207,6 +216,7 @@ class ProfileController extends GetxController {
       }
     } catch (e) {
       print('Error fetching received stats: $e');
+      _logService.uploadLog(content: 'Error fetching received stats: $e');
     }
   }
 
@@ -226,10 +236,18 @@ class ProfileController extends GetxController {
           .eq('user_id', user.id)
           .order('created_at', ascending: false);
 
+      if (response == null) {
+        collectedArticles.value = [];
+        return;
+      }
       final data = response as List<dynamic>;
       // Map inner article object
       collectedArticles.value = data
-          .map((e) => Article.fromMap(e['articles']))
+          .map(
+            (e) =>
+                e['articles'] != null ? Article.fromMap(e['articles']) : null,
+          )
+          .whereType<Article>()
           .toList();
 
       // We should also set isCollected = true for these since they are in the collection
@@ -238,6 +256,7 @@ class ProfileController extends GetxController {
       }
     } catch (e) {
       print('Error fetching collected articles: $e');
+      _logService.uploadLog(content: 'Error fetching collected articles: $e');
     }
   }
 
@@ -297,8 +316,9 @@ class ProfileController extends GetxController {
       });
 
       return true;
-    } catch (e) {
+    } catch (e, stack) {
       print('Follow Error: $e');
+      print('Stack Trace: $stack');
       Get.snackbar('错误', '关注失败: $e');
       return false;
     }
@@ -398,12 +418,13 @@ class ProfileController extends GetxController {
             'follower_id, profiles!follows_follower_id_fkey(username, avatar_url, signature)',
           ) // Ensure foreign key is used
           .eq('following_id', userId);
-
+      _logService.uploadLog(content: 'res: ${res.length}');
       // Res is List<Map<String, dynamic>>
       // Structure: [{'follower_id': '...', 'profiles': {'username': '...', ...}}]
       return List<Map<String, dynamic>>.from(res);
     } catch (e) {
       print('Error fetching followers: $e');
+      _logService.uploadLog(content: 'Error fetching followers: $e');
       return [];
     }
   }
@@ -420,6 +441,7 @@ class ProfileController extends GetxController {
       return List<Map<String, dynamic>>.from(res);
     } catch (e) {
       print('Error fetching following: $e');
+      _logService.uploadLog(content: 'Error fetching following: $e');
       return [];
     }
   }
@@ -434,32 +456,29 @@ class ProfileController extends GetxController {
           .single();
 
       // Fetch counts manually since we don't have triggers/computed columns yet
-      final followerCount = await _supabase
+      final followersRes = await _supabase
           .from('follows')
           .select('follower_id')
-          .eq('following_id', userId)
-          .count();
-
-      final followingCount = await _supabase
+          .eq('following_id', userId);
+      final followingRes = await _supabase
           .from('follows')
           .select('following_id')
-          .eq('follower_id', userId)
-          .count();
-
-      final diaryCount = await _supabase
-          .from('mood_diaries')
+          .eq('follower_id', userId);
+      final articlesRes = await _supabase
+          .from('articles')
           .select('id')
           .eq('user_id', userId)
-          .count();
+          .eq('is_published', true);
 
       return {
         ...profileRes,
-        'followers_count': followerCount.count,
-        'following_count': followingCount.count,
-        'diary_count': diaryCount.count,
+        'followers': (followersRes as List).length,
+        'following': (followingRes as List).length,
+        'diary': (articlesRes as List).length,
       };
     } catch (e) {
       print('Error fetching public profile: $e');
+      _logService.uploadLog(content: 'Error fetching public profile: $e');
       return null;
     }
   }
@@ -485,6 +504,7 @@ class ProfileController extends GetxController {
       }, onConflict: 'visitor_id, visited_id');
     } catch (e) {
       print('Error recording visit: $e');
+      _logService.uploadLog(content: 'Error recording visit: $e');
       // Fail silently, not critical
     }
   }
@@ -506,6 +526,7 @@ class ProfileController extends GetxController {
       return List<Map<String, dynamic>>.from(res);
     } catch (e) {
       print('Error fetching visitors: $e');
+      _logService.uploadLog(content: 'Error fetching visitors: $e');
       return [];
     }
   }
@@ -515,12 +536,12 @@ class ProfileController extends GetxController {
     final user = _supabase.auth.currentUser;
     if (user == null) return 0;
     try {
-      final res = await _supabase
+      final visitorsRes = await _supabase
           .from('profile_visits')
           .select('visitor_id')
-          .eq('visited_id', user.id)
-          .count(CountOption.exact);
-      return res.count;
+          .eq('visited_id', user.id);
+
+      return (visitorsRes as List).length;
     } catch (e) {
       return 0;
     }

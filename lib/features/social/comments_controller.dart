@@ -70,13 +70,11 @@ class CommentsController extends GetxController {
                 .maybeSingle();
             comment.isCollected = collectCheck != null;
 
-            // Fetch count (optional, might be slow if list is long)
-            // For MVP let's just fetch count for likes
             final countRes = await _supabase
                 .from('comment_likes')
-                .count(CountOption.exact)
+                .select('user_id')
                 .eq('comment_id', comment.id);
-            comment.likeCount = countRes;
+            comment.likeCount = (countRes as List).length;
           }),
         );
       }

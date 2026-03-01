@@ -32,18 +32,35 @@ class PrivateMessage {
     final senderProfile = map['sender'] ?? {};
     final receiverProfile = map['receiver'] ?? {};
 
-    return PrivateMessage(
-      id: map['id'] as String,
-      senderId: map['sender_id'] as String,
-      receiverId: map['receiver_id'] as String,
-      content: map['content'] as String,
-      isRead: map['is_read'] as bool? ?? false,
-      createdAt: DateTime.parse(map['created_at'] as String).toLocal(),
+    DateTime parseDate(dynamic value) {
+      if (value == null) return DateTime.now();
+      try {
+        return DateTime.parse(value.toString()).toLocal();
+      } catch (e) {
+        return DateTime.now();
+      }
+    }
 
-      senderName: senderProfile['username'],
-      senderAvatar: senderProfile['avatar_url'],
-      receiverName: receiverProfile['username'],
-      receiverAvatar: receiverProfile['avatar_url'],
+    return PrivateMessage(
+      id: map['id']?.toString() ?? '',
+      senderId: map['sender_id']?.toString() ?? '',
+      receiverId: map['receiver_id']?.toString() ?? '',
+      content: map['content']?.toString() ?? '',
+      isRead: map['is_read'] as bool? ?? false,
+      createdAt: parseDate(map['created_at']),
+
+      senderName: senderProfile != null
+          ? senderProfile['username']?.toString()
+          : null,
+      senderAvatar: senderProfile != null
+          ? senderProfile['avatar_url']?.toString()
+          : null,
+      receiverName: receiverProfile != null
+          ? receiverProfile['username']?.toString()
+          : null,
+      receiverAvatar: receiverProfile != null
+          ? receiverProfile['avatar_url']?.toString()
+          : null,
     );
   }
 

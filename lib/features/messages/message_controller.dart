@@ -49,9 +49,12 @@ class MessageController extends GetxController {
           .order('created_at', ascending: false)
           .limit(100);
 
-      final allMessages = (res as List)
-          .map((e) => PrivateMessage.fromMap(e))
-          .toList();
+      if (res == null) {
+        conversations.value = [];
+        return;
+      }
+      final data = res as List<dynamic>;
+      final allMessages = data.map((e) => PrivateMessage.fromMap(e)).toList();
 
       final Map<String, PrivateMessage> distinctConversations = {};
       int unread = 0;
@@ -79,12 +82,14 @@ class MessageController extends GetxController {
       // Better unread count (Server side count)
       final unreadRes = await _supabase
           .from('messages')
-          .count()
+          .select('sender_id')
           .eq('receiver_id', myId)
           .eq('is_read', false);
-      unreadCount.value = unreadRes;
-    } catch (e) {
+
+      unreadCount.value = (unreadRes as List).length;
+    } catch (e, stack) {
       print('Fetch Conversations Error: $e');
+      print('Stack Trace: $stack');
     } finally {
       isLoading.value = false;
     }
@@ -177,10 +182,11 @@ class MessageController extends GetxController {
       // fetchConversations(); // Might be too heavy, just adjust local state if needed.
       final unreadRes = await _supabase
           .from('messages')
-          .count()
+          .select('sender_id')
           .eq('receiver_id', myId)
           .eq('is_read', false);
-      unreadCount.value = unreadRes;
+
+      unreadCount.value = (unreadRes as List).length;
     } catch (e) {
       print('Mark Read Error: $e');
     }
@@ -221,6 +227,14 @@ class MessageController extends GetxController {
             );
           },
         )
-        .subscribe();
+        .subscribe((status, [error]) {
+          if (status == RealtimeSubscribeStatus.closed) {
+            print('DEBUG: Realtime channel closed.');
+          } else if (status == RealtimeSubscribeStatus.channelError) {
+            print('DEBUG: Realtime channel error: $error');
+          } else if (status == RealtimeSubscribeStatus.subscribed) {
+            print('DEBUG: Realtime channel subscribed.');
+          }
+        });
   }
 }

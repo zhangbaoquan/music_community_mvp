@@ -119,31 +119,77 @@ class _AdminUserDetailViewState extends State<AdminUserDetailView>
     }
   }
 
+  Future<void> deleteLog(String logId) async {
+    final cleanId = logId.trim();
+    print('DEBUG: [Environment] URL: ${_supabase.rest.url}');
+    print('DEBUG: [Auth] Current User: ${_supabase.auth.currentUser?.id}');
+    print('DEBUG: Attempting to delete log ID: "$cleanId"');
+    try {
+      final response = await _supabase
+          .from('app_logs')
+          .delete()
+          .eq('id', cleanId)
+          .select();
+
+      print('DEBUG: Delete single response: $response');
+      if ((response as List).isEmpty) {
+        throw 'Record not found (ID: $cleanId) or RLS denied.';
+      }
+
+      logs.removeWhere((log) => log['id'].toString().trim() == cleanId);
+      Get.snackbar('成功', '日志已删除');
+    } catch (e) {
+      print('DEBUG: Delete single error: $e');
+      Get.snackbar(
+        '错误',
+        '删除失败: $e',
+        backgroundColor: Colors.red.withOpacity(0.1),
+      );
+    }
+  }
+
   // Delete all logs for a specific date
   Future<void> deleteLogsByDate(String date) async {
     try {
-      // Filter logs locally to get IDs (or use date query if precise)
-      // Since we store as timestamptz, querying by date string needs casting.
-      // Easier to delete one by one or using 'in' filter with IDs we know match the date.
+      print('DEBUG: Attempting to delete logs for date: $date');
       final logsToDelete = logs.where((log) {
         final logDate = log['created_at']?.toString().split('T')[0];
         return logDate == date;
       }).toList();
 
-      if (logsToDelete.isEmpty) return;
+      if (logsToDelete.isEmpty) {
+        print('DEBUG: No logs found locally for date: $date');
+        return;
+      }
 
-      final ids = logsToDelete.map((e) => e['id']).toList();
+      final ids = logsToDelete.map((e) => e['id'].toString().trim()).toList();
+      print('DEBUG: Found ${ids.length} logs to delete. Cleaned IDs: $ids');
 
-      await _supabase.from('app_logs').delete().filter('id', 'in', ids);
+      final response = await _supabase
+          .from('app_logs')
+          .delete()
+          .filter('id', 'in', ids) // Using standard filter for 'in'
+          .select();
+
+      print('DEBUG: Delete batch response: $response');
+      if ((response as List).isEmpty) {
+        throw 'No records matched in DB. Is the App ID list ($ids) from a different database?';
+      }
 
       logs.removeWhere((log) {
-        final logDate = log['created_at']?.toString().split('T')[0];
-        return logDate == date;
+        final logId = log['id'].toString().trim();
+        return ids.contains(logId);
       });
 
-      Get.snackbar('Success', 'Logs for $date deleted');
+      Get.snackbar('成功', '已删除 $date 的日志 (${response.length} 条)');
     } catch (e) {
-      Get.snackbar('Error', 'Failed to delete logs: $e');
+      print('DEBUG: Delete batch error: $e');
+      Get.snackbar(
+        '错误',
+        '删除失败: $e',
+        duration: const Duration(seconds: 5),
+        backgroundColor: Colors.red.withOpacity(0.1),
+      );
     }
   }
 
@@ -431,7 +477,12 @@ class _AdminUserDetailViewState extends State<AdminUserDetailView>
     }
 
     final sortedDates = groupedLogs.keys.toList()
-      ..sort((a, b) => b.compareTo(a)); // Descending dates
+      ..sort((a, b) {
+        if (a == null && b == null) return 0;
+        if (a == null) return 1;
+        if (b == null) return -1;
+        return b.compareTo(a);
+      });
 
     return ListView.separated(
       padding: const EdgeInsets.all(16),
@@ -455,7 +506,10 @@ class _AdminUserDetailViewState extends State<AdminUserDetailView>
                 title: "确认删除",
                 content: "确定要删除 $date 的所有日志吗？",
                 isDestructive: true,
-                onConfirm: () => deleteLogsByDate(date),
+                onConfirm: () {
+                  Get.back();
+                  deleteLogsByDate(date);
+                },
               );
             },
           ),

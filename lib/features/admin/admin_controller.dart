@@ -23,12 +23,18 @@ class AdminController extends GetxController {
   void onInit() {
     super.onInit();
     // Double check permission
-    final profileController = Get.find<ProfileController>();
-    ever(profileController.isAdmin, (isAdmin) {
-      if (!isAdmin) {
-        Get.offAllNamed('/home');
-      }
-    });
+    if (Get.isRegistered<ProfileController>()) {
+      final profileController = Get.find<ProfileController>();
+      ever(profileController.isAdmin, (isAdmin) {
+        if (!isAdmin) {
+          Get.offAllNamed('/home');
+        }
+      });
+    } else {
+      print(
+        "WARNING: ProfileController not registered when AdminController initialized.",
+      );
+    }
 
     // Fetch initial count
     fetchUnresolvedCount();
@@ -53,17 +59,18 @@ class AdminController extends GetxController {
 
   Future<void> fetchUnresolvedCount() async {
     try {
-      final count = await Supabase.instance.client
+      final countRes = await Supabase.instance.client
           .from('feedbacks')
-          .count(CountOption.exact)
+          .select('id')
           .neq('status', 'resolved');
-      unresolvedCount.value = count;
 
-      final countReports = await Supabase.instance.client
+      final countReportsRes = await Supabase.instance.client
           .from('reports')
-          .count(CountOption.exact)
+          .select('id')
           .eq('status', 'pending');
-      unresolvedReportsCount.value = countReports;
+
+      unresolvedCount.value = (countRes as List).length;
+      unresolvedReportsCount.value = (countReportsRes as List).length;
     } catch (e) {
       print("Error fetching unresolved count: $e");
     }

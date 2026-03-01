@@ -1,4 +1,5 @@
 import 'package:get/get.dart';
+import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class LogService extends GetxService {
@@ -17,7 +18,17 @@ class LogService extends GetxService {
       });
       return true;
     } catch (e) {
-      print('Error uploading log: $e');
+      print('DEBUG: LogService.uploadLog failed: $e');
+      print(
+        'DEBUG: Upload Params: content=$content, deviceInfo=$deviceInfo, userId=${user.id}',
+      );
+      // Show snackbar during debugging to help identify RLS issues
+      Get.snackbar(
+        'Log Error',
+        'Failed to upload log: $e',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red.withOpacity(0.1),
+      );
       return false;
     }
   }

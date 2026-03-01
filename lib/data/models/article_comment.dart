@@ -62,16 +62,26 @@ class ArticleComment {
       liked = list.isNotEmpty;
     }
 
+    DateTime parseDate(dynamic value) {
+      if (value == null) return DateTime.now();
+      try {
+        return DateTime.parse(value.toString()).toLocal();
+      } catch (e) {
+        print('Error parsing date: $value, error: $e');
+        return DateTime.now();
+      }
+    }
+
     return ArticleComment(
-      id: map['id'],
-      articleId: map['article_id'],
-      userId: map['user_id'],
-      content: map['content'],
-      parentId: map['parent_id'],
-      createdAt: DateTime.parse(map['created_at']).toLocal(),
-      userAvatar: profile != null ? profile['avatar_url'] : null,
-      userName: profile != null ? profile['username'] : null,
-      replyToUserName: map['reply_to_username'],
+      id: map['id']?.toString() ?? '',
+      articleId: map['article_id']?.toString() ?? '',
+      userId: map['user_id']?.toString() ?? '',
+      content: map['content']?.toString() ?? '',
+      parentId: map['parent_id']?.toString(),
+      createdAt: parseDate(map['created_at']),
+      userAvatar: profile != null ? profile['avatar_url']?.toString() : null,
+      userName: profile != null ? profile['username']?.toString() : null,
+      replyToUserName: map['reply_to_username']?.toString(),
       likesCount: likes,
       isLiked: liked,
       replies: [],

@@ -57,9 +57,17 @@ class AuthController extends GetxController {
       if (targetRoute == '/' ||
           targetRoute == '/login' ||
           targetRoute.isEmpty) {
-        Get.offAllNamed('/home');
+        if (Get.currentRoute != '/home') {
+          Get.offAllNamed('/home');
+        }
       } else {
-        Get.offAllNamed(targetRoute);
+        // Ensure route starts with /
+        if (!targetRoute.startsWith('/')) {
+          targetRoute = '/$targetRoute';
+        }
+        if (Get.currentRoute != targetRoute) {
+          Get.offAllNamed(targetRoute);
+        }
       }
     } else {
       // Logged out

@@ -6,11 +6,7 @@ import 'package:flutter_quill/flutter_quill.dart'; // import for FlutterQuillLoc
 import 'package:music_community_mvp/core/shim_google_fonts.dart';
 import 'package:music_community_mvp/core/app_scroll_behavior.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'features/auth/auth_controller.dart';
-
-import 'package:timeago/timeago.dart' as timeago; // Import timeago
-import 'data/services/log_service.dart';
-
+import 'package:timeago/timeago.dart' as timeago;
 import 'features/layout/main_layout.dart';
 import 'features/auth/login_view.dart';
 import 'features/admin/admin_layout.dart';
@@ -26,12 +22,18 @@ import 'features/profile/visitor_list_view.dart';
 import 'features/profile/follow_list_view.dart';
 import 'data/models/article.dart'; // For Article model
 import 'features/about/about_view.dart'; // About and Feedback Data
-import 'features/safety/safety_service.dart';
-import 'features/player/player_controller.dart'; // Import PlayerController
+import 'core/app_binding.dart'; // Add this import
 
-void main() {
-  // Ensure binding, but DO NOT await async calls that Block startup
+Future<void> main() async {
+  // Ensure binding
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Initialize Supabase BEFORE runApp to ensure services are ready
+  await Supabase.initialize(
+    url: 'https://qinqinmusic.com',
+    anonKey:
+        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyAgCiAgICAicm9sZSI6ICJhbm9uIiwKICAgICJpc3MiOiAic3VwYWJhc2UtZGVtbyIsCiAgICAiaWF0IjogMTY0MTc2OTIwMCwKICAgICJleHAiOiAxNzk5NTM1NjAwCn0.dc_X5iR_VP_qT0zsiyj_I_OZ2T9FtRU2BBNWN8Bu4GE',
+  );
 
   // Register Chinese messages for timeago
   timeago.setLocaleMessages('zh', timeago.ZhCnMessages());
@@ -66,6 +68,7 @@ class MusicCommunityApp extends StatelessWidget {
     return GetMaterialApp(
       title: '亲亲心情笔记',
       debugShowCheckedModeBanner: false,
+      initialBinding: AppBinding(), // Set global binding
       defaultTransition: Transition.fadeIn, // Smooth fade transition
       transitionDuration: const Duration(milliseconds: 300), // 300ms duration
       builder: (context, child) {
@@ -77,7 +80,7 @@ class MusicCommunityApp extends StatelessWidget {
             // Ignore error on non-web platforms
           }
         });
-        return SelectionArea(child: child!);
+        return child ?? const SizedBox.shrink();
       },
       theme: ThemeData(
         useMaterial3: true,
@@ -184,34 +187,11 @@ class _AppStartupScreenState extends State<AppStartupScreen> {
   }
 
   Future<void> _initServices() async {
-    try {
-      // V14 Fix: Initialize Supabase inside UI to allow immediate rendering
-      // 1. Initialize Supabase
-      await Supabase.initialize(
-        url: 'https://qinqinmusic.com', // Use HTTPS (Cloudflare Flexible)
-        anonKey:
-            'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyAgCiAgICAicm9sZSI6ICJhbm9uIiwKICAgICJpc3MiOiAic3VwYWJhc2UtZGVtbyIsCiAgICAiaWF0IjogMTY0MTc2OTIwMCwKICAgICJleHAiOiAxNzk5NTM1NjAwCn0.dc_X5iR_VP_qT0zsiyj_I_OZ2T9FtRU2BBNWN8Bu4GE',
-      );
-
-      setState(() {
-        status = "服务加载中... (Initializing)";
-      });
-
-      // 2. Inject Controllers
-      Get.put(AuthController(), permanent: true);
-      Get.put(SafetyService());
-      Get.put(PlayerController(), permanent: true);
-      Get.put(LogService());
-
-      // 3. Check Auth and Redirect
-      _checkAuthAndRedirect();
-    } catch (e) {
-      print("Critical Init Error: $e");
-      setState(() {
-        status = "连接失败，请刷新重试\nError: $e";
-        _hasError = true;
-      });
-    }
+    // Services are now initialized in main() via AppBinding
+    await Future.delayed(
+      const Duration(milliseconds: 1500),
+    ); // Show splash for a bit
+    _checkAuthAndRedirect();
   }
 
   void _checkAuthAndRedirect() {

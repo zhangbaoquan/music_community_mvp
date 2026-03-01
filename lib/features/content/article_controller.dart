@@ -348,7 +348,10 @@ class ArticleController extends GetxController {
         }
       }
 
-      rootComments.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+      rootComments.sort((a, b) {
+        // createdAt is non-nullable in ArticleComment
+        return b.createdAt.compareTo(a.createdAt);
+      });
 
       currentComments.value = rootComments;
       totalCommentsCount.value = allComments.length;
