@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:music_community_mvp/core/shim_google_fonts.dart';
+import 'package:music_community_mvp/core/utils/string_extensions.dart';
 import 'package:music_community_mvp/features/social/comments_sheet.dart';
 import 'player_controller.dart';
 
@@ -118,7 +119,7 @@ class PlayerBar extends StatelessWidget {
                 borderRadius: BorderRadius.circular(8),
                 image: coverUrl.isNotEmpty
                     ? DecorationImage(
-                        image: NetworkImage(coverUrl),
+                        image: NetworkImage(coverUrl.toSecureUrl()),
                         fit: BoxFit.cover,
                       )
                     : null,

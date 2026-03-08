@@ -6,6 +6,7 @@ import 'package:emoji_picker_flutter/emoji_picker_flutter.dart';
 import 'article_controller.dart';
 import '../safety/report_dialog.dart';
 import '../../core/ui/action_sheet.dart';
+import '../../core/utils/string_extensions.dart';
 
 class ArticleCommentDrawer extends StatefulWidget {
   final String articleId;
@@ -513,10 +514,13 @@ class _ArticleCommentDrawerState extends State<ArticleCommentDrawer> {
               children: [
                 CircleAvatar(
                   radius: 16,
-                  backgroundImage: comment.userAvatar != null
-                      ? NetworkImage(comment.userAvatar!)
+                  backgroundImage:
+                      comment.userAvatar != null &&
+                          comment.userAvatar!.isNotEmpty
+                      ? NetworkImage(comment.userAvatar!.toSecureUrl())
                       : null,
-                  child: comment.userAvatar == null
+                  child:
+                      comment.userAvatar == null || comment.userAvatar!.isEmpty
                       ? const Icon(Icons.person, size: 16)
                       : null,
                 ),
