@@ -141,9 +141,6 @@ class _ArticleCommentDrawerState extends State<ArticleCommentDrawer> {
     // 2. Sort by CreatedAt (Ascending usually for comments? or Descending?
     // Usually chronological for chat-like view. Let's do Ascending so users follow conversation.)
     allReplies.sort((a, b) {
-      if (a.createdAt == null && b.createdAt == null) return 0;
-      if (a.createdAt == null) return 1;
-      if (b.createdAt == null) return -1;
       return a.createdAt.compareTo(b.createdAt);
     });
 

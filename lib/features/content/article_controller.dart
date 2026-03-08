@@ -131,30 +131,35 @@ class ArticleController extends GetxController {
     }
   }
 
-  /// Toggle Like
-  Future<bool> toggleLike(Article article) async {
-    if (!await Get.find<ProfileController>().checkActionAllowed('点赞文章'))
-      return false;
+  Future<void> toggleLike(Article article) async {
+    if (!await Get.find<ProfileController>().checkActionAllowed('点赞文章')) return;
     final userId = _supabase.auth.currentUser?.id;
-    if (userId == null) return false;
+    if (userId == null) {
+      Get.snackbar('提示', '请先登录');
+      return;
+    }
+
+    final originalIsLiked = article.isLiked;
+    final originalCount = article.likesCount;
+
+    // Optimistic Update
+    article.isLiked = !originalIsLiked;
+    article.likesCount += (originalIsLiked ? -1 : 1).clamp(-999999, 999999);
+    articles.refresh();
 
     try {
-      if (article.isLiked) {
+      if (originalIsLiked) {
         // Unlike
         await _supabase.from('article_likes').delete().match({
           'user_id': userId,
           'article_id': article.id,
         });
-        article.isLiked = false;
-        article.likesCount = (article.likesCount - 1).clamp(0, 999999);
       } else {
         // Like
         await _supabase.from('article_likes').insert({
           'user_id': userId,
           'article_id': article.id,
         });
-        article.isLiked = true;
-        article.likesCount++;
 
         // Notification: Like Article
         if (article.userId != userId) {
@@ -166,53 +171,70 @@ class ArticleController extends GetxController {
           });
         }
       }
-      articles.refresh(); // Update UI
-      return true;
     } catch (e) {
       print('Error toggling like: $e');
-      return false;
+      // Revert if UI update was premature
+      article.isLiked = originalIsLiked;
+      article.likesCount = originalCount;
+      articles.refresh();
+      Get.snackbar(
+        '服务器错误',
+        '点赞失败: 请检查网络或联系管理员 ($e)',
+        snackPosition: SnackPosition.BOTTOM,
+      );
     }
   }
 
   /// Toggle Collection
-  Future<bool> toggleCollection(Article article) async {
-    if (!await Get.find<ProfileController>().checkActionAllowed('收藏文章'))
-      return false;
+  Future<void> toggleCollection(Article article) async {
+    if (!await Get.find<ProfileController>().checkActionAllowed('收藏文章')) return;
     final userId = _supabase.auth.currentUser?.id;
-    if (userId == null) return false;
+    if (userId == null) {
+      Get.snackbar('提示', '请先登录');
+      return;
+    }
+
+    final originalIsCollected = article.isCollected;
+    final originalCount = article.collectionsCount;
+
+    // Optimistic Update
+    article.isCollected = !originalIsCollected;
+    article.collectionsCount += (originalIsCollected ? -1 : 1).clamp(
+      -999999,
+      999999,
+    );
+    articles.refresh();
 
     try {
-      if (article.isCollected) {
+      if (originalIsCollected) {
         // Remove Collection
         await _supabase.from('article_collections').delete().match({
           'user_id': userId,
           'article_id': article.id,
         });
-        article.isCollected = false;
-        article.collectionsCount = (article.collectionsCount - 1).clamp(
-          0,
-          999999,
-        );
       } else {
         // Add Collection
         await _supabase.from('article_collections').insert({
           'user_id': userId,
           'article_id': article.id,
         });
-        article.isCollected = true;
-        article.collectionsCount++;
       }
-      articles.refresh(); // Update UI
 
       // Sync with ProfileController if it's alive
       if (Get.isRegistered<ProfileController>()) {
         Get.find<ProfileController>().fetchCollectedArticles();
       }
-
-      return true;
     } catch (e) {
       print('Error toggling collection: $e');
-      return false;
+      // Revert if UI update was premature
+      article.isCollected = originalIsCollected;
+      article.collectionsCount = originalCount;
+      articles.refresh();
+      Get.snackbar(
+        '服务器错误',
+        '收藏失败: 请检查网络或联系管理员 ($e)',
+        snackPosition: SnackPosition.BOTTOM,
+      );
     }
   }
 
@@ -230,6 +252,7 @@ class ArticleController extends GetxController {
       isCommentsLoading.value = true;
       List<dynamic> data;
       try {
+        print('[DEBUG fetchComments] Trying primary join...');
         // Try optimized fetch with join
         final response = await _supabase
             .from('article_comments')
@@ -239,15 +262,21 @@ class ArticleController extends GetxController {
             .eq('article_id', articleId)
             .order('created_at', ascending: true);
         data = response as List<dynamic>;
+        print(
+          '[DEBUG fetchComments] Primary join success, loaded ${data.length} comments.',
+        );
       } catch (e) {
         // Fallback: Fetch comments then fetch profiles manually
-        print('Join failed, using fallback: $e');
+        print(
+          '[DEBUG fetchComments] Primary join failed ($e). using fallback...',
+        );
         final response = await _supabase
             .from('article_comments')
             .select('*, likes:article_comment_likes(count)')
             .eq('article_id', articleId)
             .order('created_at', ascending: true);
         data = response as List<dynamic>;
+        print('[DEBUG fetchComments] Fallback loaded ${data.length} comments.');
 
         // Fetch user profiles
         final userIds = data
@@ -259,12 +288,14 @@ class ArticleController extends GetxController {
               .from('profiles')
               .select('id, username, avatar_url')
               .filter('id', 'in', userIds);
-
           final profilesMap = {for (var p in profilesResponse) p['id']: p};
-          for (var item in data) {
-            final pid = item['user_id'];
+          for (var i = 0; i < data.length; i++) {
+            final pid = data[i]['user_id'];
             if (profilesMap.containsKey(pid)) {
-              item['profiles'] = profilesMap[pid];
+              // Copy to become mutable if not already
+              final map = Map<String, dynamic>.from(data[i]);
+              map['profiles'] = profilesMap[pid];
+              data[i] = map;
             }
           }
         }
@@ -277,6 +308,9 @@ class ArticleController extends GetxController {
       // Fetch My Likes (isLiked status)
       final user = _supabase.auth.currentUser;
       Set<String> myLikedCommentIds = {};
+
+      print('[DEBUG fetchComments] Authenticated user: ${user?.id}');
+
       if (user != null && data.isNotEmpty) {
         final commentIds = data.map((e) => e['id'] as String).toList();
         try {
@@ -284,13 +318,16 @@ class ArticleController extends GetxController {
               .from('article_comment_likes')
               .select('comment_id')
               .eq('user_id', user.id)
-              .filter('comment_id', 'in', commentIds); // Supabase filter syntax
+              .inFilter('comment_id', commentIds);
 
           for (var like in myLikesResponse) {
             myLikedCommentIds.add(like['comment_id'] as String);
           }
+          print(
+            '[DEBUG fetchComments] User has liked ${myLikedCommentIds.length} comments in this list: $myLikedCommentIds',
+          );
         } catch (e) {
-          print('Error checking my likes: $e');
+          print('[DEBUG fetchComments] Error checking my likes: $e');
         }
       }
 
@@ -301,8 +338,9 @@ class ArticleController extends GetxController {
 
       // 2. Map raw data to ArticleComment objects, injecting 'replyToUserName'
       final allComments = data.map((e) {
+        final map = Map<String, dynamic>.from(e);
         String? replyToName;
-        final parentId = e['parent_id'];
+        final parentId = map['parent_id'];
         if (parentId != null) {
           final parentData = commentIdToDataMap[parentId];
           if (parentData != null) {
@@ -315,14 +353,12 @@ class ArticleController extends GetxController {
         }
 
         // Inject into map for fromMap to use
-        e['reply_to_username'] = replyToName;
-        // Inject into map for fromMap to use
-        e['reply_to_username'] = replyToName;
+        map['reply_to_username'] = replyToName;
 
         // Inject is_liked
-        e['is_liked'] = myLikedCommentIds.contains(e['id']);
+        map['is_liked'] = myLikedCommentIds.contains(map['id']);
 
-        return ArticleComment.fromMap(e);
+        return ArticleComment.fromMap(map);
       }).toList();
 
       // 3. Create a lookup map for ArticleComment objects to build the tree
@@ -353,7 +389,7 @@ class ArticleController extends GetxController {
         return b.createdAt.compareTo(a.createdAt);
       });
 
-      currentComments.value = rootComments;
+      currentComments.assignAll(rootComments);
       totalCommentsCount.value = allComments.length;
 
       // If we have a selected thread, we need to update it with the new object
@@ -367,7 +403,7 @@ class ArticleController extends GetxController {
         }
       }
     } catch (e) {
-      print('Error fetching comments: $e');
+      print('[DEBUG fetchComments] Critical error catching fetchComments: $e');
     } finally {
       isCommentsLoading.value = false;
     }
@@ -511,8 +547,13 @@ class ArticleController extends GetxController {
       comment.isLiked = isLiked;
       comment.likesCount += (isLiked ? 1 : -1);
       currentComments.refresh();
+      if (selectedThread.value != null) selectedThread.refresh();
       print('Error toggling like: $e');
-      Get.snackbar('错误', '操作失败，请重试');
+      Get.snackbar(
+        '服务器错误',
+        '评论点赞失败: 请检查网络或联系管理员 ($e)',
+        snackPosition: SnackPosition.BOTTOM,
+      );
     } finally {
       isCommentsLoading.value = false;
     }

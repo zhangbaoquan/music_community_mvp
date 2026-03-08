@@ -478,9 +478,6 @@ class _AdminUserDetailViewState extends State<AdminUserDetailView>
 
     final sortedDates = groupedLogs.keys.toList()
       ..sort((a, b) {
-        if (a == null && b == null) return 0;
-        if (a == null) return 1;
-        if (b == null) return -1;
         return b.compareTo(a);
       });
 

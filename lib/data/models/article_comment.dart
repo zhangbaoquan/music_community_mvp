@@ -48,7 +48,7 @@ class ArticleComment {
       // If we select 'likes:article_comment_likes(count)', Supabase returns a list with one object {count: N}
       final list = map['likes'] as List;
       if (list.isNotEmpty && list.first['count'] != null) {
-        likes = list.first['count'] as int;
+        likes = int.tryParse(list.first['count'].toString()) ?? 0;
       }
     }
 
