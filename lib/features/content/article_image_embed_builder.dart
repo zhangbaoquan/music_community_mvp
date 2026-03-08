@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_quill/flutter_quill.dart';
+import 'package:music_community_mvp/core/utils/string_extensions.dart';
 
 class ArticleImageEmbedBuilder extends EmbedBuilder {
   @override
@@ -49,7 +50,7 @@ class ArticleImageEmbedBuilder extends EmbedBuilder {
     AlignmentGeometry alignment = Alignment.center;
 
     Widget imageWidget = Image.network(
-      imageUrl,
+      imageUrl.toSecureUrl(),
       width: width,
       fit: BoxFit.contain,
       errorBuilder: (context, error, stackTrace) {

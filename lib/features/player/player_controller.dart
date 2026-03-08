@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:just_audio/just_audio.dart';
 import '../../data/models/song.dart';
 import '../../data/services/log_service.dart'; // Import LogService
+import '../../core/utils/string_extensions.dart';
 
 class PlayerController extends GetxController {
   final AudioPlayer _player = AudioPlayer();
@@ -86,7 +87,7 @@ class PlayerController extends GetxController {
         await _player.stop();
       }
 
-      _currentUrl = song.url;
+      _currentUrl = song.url.toSecureUrl();
 
       // Update UI
       currentSong.value = song;
@@ -98,7 +99,7 @@ class PlayerController extends GetxController {
       await _player.setVolume(1.0);
 
       // Standard Logic: Await Load URL
-      await _player.setUrl(song.url);
+      await _player.setUrl(_currentUrl!);
 
       // Standard Logic: Attempt Play
       await _player.play();

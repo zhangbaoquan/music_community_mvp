@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:music_community_mvp/features/music/music_controller.dart';
 import 'package:music_community_mvp/features/player/player_controller.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:music_community_mvp/core/utils/string_extensions.dart';
 
 class MusicPickerSheet extends StatefulWidget {
   final Function(String songId, String songTitle) onSelected;
@@ -108,7 +109,7 @@ class _MusicPickerSheetState extends State<MusicPickerSheet>
                     borderRadius: BorderRadius.circular(8),
                     image: song.coverUrl != null
                         ? DecorationImage(
-                            image: NetworkImage(song.coverUrl!),
+                            image: NetworkImage(song.coverUrl!.toSecureUrl()),
                             fit: BoxFit.cover,
                           )
                         : null,

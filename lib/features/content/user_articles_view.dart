@@ -4,6 +4,7 @@ import 'package:music_community_mvp/core/shim_google_fonts.dart';
 import 'package:music_community_mvp/features/content/article_controller.dart';
 import 'package:music_community_mvp/features/content/article_detail_view.dart';
 import 'package:music_community_mvp/data/models/article.dart';
+import 'package:music_community_mvp/core/utils/string_extensions.dart';
 
 class UserArticlesView extends GetView<ArticleController> {
   const UserArticlesView({super.key});
@@ -122,7 +123,9 @@ class UserArticlesView extends GetView<ArticleController> {
                     borderRadius: BorderRadius.circular(8),
                     image: article.coverUrl != null
                         ? DecorationImage(
-                            image: NetworkImage(article.coverUrl!),
+                            image: NetworkImage(
+                              article.coverUrl!.toSecureUrl(),
+                            ),
                             fit: BoxFit.cover,
                           )
                         : null,
