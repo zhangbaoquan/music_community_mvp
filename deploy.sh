@@ -21,6 +21,14 @@ fi
 echo "💉 Injecting Killer Service Worker..."
 cp web/flutter_service_worker.js build/web/flutter_service_worker.js
 
+# 2.1 Cache Busting (NEW: Prevent Nginx 30-day stale cache)
+echo "🔥 Applying Cache Busting Hash..."
+TIMESTAMP=$(date +%s)
+# Update index.html to load fresh flutter_bootstrap.js
+sed -i '' "s/flutter_bootstrap.js?v=[^\"]*/flutter_bootstrap.js?v=$TIMESTAMP/g" build/web/index.html
+# Update flutter_bootstrap.js to load fresh main.dart.js
+sed -i '' "s/\"main.dart.js\"/\"main.dart.js?v=$TIMESTAMP\"/g" build/web/flutter_bootstrap.js
+
 # 3. Deploy using Rsync
 echo "📤 Syncing files to server..."
 # Note: rsync determines update by size/mtime. The killer SW is new so it will overwrite the old one.
