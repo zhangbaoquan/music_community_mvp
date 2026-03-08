@@ -22,6 +22,22 @@ class ArticleController extends GetxController {
   void onInit() {
     super.onInit();
     fetchArticles();
+
+    _supabase.auth.onAuthStateChange.listen((data) {
+      if (data.event == AuthChangeEvent.signedOut) {
+        clearArticlesState();
+      } else if (data.event == AuthChangeEvent.signedIn) {
+        // Refetch on new login to refresh like/collection bindings
+        fetchArticles();
+      }
+    });
+  }
+
+  void clearArticlesState() {
+    userArticles.clear();
+    // Do we clear public articles too? Probably good so we don't leak "Liked" status
+    // of the previous user into the public list until refetched.
+    articles.clear();
   }
 
   /// Fetch all published articles with author profile info & social stats

@@ -24,6 +24,27 @@ class MessageController extends GetxController {
     // Subscribe to realtime messages globally
     _setupRealtimeSubscription();
     fetchConversations();
+
+    _supabase.auth.onAuthStateChange.listen((data) {
+      if (data.event == AuthChangeEvent.signedOut) {
+        clearMessages();
+      } else if (data.event == AuthChangeEvent.signedIn) {
+        // User logged in, refetch
+        fetchConversations();
+        // The realtime subscription filter uses myId. Since AuthState changes,
+        // we might need to recreate the subscription.
+        _supabase.removeChannel(_supabase.channel('public:messages'));
+        _setupRealtimeSubscription();
+      }
+    });
+  }
+
+  void clearMessages() {
+    conversations.clear();
+    currentMessages.clear();
+    unreadCount.value = 0;
+    // Remove the message channel specifically to stop receiving payloads for previous user
+    _supabase.removeChannel(_supabase.channel('public:messages'));
   }
 
   // 1. Fetch 'Inbox' (List of recent conversations)
@@ -49,15 +70,10 @@ class MessageController extends GetxController {
           .order('created_at', ascending: false)
           .limit(100);
 
-      if (res == null) {
-        conversations.value = [];
-        return;
-      }
       final data = res as List<dynamic>;
       final allMessages = data.map((e) => PrivateMessage.fromMap(e)).toList();
 
       final Map<String, PrivateMessage> distinctConversations = {};
-      int unread = 0;
 
       for (var msg in allMessages) {
         // Determine the 'partner' ID
@@ -69,7 +85,6 @@ class MessageController extends GetxController {
           // Note: This naive unread count only counts from the fetched limit(100).
           // For accurate global unread, we need a separate count query properly.
           // But for MVP this is okay-ish for the reactive badge if lists are fresh.
-          unread++;
         }
 
         if (!distinctConversations.containsKey(partnerId)) {

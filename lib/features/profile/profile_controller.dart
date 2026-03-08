@@ -95,6 +95,37 @@ class ProfileController extends GetxController {
   void onInit() {
     super.onInit();
     loadProfile();
+
+    // Listen to Auth State to handle clear on logout
+    _supabase.auth.onAuthStateChange.listen((data) {
+      if (data.event == AuthChangeEvent.signedOut) {
+        clearProfile();
+      } else if (data.event == AuthChangeEvent.signedIn) {
+        loadProfile();
+      }
+    });
+  }
+
+  void clearProfile() {
+    userEmail.value = '';
+    username.value = '';
+    avatarUrl.value = '';
+    signature.value = '';
+    isAdmin.value = false;
+    diaryCount.value = 0;
+    status.value = 'active';
+    bannedUntil.value = null;
+    followingCount.value = 0;
+    followersCount.value = 0;
+    visitorsCount.value = 0;
+    moodIndex.value = 85;
+    receivedLikesCount.value = 0;
+    receivedCommentsCount.value = 0;
+    receivedCollectionsCount.value = 0;
+    collectedArticles.clear();
+    earnedBadges.clear();
+    email.value = '';
+    joinDate.value = '';
   }
 
   Future<void> loadProfile() async {
@@ -137,12 +168,8 @@ class ProfileController extends GetxController {
             .select('id')
             .eq('user_id', user.id);
 
-        if (statsResponse == null) {
-          diaryCount.value = 0;
-        } else {
-          final List data = statsResponse as List<dynamic>;
-          diaryCount.value = data.length;
-        }
+        final List data = statsResponse as List<dynamic>;
+        diaryCount.value = data.length;
 
         // Fetch Social Stats (Active)
         await fetchUserStats(user.id);
@@ -236,10 +263,6 @@ class ProfileController extends GetxController {
           .eq('user_id', user.id)
           .order('created_at', ascending: false);
 
-      if (response == null) {
-        collectedArticles.value = [];
-        return;
-      }
       final data = response as List<dynamic>;
       // Map inner article object
       collectedArticles.value = data
