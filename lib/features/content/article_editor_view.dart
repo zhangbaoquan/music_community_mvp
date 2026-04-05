@@ -197,7 +197,7 @@ class _ArticleEditorViewState extends State<ArticleEditorView> {
       Get.snackbar(
         '发布成功',
         widget.article != null ? '您的文章已更新！' : '您的文章已发布！',
-        backgroundColor: Colors.green.withOpacity(0.1),
+        backgroundColor: Colors.green.withValues(alpha: 0.1),
         colorText: Colors.green,
         duration: const Duration(seconds: 2),
       );
@@ -209,7 +209,7 @@ class _ArticleEditorViewState extends State<ArticleEditorView> {
       Get.snackbar(
         '发布失败',
         '请稍后重试或检查网络',
-        backgroundColor: Colors.red.withOpacity(0.1),
+        backgroundColor: Colors.red.withValues(alpha: 0.1),
         colorText: Colors.red,
       );
     }
@@ -235,7 +235,7 @@ class _ArticleEditorViewState extends State<ArticleEditorView> {
           boxShadow: isSelected
               ? [
                   BoxShadow(
-                    color: _primaryColor.withOpacity(0.3),
+                    color: _primaryColor.withValues(alpha: 0.3),
                     blurRadius: 8,
                     offset: const Offset(0, 2),
                   ),
@@ -483,7 +483,7 @@ class _ArticleEditorViewState extends State<ArticleEditorView> {
                       ..._selectedTags.map(
                         (tag) => Container(
                           decoration: BoxDecoration(
-                            color: _primaryColor.withOpacity(0.1),
+                            color: _primaryColor.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(20),
                             border: Border.all(color: _primaryColor),
                           ),

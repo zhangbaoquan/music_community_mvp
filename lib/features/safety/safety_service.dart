@@ -75,8 +75,9 @@ class SafetyService extends GetxService {
   /// Combined Check: Validate Content AND Rate Limit
   bool canPost(String content, String actionKey, {int cooldownSeconds = 60}) {
     if (!validateContent(content)) return false;
-    if (!checkRateLimit(actionKey, cooldownSeconds: cooldownSeconds))
+    if (!checkRateLimit(actionKey, cooldownSeconds: cooldownSeconds)) {
       return false;
+    }
     return true;
   }
 

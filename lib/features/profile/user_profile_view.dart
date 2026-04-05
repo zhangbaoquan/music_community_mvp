@@ -196,8 +196,9 @@ class _UserProfileViewState extends State<UserProfileView> {
                       Expanded(
                         child: OutlinedButton.icon(
                           onPressed: () async {
-                            if (!await _profileCtrl.checkActionAllowed('发送私信'))
+                            if (!await _profileCtrl.checkActionAllowed('发送私信')) {
                               return;
+                            }
                             Get.toNamed(
                               '/chat/${widget.userId}',
                               parameters: {
@@ -232,8 +233,9 @@ class _UserProfileViewState extends State<UserProfileView> {
                   const SizedBox(width: 12),
                   OutlinedButton.icon(
                     onPressed: () async {
-                      if (!await _profileCtrl.checkActionAllowed('发送私信'))
+                      if (!await _profileCtrl.checkActionAllowed('发送私信')) {
                         return;
+                      }
                       Get.toNamed(
                         '/chat/${widget.userId}',
                         parameters: {
@@ -420,7 +422,7 @@ class _UserProfileViewState extends State<UserProfileView> {
                       border: Border.all(color: Colors.grey[100]!),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.04),
+                          color: Colors.black.withValues(alpha: 0.04),
                           blurRadius: 10,
                           offset: const Offset(0, 4),
                         ),
@@ -529,8 +531,9 @@ class _UserProfileViewState extends State<UserProfileView> {
         Obx(() {
           final articles =
               _articleCtrl.userArticles; // Same scoping note as music
-          if (articles.isEmpty)
+          if (articles.isEmpty) {
             return const Text("暂无文章", style: TextStyle(color: Colors.grey));
+          }
 
           return ListView.separated(
             shrinkWrap: true,

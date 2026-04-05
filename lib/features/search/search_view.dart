@@ -24,7 +24,8 @@ class _SearchViewState extends State<SearchView>
     _tabController = TabController(length: 4, vsync: this);
   }
 
-  @override
+  // A GetxController has onClose, but State has dispose.
+  // This was likely a leftover from converting GetView to StatefulWidget.
   void onClose() {
     _tabController.dispose();
     _textCtrl.dispose();

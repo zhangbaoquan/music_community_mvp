@@ -121,7 +121,7 @@ class SponsorDialog extends StatelessWidget {
               border: Border.all(color: Colors.grey[200]!),
               boxShadow: [
                 BoxShadow(
-                  color: color.withOpacity(0.1),
+                  color: color.withValues(alpha: 0.1),
                   blurRadius: 20,
                   offset: const Offset(0, 8),
                 ),
@@ -165,7 +165,7 @@ class SponsorDialog extends StatelessWidget {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           decoration: BoxDecoration(
-            color: color.withOpacity(0.1),
+            color: color.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(20),
           ),
           child: Row(

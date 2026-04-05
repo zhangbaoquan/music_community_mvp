@@ -9,7 +9,7 @@ LOCAL_DIR="build/web/"
 echo "🚀 Starting Deployment..."
 
 # 1. Build Flutter Web App
-echo "📦 Building Flutter Web App..."
+echo "📦 Building Flutter Web App (CanvasKit Renderer)..."
 flutter build web --release --source-maps --pwa-strategy=none
 
 if [ $? -ne 0 ]; then

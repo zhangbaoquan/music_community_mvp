@@ -15,12 +15,6 @@ class MusicController extends GetxController {
   final isUploading = false.obs;
   final uploadProgress = 0.0.obs;
 
-  @override
-  void onInit() {
-    super.onInit();
-    // fetchUserSongs(); // Can fetch on init or when entering profile
-    // fetchSongs(); // Fetch discovery songs
-  }
 
   // Fetch all public songs (discovery)
   Future<void> fetchSongs() async {
@@ -110,8 +104,9 @@ class MusicController extends GetxController {
     XFile? coverFile,
     List<String> moodTags = const [],
   }) async {
-    if (!await Get.find<ProfileController>().checkActionAllowed('上传音乐'))
+    if (!await Get.find<ProfileController>().checkActionAllowed('上传音乐')) {
       return false;
+    }
     try {
       isUploading.value = true;
       uploadProgress.value =
@@ -205,8 +200,9 @@ class MusicController extends GetxController {
   }
 
   Future<bool> deleteSong(String songId) async {
-    if (!await Get.find<ProfileController>().checkActionAllowed('删除音乐'))
+    if (!await Get.find<ProfileController>().checkActionAllowed('删除音乐')) {
       return false;
+    }
     try {
       // 1. Delete from DB (RLS will handle permission check)
       await _supabase.from('songs').delete().eq('id', songId);

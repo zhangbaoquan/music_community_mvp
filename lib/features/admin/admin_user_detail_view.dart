@@ -143,7 +143,7 @@ class _AdminUserDetailViewState extends State<AdminUserDetailView>
       Get.snackbar(
         '错误',
         '删除失败: $e',
-        backgroundColor: Colors.red.withOpacity(0.1),
+        backgroundColor: Colors.red.withValues(alpha: 0.1),
       );
     }
   }
@@ -188,7 +188,7 @@ class _AdminUserDetailViewState extends State<AdminUserDetailView>
         '错误',
         '删除失败: $e',
         duration: const Duration(seconds: 5),
-        backgroundColor: Colors.red.withOpacity(0.1),
+        backgroundColor: Colors.red.withValues(alpha: 0.1),
       );
     }
   }

@@ -65,7 +65,7 @@ class ChatListView extends StatelessWidget {
                 CircleAvatar(
                   backgroundImage:
                       partnerAvatar != null && partnerAvatar.isNotEmpty
-                      ? NetworkImage(partnerAvatar.toSecureUrl()!)
+                      ? NetworkImage(partnerAvatar.toSecureUrl())
                       : null,
                   child: partnerAvatar == null || partnerAvatar.isEmpty
                       ? const Icon(Icons.person)

@@ -211,7 +211,7 @@ class MoodStationView extends StatelessWidget {
             child: InkWell(
               onTap: onTap,
               borderRadius: BorderRadius.circular(24),
-              hoverColor: color.withOpacity(0.8), // Slight darken on hover
+              hoverColor: color.withValues(alpha: 0.8), // Slight darken on hover
               child: Container(
                 decoration: BoxDecoration(
                   color: color,
@@ -219,7 +219,7 @@ class MoodStationView extends StatelessWidget {
                   border: Border.all(color: Colors.white, width: 2),
                   boxShadow: [
                     BoxShadow(
-                      color: iconColor.withOpacity(0.1),
+                      color: iconColor.withValues(alpha: 0.1),
                       blurRadius: 20,
                       offset: const Offset(0, 10),
                     ),
@@ -235,7 +235,7 @@ class MoodStationView extends StatelessWidget {
                         shape: BoxShape.circle,
                         boxShadow: [
                           BoxShadow(
-                            color: iconColor.withOpacity(0.2),
+                            color: iconColor.withValues(alpha: 0.2),
                             blurRadius: 10,
                             offset: const Offset(0, 5),
                           ),

@@ -157,8 +157,9 @@ class _StoryEditorViewState extends State<StoryEditorView> {
           // Clean URL (remove our custom params)
           if (query.isEmpty) {
             imageUrl = uri.replace(query: null).toString();
-            if (imageUrl.endsWith('?'))
+            if (imageUrl.endsWith('?')) {
               imageUrl = imageUrl.substring(0, imageUrl.length - 1);
+            }
           } else {
             imageUrl = uri.replace(queryParameters: query).toString();
           }
@@ -298,12 +299,15 @@ class _StoryEditorViewState extends State<StoryEditorView> {
             final attrs = <String>[];
 
             // 1. Direct Attributes
-            if (op.attributes!.containsKey('width'))
+            if (op.attributes!.containsKey('width')) {
               attrs.add('q_w=${op.attributes!['width']}');
-            if (op.attributes!.containsKey('height'))
+            }
+            if (op.attributes!.containsKey('height')) {
               attrs.add('q_h=${op.attributes!['height']}');
-            if (op.attributes!.containsKey('align'))
+            }
+            if (op.attributes!.containsKey('align')) {
               attrs.add('q_a=${op.attributes!['align']}');
+            }
 
             // 2. Style Attribute (CSS String) - Extensions often write here
             if (op.attributes!.containsKey('style')) {

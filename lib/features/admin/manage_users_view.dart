@@ -128,7 +128,7 @@ class _ManageUsersViewState extends State<ManageUsersView> {
             contentPadding: const EdgeInsets.all(12),
             leading: CircleAvatar(
               backgroundImage: avatarUrl != null
-                  ? NetworkImage(avatarUrl.toSecureUrl()!)
+                  ? NetworkImage(avatarUrl.toSecureUrl())
                   : null,
               child: avatarUrl == null ? const Icon(Icons.person) : null,
             ),
@@ -205,7 +205,7 @@ class _ManageUsersViewState extends State<ManageUsersView> {
               color: Colors.grey[200],
               image: avatarUrl != null
                   ? DecorationImage(
-                      image: NetworkImage(avatarUrl!.toSecureUrl()),
+                      image: NetworkImage(avatarUrl.toSecureUrl()),
                       fit: BoxFit.cover,
                     )
                   : null,

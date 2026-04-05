@@ -29,11 +29,13 @@ class PremiumBadgeWidget extends StatelessWidget {
   // Color Palette Model
   List<Color> _getBadgeColors(String? iconUrl) {
     if (iconUrl == null) return _goldPalette;
-    if (iconUrl.contains('first_voice'))
+    if (iconUrl.contains('first_voice')) {
       return _goldPalette; // Creation -> Gold
+    }
     if (iconUrl.contains('scribe')) return _cyanPalette; // Writing -> Cyan
-    if (iconUrl.contains('resonator'))
+    if (iconUrl.contains('resonator')) {
       return _purplePalette; // Social -> Purple
+    }
     if (iconUrl.contains('popularity')) return _pinkPalette; // Likes -> Pink
     if (iconUrl.contains('community')) return _bluePalette; // Fans -> Blue
     return _goldPalette;
@@ -128,7 +130,7 @@ class PremiumBadgeWidget extends StatelessWidget {
                           ),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.15),
+                        color: Colors.black.withValues(alpha: 0.15),
                         blurRadius: 10,
                         offset: const Offset(0, 5),
                       ),
@@ -160,7 +162,7 @@ class PremiumBadgeWidget extends StatelessWidget {
                               height: size,
                               decoration: BoxDecoration(
                                 shape: BoxShape.circle,
-                                color: Colors.white.withOpacity(0.2),
+                                color: Colors.white.withValues(alpha: 0.2),
                               ),
                             ),
                           ),
@@ -175,12 +177,12 @@ class PremiumBadgeWidget extends StatelessWidget {
                                 decoration: BoxDecoration(
                                   shape: BoxShape.circle,
                                   color: isLocked
-                                      ? Colors.grey.withOpacity(0.1)
-                                      : Colors.white.withOpacity(0.2),
+                                      ? Colors.grey.withValues(alpha: 0.1)
+                                      : Colors.white.withValues(alpha: 0.2),
                                   border: Border.all(
                                     color: isLocked
-                                        ? Colors.grey.withOpacity(0.3)
-                                        : Colors.white.withOpacity(0.5),
+                                        ? Colors.grey.withValues(alpha: 0.3)
+                                        : Colors.white.withValues(alpha: 0.5),
                                     width: 1,
                                   ),
                                 ),

@@ -430,8 +430,9 @@ class ArticleController extends GetxController {
     String content, {
     String? parentId,
   }) async {
-    if (!await Get.find<ProfileController>().checkActionAllowed('发布评论'))
+    if (!await Get.find<ProfileController>().checkActionAllowed('发布评论')) {
       return false;
+    }
 
     // Safety Check
     if (!Get.find<SafetyService>().canPost(
@@ -595,8 +596,9 @@ class ArticleController extends GetxController {
 
   /// Delete Article
   Future<bool> deleteArticle(String articleId) async {
-    if (!await Get.find<ProfileController>().checkActionAllowed('删除文章'))
+    if (!await Get.find<ProfileController>().checkActionAllowed('删除文章')) {
       return false;
+    }
     try {
       await _supabase.from('articles').delete().eq('id', articleId);
       articles.removeWhere((a) => a.id == articleId);
@@ -619,8 +621,9 @@ class ArticleController extends GetxController {
     String type = 'original',
     List<String> tags = const [],
   }) async {
-    if (!await Get.find<ProfileController>().checkActionAllowed('更新文章'))
+    if (!await Get.find<ProfileController>().checkActionAllowed('更新文章')) {
       return false;
+    }
 
     // Safety Check
     final safetyService = Get.find<SafetyService>();
@@ -691,8 +694,9 @@ class ArticleController extends GetxController {
     String type = 'original',
     List<String> tags = const [],
   }) async {
-    if (!await Get.find<ProfileController>().checkActionAllowed('发布文章'))
+    if (!await Get.find<ProfileController>().checkActionAllowed('发布文章')) {
       return false;
+    }
 
     // Safety Check
     final safetyService = Get.find<SafetyService>();

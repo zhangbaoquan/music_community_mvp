@@ -166,6 +166,7 @@ class _ChatDetailViewState extends State<ChatDetailView> {
                                             widget.partnerAvatar!.toSecureUrl(),
                                           )
                                         : null,
+                                    backgroundColor: Colors.grey[400],
                                     child:
                                         widget.partnerAvatar == null ||
                                             widget.partnerAvatar!.isEmpty
@@ -175,7 +176,6 @@ class _ChatDetailViewState extends State<ChatDetailView> {
                                             color: Colors.white,
                                           )
                                         : null,
-                                    backgroundColor: Colors.grey[400],
                                   ),
                                   const SizedBox(width: 8),
                                 ],
@@ -260,6 +260,7 @@ class _ChatDetailViewState extends State<ChatDetailView> {
                                       backgroundImage: myAvatar.isNotEmpty
                                           ? NetworkImage(myAvatar.toSecureUrl())
                                           : null,
+                                      backgroundColor: Colors.blue[300],
                                       child: myAvatar.isEmpty
                                           ? const Icon(
                                               Icons.person,
@@ -267,7 +268,6 @@ class _ChatDetailViewState extends State<ChatDetailView> {
                                               color: Colors.white,
                                             )
                                           : null,
-                                      backgroundColor: Colors.blue[300],
                                     );
                                   }),
                                 ],

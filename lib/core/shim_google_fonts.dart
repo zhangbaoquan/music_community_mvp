@@ -23,8 +23,9 @@ class GoogleFonts {
     double? decorationThickness,
   }) {
     return TextStyle(
-      fontFamily: '-apple-system',
+      fontFamily: 'NotoSansSC',
       fontFamilyFallback: const [
+        '-apple-system',
         'PingFang SC',
         'Heiti SC',
         'Microsoft YaHei',
@@ -68,8 +69,9 @@ class GoogleFonts {
   static TextTheme outfitTextTheme([TextTheme? textTheme]) {
     textTheme ??= ThemeData.light().textTheme;
     return textTheme.apply(
-      fontFamily: '-apple-system',
+      fontFamily: 'NotoSansSC',
       fontFamilyFallback: const [
+        '-apple-system',
         'PingFang SC',
         'Heiti SC',
         'Microsoft YaHei',

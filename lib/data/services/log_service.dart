@@ -27,7 +27,7 @@ class LogService extends GetxService {
         'Log Error',
         'Failed to upload log: $e',
         snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red.withOpacity(0.1),
+        backgroundColor: Colors.red.withValues(alpha: 0.1),
       );
       return false;
     }

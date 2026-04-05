@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'dart:js' as js; // Import dart:js for web interop
+import 'package:universal_html/js.dart' as js;
+
 import 'package:get/get.dart';
 import 'package:flutter_localizations/flutter_localizations.dart'; // Add this
 import 'package:flutter_quill/flutter_quill.dart'; // import for FlutterQuillLocalizations
@@ -23,6 +24,7 @@ import 'features/profile/follow_list_view.dart';
 import 'data/models/article.dart'; // For Article model
 import 'features/about/about_view.dart'; // About and Feedback Data
 import 'core/app_binding.dart'; // Add this import
+import 'package:sentry_flutter/sentry_flutter.dart';
 
 Future<void> main() async {
   // Ensure binding
@@ -62,7 +64,13 @@ Future<void> main() async {
     );
   };
 
-  runApp(const MusicCommunityApp());
+  await SentryFlutter.init(
+    (options) {
+      options.dsn = 'https://example@o0.ingest.sentry.io/0'; // Placeholder DSN: USER MUST REPLACE
+      options.tracesSampleRate = 1.0; // Capture 100% of the transactions for performance monitoring
+    },
+    appRunner: () => runApp(const MusicCommunityApp()),
+  );
 }
 
 class MusicCommunityApp extends StatelessWidget {
@@ -76,11 +84,15 @@ class MusicCommunityApp extends StatelessWidget {
       initialBinding: AppBinding(), // Set global binding
       defaultTransition: Transition.fadeIn, // Smooth fade transition
       transitionDuration: const Duration(milliseconds: 300), // 300ms duration
+      navigatorObservers: [
+        SentryNavigatorObserver(), // Track routing telemetry
+      ],
       builder: (context, child) {
-        // Remove loading screen after first frame
         WidgetsBinding.instance.addPostFrameCallback((_) {
           try {
-            js.context.callMethod('removeLoading');
+            if (js.context.hasProperty('removeLoading')) {
+               js.context.callMethod('removeLoading');
+            }
           } catch (e) {
             // Ignore error on non-web platforms
           }
@@ -94,7 +106,7 @@ class MusicCommunityApp extends StatelessWidget {
         textTheme: GoogleFonts.outfitTextTheme(),
         scrollbarTheme: ScrollbarThemeData(
           thumbColor: WidgetStateProperty.all(
-            Colors.grey[400]!.withOpacity(0.6),
+            Colors.grey[400]!.withValues(alpha: 0.6),
           ),
           radius: const Radius.circular(4),
           thickness: WidgetStateProperty.all(6),
@@ -216,7 +228,7 @@ class _AppStartupScreenState extends State<AppStartupScreen> {
             Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: Colors.blueAccent.withOpacity(0.1),
+                color: Colors.blueAccent.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
               child: const Icon(

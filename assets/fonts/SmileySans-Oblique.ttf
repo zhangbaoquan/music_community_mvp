@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Error>
+  <Code>NoSuchKey</Code>
+  <Message>The specified key does not exist.</Message>
+  <RequestId>69B18D957D696336311AC9F6</RequestId>
+  <HostId>fe-static-zbprod-zb1-oss-3.oss-cn-zhangjiakou.aliyuncs.com</HostId>
+  <Key>smiley-sans@2.0.1/dist/SmileySans-Oblique.ttf</Key>
+  <EC>0026-00000001</EC>
+  <RecommendDoc>https://api.aliyun.com/troubleshoot?q=0026-00000001</RecommendDoc>
+</Error>

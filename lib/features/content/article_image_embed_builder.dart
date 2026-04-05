@@ -200,7 +200,7 @@ class ArticleImageEmbedBuilder extends EmbedBuilder {
       child: Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: isSelected ? Colors.blue.withOpacity(0.1) : Colors.grey[100],
+          color: isSelected ? Colors.blue.withValues(alpha: 0.1) : Colors.grey[100],
           borderRadius: BorderRadius.circular(8),
           border: Border.all(
             color: isSelected ? Colors.blue : Colors.transparent,

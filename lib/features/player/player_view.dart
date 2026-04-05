@@ -18,7 +18,7 @@ class PlayerView extends StatelessWidget {
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 20,
             offset: const Offset(0, 10),
           ),
@@ -83,7 +83,7 @@ class PlayerView extends StatelessWidget {
                 activeTrackColor: const Color(0xFF1A1A1A),
                 inactiveTrackColor: Colors.grey[200],
                 thumbColor: const Color(0xFF1A1A1A),
-                overlayColor: const Color(0xFF1A1A1A).withOpacity(0.1),
+                overlayColor: const Color(0xFF1A1A1A).withValues(alpha: 0.1),
               ),
               child: Slider(
                 value: value,

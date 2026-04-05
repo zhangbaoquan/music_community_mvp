@@ -78,7 +78,7 @@ class BadgeDetailView extends GetView<BadgeService> {
                           borderRadius: BorderRadius.circular(20),
                           boxShadow: [
                             BoxShadow(
-                              color: const Color(0xFF4CA1AF).withOpacity(0.3),
+                              color: const Color(0xFF4CA1AF).withValues(alpha: 0.3),
                               blurRadius: 16,
                               offset: const Offset(0, 8),
                             ),
@@ -152,7 +152,7 @@ class BadgeDetailView extends GetView<BadgeService> {
                               borderRadius: BorderRadius.circular(24),
                               border: isOwned
                                   ? Border.all(
-                                      color: Colors.amber.withOpacity(0.2),
+                                      color: Colors.amber.withValues(alpha: 0.2),
                                       width: 1.5,
                                     )
                                   : Border.all(
@@ -161,7 +161,7 @@ class BadgeDetailView extends GetView<BadgeService> {
                                     ),
                               boxShadow: [
                                 BoxShadow(
-                                  color: Colors.black.withOpacity(0.04),
+                                  color: Colors.black.withValues(alpha: 0.04),
                                   blurRadius: 10,
                                   offset: const Offset(0, 4),
                                 ),

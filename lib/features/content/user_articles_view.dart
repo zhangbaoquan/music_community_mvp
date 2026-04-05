@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:music_community_mvp/core/shim_google_fonts.dart';
 import 'package:music_community_mvp/features/content/article_controller.dart';
-import 'package:music_community_mvp/features/content/article_detail_view.dart';
 import 'package:music_community_mvp/data/models/article.dart';
 import 'package:music_community_mvp/core/utils/string_extensions.dart';
 
@@ -96,7 +95,7 @@ class UserArticlesView extends GetView<ArticleController> {
         border: Border.all(color: Colors.grey[200]!),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.02),
+            color: Colors.black.withValues(alpha: 0.02),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),

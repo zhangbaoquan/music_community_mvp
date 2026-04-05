@@ -272,7 +272,7 @@ class _UploadMusicViewState extends State<UploadMusicView> {
                   },
                   selectedColor: Theme.of(
                     context,
-                  ).primaryColor.withOpacity(0.2),
+                  ).primaryColor.withValues(alpha: 0.2),
                   labelStyle: TextStyle(
                     color: _selectedSource == source
                         ? Theme.of(context).primaryColor

@@ -60,7 +60,7 @@ class _BadgePopupState extends State<BadgePopup>
               borderRadius: BorderRadius.circular(24),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.amber.withOpacity(0.3),
+                  color: Colors.amber.withValues(alpha: 0.3),
                   blurRadius: 50,
                   spreadRadius: 20,
                 ),
@@ -130,7 +130,7 @@ class _BadgePopupState extends State<BadgePopup>
                   ),
                   margin: const EdgeInsets.symmetric(horizontal: 24),
                   decoration: BoxDecoration(
-                    color: Colors.amber.withOpacity(0.1),
+                    color: Colors.amber.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text(

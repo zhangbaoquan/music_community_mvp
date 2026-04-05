@@ -96,16 +96,17 @@
     };
 
     window.flutterConfiguration = {
-      renderer: 'html', // Force HTML renderer for better mobile performance and faster load times
+      // Flutter 3.32+ only supports CanvasKit/SkWasm. 
+      // HTML renderer has been officially deprecated and removed.
     };
   </script>
   <script>
     // Global function to remove loading screen called from Flutter
-    window.removeLoading = function() {
+    window.removeLoading = function () {
       var loadingDiv = document.getElementById('loading');
       if (loadingDiv) {
         loadingDiv.style.opacity = '0';
-        setTimeout(function() {
+        setTimeout(function () {
           loadingDiv.remove();
         }, 500); // Smooth fade out
       }
@@ -115,7 +116,7 @@
   <!-- Fixed on-load to onload -->
   <!-- Anti-Caching: Version fix_cache_3 -->
   <script src="flutter_bootstrap.js?v=fix_cache_3" async>
-    </script>
+  </script>
   <script>
     // Force unregister service workers to clear stale cache
     if ('serviceWorker' in navigator) {

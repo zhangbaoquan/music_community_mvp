@@ -149,8 +149,9 @@ class MessageController extends GetxController {
       content,
       'send_message',
       cooldownSeconds: 5,
-    ))
+    )) {
       return;
+    }
 
     final myId = _supabase.auth.currentUser?.id;
     if (myId == null || content.trim().isEmpty) return;

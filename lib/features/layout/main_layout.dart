@@ -309,15 +309,15 @@ class MainLayout extends StatelessWidget {
       int currentIndex = 0;
       final pageIndex = navCtrl.selectedIndex.value;
 
-      if (pageIndex == 0)
+      if (pageIndex == 0) {
         currentIndex = 0;
-      else if (pageIndex == 1)
+      } else if (pageIndex == 1) {
         currentIndex = 1;
-      else if (pageIndex == 2)
+      } else if (pageIndex == 2) {
         currentIndex = 2;
-      else if (pageIndex == 4)
+      } else if (pageIndex == 4) {
         currentIndex = 3; // Map Page 4 to Item 3
-      else {
+      } else {
         // For Search (3) or About(5), they don't have a bottom tab.
         // We can default to 0 (Home) or keep the previous valid selection?
         // Defaulting to 0 is safest to avoid crash.
@@ -427,7 +427,7 @@ class MainLayout extends StatelessWidget {
           border: Border(top: BorderSide(color: Colors.grey[200]!)),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
+              color: Colors.black.withValues(alpha: 0.05),
               blurRadius: 20,
               offset: const Offset(0, -5),
             ),

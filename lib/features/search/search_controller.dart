@@ -17,14 +17,6 @@ class SearchController extends GetxController {
   // Debounce worker
   Worker? _debounceWorker;
 
-  @override
-  void onInit() {
-    super.onInit();
-    // Auto-search when text changes (optional, maybe stick to manual enter for now to save quota/performance)
-    // _debounceWorker = debounce(searchText, (enteredText) {
-    //   if (enteredText.isNotEmpty) search(enteredText);
-    // }, time: const Duration(milliseconds: 800));
-  }
 
   @override
   void onClose() {
