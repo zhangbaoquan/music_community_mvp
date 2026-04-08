@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:get/get.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -48,12 +49,33 @@ class NotificationService extends GetxService {
   final _supabase = Supabase.instance.client;
   final notifications = <NotificationModel>[].obs;
   final unreadCount = 0.obs;
+  StreamSubscription<AuthState>? _authStateSubscription;
 
   @override
   void onInit() {
     super.onInit();
-    // In a real app, we might want to listen to realtime changes here
+    // Default fetch
     fetchNotifications();
+
+    // Listen to Auth State to clear notifications on logout
+    _authStateSubscription = _supabase.auth.onAuthStateChange.listen((data) {
+      if (data.event == AuthChangeEvent.signedOut) {
+        clearNotifications();
+      } else if (data.event == AuthChangeEvent.signedIn) {
+        fetchNotifications();
+      }
+    });
+  }
+
+  void clearNotifications() {
+    notifications.clear();
+    unreadCount.value = 0;
+  }
+
+  @override
+  void onClose() {
+    _authStateSubscription?.cancel();
+    super.onClose();
   }
 
   Future<void> fetchNotifications() async {

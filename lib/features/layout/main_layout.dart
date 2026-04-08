@@ -327,7 +327,11 @@ class MainLayout extends StatelessWidget {
       return BottomNavigationBar(
         currentIndex: currentIndex,
         onTap: (index) async {
-          if (index == 2) {
+          if (index == 0) {
+            navCtrl.changePage(0);
+          } else if (index == 1) {
+            navCtrl.changePage(1);
+          } else if (index == 2) {
             if (!await profileCtrl.requireLogin()) return;
             navCtrl.changePage(2);
           } else if (index == 3) {
