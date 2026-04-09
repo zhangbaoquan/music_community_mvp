@@ -172,16 +172,16 @@ class ProfileController extends GetxController {
         diaryCount.value = data.length;
 
         // Fetch Social Stats (Active)
-        await fetchUserStats(user.id);
-
         // Fetch Received Stats (Passive)
-        await fetchUserReceivedStats(user.id);
-
         // Fetch Collected Articles
-        await fetchCollectedArticles();
-
         // Fetch Badges
-        await fetchBadges(user.id);
+        // 并行加载所有非阻塞数据，减少串行等待时间
+        await Future.wait([
+          fetchUserStats(user.id),
+          fetchUserReceivedStats(user.id),
+          fetchCollectedArticles(),
+          fetchBadges(user.id),
+        ]);
       } catch (e) {
         print('Error loading profile: $e');
         _logService.uploadLog(content: 'Error loading profile: $e');
@@ -199,27 +199,25 @@ class ProfileController extends GetxController {
 
   Future<void> fetchUserStats(String userId) async {
     try {
-      // Fetch Followers (how many people follow me)
-      final followersRes = await _supabase
-          .from('follows')
-          .select('follower_id')
-          .eq('following_id', userId);
+      // 并行执行 3 个独立的统计查询
+      final results = await Future.wait([
+        _supabase
+            .from('follows')
+            .select('follower_id')
+            .eq('following_id', userId),
+        _supabase
+            .from('follows')
+            .select('following_id')
+            .eq('follower_id', userId),
+        _supabase
+            .from('profile_visits')
+            .select('visitor_id')
+            .eq('visited_id', userId),
+      ]);
 
-      // Fetch Following (how many people I follow)
-      final followingRes = await _supabase
-          .from('follows')
-          .select('following_id')
-          .eq('follower_id', userId);
-
-      // Fetch Visitors Count
-      final visitorsRes = await _supabase
-          .from('profile_visits')
-          .select('visitor_id')
-          .eq('visited_id', userId);
-
-      followersCount.value = (followersRes as List).length;
-      followingCount.value = (followingRes as List).length;
-      visitorsCount.value = (visitorsRes as List).length;
+      followersCount.value = (results[0] as List).length;
+      followingCount.value = (results[1] as List).length;
+      visitorsCount.value = (results[2] as List).length;
     } catch (e, stack) {
       print('Error fetching user stats: $e');
       print('Stack Trace: $stack');

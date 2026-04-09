@@ -204,10 +204,8 @@ class _AppStartupScreenState extends State<AppStartupScreen> {
   }
 
   Future<void> _initServices() async {
-    // Services are now initialized in main() via AppBinding
-    await Future.delayed(
-      const Duration(milliseconds: 1500),
-    ); // Show splash for a bit
+    // Services are now initialized in main() via AppBinding (synchronous Get.put).
+    // No artificial delay needed — controllers are ready immediately.
     _checkAuthAndRedirect();
   }
 

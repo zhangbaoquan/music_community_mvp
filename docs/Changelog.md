@@ -4,6 +4,18 @@
 
 ---
 
+## [2026-04-09] BUG-001 — 首屏加载性能优化
+
+- **变更文件**：`web/index.html`、`lib/main.dart`、`lib/core/app_binding.dart`、`lib/features/profile/profile_controller.dart`
+- **变更内容**：
+  1. 移除 AppStartupScreen 中 1500ms 的人为延迟（早期竞态条件 workaround，已无必要）
+  2. 非关键 Controller（Player/Profile/Article）改为 `Get.lazyPut` 延迟加载
+  3. ProfileController.loadProfile() 中 7 个串行 Supabase 查询改为 `Future.wait()` 并行执行
+  4. index.html 添加 viewport meta、Loading 文案从"1-2分钟"改为"正在准备你的音乐空间"
+- **设计决策**：Flutter Web WASM 引擎下载（~15-30s）为不可控的固有成本，本次优化聚焦 Dart 层可控部分，预计压缩 Dart 启动耗时从 ~5s 至 ~1s
+
+---
+
 ## [2026-04-06] Agent 资产体系建设
 
 - **变更内容**：建立完整的 Agent 资产体系（README / docs / PRD / 任务清单 / 测试清单 / AGENTS.md / Workflows / Skills）

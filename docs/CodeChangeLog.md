@@ -5,6 +5,23 @@
 
 ---
 
+## [2026-04-09] BUG-001 首屏加载性能优化（Dart 层）
+
+- **修改文件**：
+  - [修改] `web/index.html`
+  - [修改] `lib/main.dart`
+  - [修改] `lib/core/app_binding.dart`
+  - [修改] `lib/features/profile/profile_controller.dart`
+- **原因**：v1.0 回归测试发现首屏加载耗时约 40s。经分析，Flutter WASM/CanvasKit 引擎下载（~15-30s）为不可控固有成本，但 Dart 应用层存在 3 处可控瓶颈：(1) AppStartupScreen 中 1500ms 的人为延迟；(2) AppBinding 中 6 个 Controller 全部同步立即初始化；(3) ProfileController.loadProfile() 中 7 个 Supabase 查询完全串行执行。
+- **修复方案**：
+  1. `main.dart`：删除 `_initServices()` 中的 `Future.delayed(1500ms)`，该延迟是早期为规避 GetX Controller 竞态条件加的 workaround，现在 AppBinding 使用同步 `Get.put()`，Controller 在 `dependencies()` 完成时即可用，延迟已无必要。
+  2. `app_binding.dart`：将 `PlayerController`、`ProfileController`、`ArticleController` 从 `Get.put(permanent: true)` 改为 `Get.lazyPut(fenix: true)`，首屏渲染不再阻塞等待这三个 Controller 的 `onInit()` 数据加载。关键路径的 `LogService`、`AuthController`、`SafetyService` 保留 `Get.put` 立即注册。
+  3. `profile_controller.dart`：`loadProfile()` 中的 `fetchUserStats()`、`fetchUserReceivedStats()`、`fetchCollectedArticles()`、`fetchBadges()` 从串行 await 改为 `Future.wait()` 并行执行；`fetchUserStats()` 内部的 followers/following/visitors 三个查询也从串行改为 `Future.wait()` 并行。
+  4. `index.html`：添加 `<meta name="viewport">` 确保移动端渲染；Loading 副文案从"(首次加载可能需要 1-2 分钟)"改为"✨ 正在准备你的音乐空间"。
+- **自测结果**：`flutter analyze` 通过，118 条 info（全为已有的 avoid_print），无 error/warning，无新增问题。
+
+---
+
 ## [2026-04-08] BUG-005 退出登录后消息中心红点残留
 
 - **修改文件**：
