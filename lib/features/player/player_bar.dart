@@ -47,7 +47,9 @@ class PlayerBar extends StatelessWidget {
                   shape: BoxShape.circle,
                 ),
                 child: Obx(() {
-                  if (controller.isBuffering.value) {
+                  // 仅在非播放状态下显示 Loading
+                  if (controller.isBuffering.value &&
+                      !controller.isPlaying.value) {
                     return const SizedBox(
                       width: 24,
                       height: 24,
@@ -200,7 +202,8 @@ class PlayerBar extends StatelessWidget {
                     color: Color(0xFF1A1A1A),
                     shape: BoxShape.circle,
                   ),
-                  child: controller.isBuffering.value
+                  child: controller.isBuffering.value &&
+                          !controller.isPlaying.value
                       ? const SizedBox(
                           width: 24,
                           height: 24,

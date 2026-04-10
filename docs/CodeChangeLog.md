@@ -5,6 +5,38 @@
 
 ---
 
+## [2026-04-11] BUG-004（新） 播放按钮在音频播放中仍显示 Loading 圈
+
+- **修改文件**：
+  - [修改] `lib/features/content/article_detail_view.dart`
+  - [修改] `lib/features/player/player_bar.dart`
+- **原因**：`just_audio` 的 `processingState` 在部分移动端浏览器上存在"状态滞后"现象 — 音频实际已在播放（`isPlaying = true`），但 `processingState` 仍报告 `buffering`。UI 中播放按钮的判断逻辑为 `if (isBuffering) → 显示 CircularProgressIndicator`，导致用户看到音乐正常播放但按钮一直转圈。
+- **修复方案**：
+  将所有播放按钮的 Loading 判断从 `isBuffering` 改为 `isBuffering && !isPlaying`。正在播放时优先显示暂停按钮，确保用户始终拥有控制权。共修复 3 处：
+  1. `article_detail_view.dart`：`_MusicPlayerCard` 组件中的播放按钮
+  2. `player_bar.dart`：底部播放栏小屏（Mobile）布局中的播放按钮
+  3. `player_bar.dart`：底部播放栏大屏（Desktop）布局中的播放按钮
+- **设计决策**：`isPlaying` 优先级高于 `isBuffering`。这与主流音乐播放器（Spotify、Apple Music）的行为一致 — 即使在边播放边缓冲，也始终显示暂停按钮而非 Loading。
+- **自测结果**：`flutter analyze` 通过，0 error / 0 warning。用户部署后在小屏手机上验证 BUG 修复成功。
+
+---
+
+## [2026-04-10] BUG-002 补充修复：pushState → replaceState + UrlSyncObserver
+
+- **修改文件**：
+  - [修改] `lib/features/layout/main_layout.dart`
+  - [修改] `lib/features/home/home_view.dart`
+  - [修改] `lib/main.dart`
+- **原因**：BUG-002 首次修复使用 `pushState` 在浏览器历史栈中创建条目，导致与 GetX 路由引擎的 `popstate` 监听产生冲突 — 多次切换 Tab 后点浏览器后退，URL 和 Tab 不一致。第二轮修复为 `replaceState` 解决了 Tab 切换场景，但从 admin 页面返回时 URL 仍不同步（GetX 恢复的是它内部记录的路由 `/home`，而非当前 Tab 对应的 URL）。
+- **修复方案**（共三轮迭代）：
+  1. `main_layout.dart` + `home_view.dart`：所有 `pushState` 改为 `replaceState`，移除 `popstate` 监听器。Tab 切换不再创建浏览器历史条目，消除与 GetX 的双系统冲突。
+  2. `main_layout.dart`：NavigationController 新增 `syncUrlToCurrentTab()` 公开方法，用于在从子页面返回时修正 URL。
+  3. `main.dart`：新增 `UrlSyncObserver`（继承 `NavigatorObserver`），注册到 `GetMaterialApp.navigatorObservers`。当任何页面被 pop 时（如从 admin 返回），在下一帧自动调用 `syncUrlToCurrentTab()` 确保地址栏 URL 与当前 Tab 一致。
+- **设计决策**：使用 `NavigatorObserver.didPop` 而非 `MainLayout.build()` 中的 `addPostFrameCallback`，因为 Flutter Navigator pop 时底层 Widget 只是"重新露出"，不触发 `build()`。`NavigatorObserver` 是 Flutter 框架级路由生命周期 API，不依赖 Widget 重建。
+- **自测结果**：`flutter analyze` 通过。线上验证：侧栏切换 URL 正确、admin 返回后 URL 与 Tab 一致、地址栏直达正常。
+
+---
+
 ## [2026-04-10] BUG-002 URL 路由不随页面切换更新
 
 - **修改文件**：
