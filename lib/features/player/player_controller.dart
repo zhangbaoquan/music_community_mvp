@@ -40,9 +40,11 @@ class PlayerController extends GetxController {
     // Listen to player state
     _player.playerStateStream.listen((state) {
       isPlaying.value = state.playing;
-      isBuffering.value =
-          state.processingState == ProcessingState.buffering ||
-          state.processingState == ProcessingState.loading;
+      // 仅在「正在播放 + 缓冲中」时报告 buffering
+      // 修复：部分移动端浏览器暂停后 processingState 仍卡在 buffering
+      isBuffering.value = state.playing &&
+          (state.processingState == ProcessingState.buffering ||
+           state.processingState == ProcessingState.loading);
 
       if (state.processingState == ProcessingState.completed) {
         isPlaying.value = false;

@@ -971,7 +971,7 @@ class _MusicPlayerCard extends StatelessWidget {
                     // 仅在非播放状态下显示 Loading
                     // 修复：just_audio 在部分设备上 processingState
                     // 可能卡在 buffering，但音频实际已在播放
-                    if (player.isBuffering.value && !player.isPlaying.value)
+                    if (player.isBuffering.value)
                       const SizedBox(
                         width: 40,
                         height: 40,

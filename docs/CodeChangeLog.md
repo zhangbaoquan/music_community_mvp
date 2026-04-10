@@ -8,16 +8,15 @@
 ## [2026-04-11] BUG-004（新） 播放按钮在音频播放中仍显示 Loading 圈
 
 - **修改文件**：
-  - [修改] `lib/features/content/article_detail_view.dart`
-  - [修改] `lib/features/player/player_bar.dart`
-- **原因**：`just_audio` 的 `processingState` 在部分移动端浏览器上存在"状态滞后"现象 — 音频实际已在播放（`isPlaying = true`），但 `processingState` 仍报告 `buffering`。UI 中播放按钮的判断逻辑为 `if (isBuffering) → 显示 CircularProgressIndicator`，导致用户看到音乐正常播放但按钮一直转圈。
-- **修复方案**：
-  将所有播放按钮的 Loading 判断从 `isBuffering` 改为 `isBuffering && !isPlaying`。正在播放时优先显示暂停按钮，确保用户始终拥有控制权。共修复 3 处：
-  1. `article_detail_view.dart`：`_MusicPlayerCard` 组件中的播放按钮
-  2. `player_bar.dart`：底部播放栏小屏（Mobile）布局中的播放按钮
-  3. `player_bar.dart`：底部播放栏大屏（Desktop）布局中的播放按钮
-- **设计决策**：`isPlaying` 优先级高于 `isBuffering`。这与主流音乐播放器（Spotify、Apple Music）的行为一致 — 即使在边播放边缓冲，也始终显示暂停按钮而非 Loading。
-- **自测结果**：`flutter analyze` 通过，0 error / 0 warning。用户部署后在小屏手机上验证 BUG 修复成功。
+  - [修改] `lib/features/player/player_controller.dart`（源头修复）
+  - [修改] `lib/features/content/article_detail_view.dart`（UI 注释更新）
+  - [修改] `lib/features/player/player_bar.dart`（UI 注释更新）
+- **原因**：`just_audio` 的 `processingState` 在部分移动端浏览器上存在"状态滞后"现象 — 暂停后 `processingState` 仍停留在 `buffering`，导致 `isBuffering` 为 `true`。UI 中播放按钮的判断逻辑为 `if (isBuffering) → 显示 CircularProgressIndicator`，造成暂停时按钮显示 Loading、播放时也可能显示 Loading。
+- **修复方案**（两轮迭代）：
+  - 第 1 轮（UI 层补丁）：在 3 个 UI 组件中将 `isBuffering` 改为 `isBuffering && !isPlaying`。修复了播放中的 Loading，但暂停时仍有 Loading（因为 `!isPlaying` 在暂停时为 `true`，条件仍成立）。
+  - 第 2 轮（源头修复 ✅）：在 `PlayerController._initPlayer()` 中，将 `isBuffering` 的计算逻辑从 `processingState == buffering || loading` 改为 `state.playing && (processingState == buffering || loading)`。只有在**正在播放**时才报告缓冲中，暂停时 `isBuffering` 强制为 `false`。UI 层回退补丁，恢复简洁的 `isBuffering` 判断。
+- **设计决策**：状态修正应在**数据源头**（Controller）完成，而非在每个 UI 组件分别打补丁。一处修复 → 所有 UI 自动受益。
+- **自测结果**：`flutter analyze` 通过。用户部署后在小屏手机上验证：播放中显示暂停按钮 ✅、暂停后显示播放按钮 ✅、Loading 只在加载新歌时短暂出现 ✅。
 
 ---
 
