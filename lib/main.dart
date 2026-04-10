@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:universal_html/js.dart' as js;
+import 'package:universal_html/html.dart' as html;
+import 'package:music_community_mvp/features/layout/main_layout.dart';
 
 import 'package:get/get.dart';
 import 'package:flutter_localizations/flutter_localizations.dart'; // Add this
@@ -8,7 +10,6 @@ import 'package:music_community_mvp/core/shim_google_fonts.dart';
 import 'package:music_community_mvp/core/app_scroll_behavior.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:timeago/timeago.dart' as timeago;
-import 'features/layout/main_layout.dart';
 import 'features/auth/login_view.dart';
 import 'features/admin/admin_layout.dart';
 import 'features/admin/admin_guard.dart';
@@ -22,7 +23,6 @@ import 'features/gamification/badge_detail_view.dart';
 import 'features/profile/visitor_list_view.dart';
 import 'features/profile/follow_list_view.dart';
 import 'data/models/article.dart'; // For Article model
-import 'features/about/about_view.dart'; // About and Feedback Data
 import 'core/app_binding.dart'; // Add this import
 import 'package:sentry_flutter/sentry_flutter.dart';
 
@@ -86,6 +86,7 @@ class MusicCommunityApp extends StatelessWidget {
       transitionDuration: const Duration(milliseconds: 300), // 300ms duration
       navigatorObservers: [
         SentryNavigatorObserver(), // Track routing telemetry
+        UrlSyncObserver(), // Sync URL when returning to MainLayout
       ],
       builder: (context, child) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -127,7 +128,11 @@ class MusicCommunityApp extends StatelessWidget {
       home: AppStartupScreen(),
       getPages: [
         GetPage(name: '/home', page: () => MainLayout()),
-        GetPage(name: '/about', page: () => const AboutView()),
+        GetPage(name: '/diary', page: () => MainLayout()),
+        GetPage(name: '/profile', page: () => MainLayout()),
+        GetPage(name: '/search', page: () => MainLayout()),
+        GetPage(name: '/messages', page: () => MainLayout()),
+        GetPage(name: '/about', page: () => MainLayout()),
         GetPage(name: '/login', page: () => const LoginView()),
         GetPage(
           name: '/admin',
@@ -210,8 +215,13 @@ class _AppStartupScreenState extends State<AppStartupScreen> {
   }
 
   void _checkAuthAndRedirect() {
-    // Proceed to Home
-    Get.offAllNamed('/home');
+    // 尊重用户输入的 URL，如果是已注册的 Tab 路由则直接跳转
+    final hash = html.window.location.hash.replaceFirst('#', '');
+    final basePath = hash.split('?').first;
+    // 检查是否是已注册的主 Tab 路由
+    const validTabRoutes = ['/home', '/diary', '/profile', '/search', '/messages', '/about'];
+    final targetRoute = validTabRoutes.contains(basePath) ? basePath : '/home';
+    Get.offAllNamed(targetRoute);
   }
 
   @override
@@ -266,5 +276,23 @@ class _AppStartupScreenState extends State<AppStartupScreen> {
         ),
       ),
     );
+  }
+}
+
+/// 路由观察器 — 当页面被 pop 时自动同步地址栏 URL
+///
+/// 解决的问题：从 admin/article 等页面返回 MainLayout 时，
+/// GetX 恢复的 URL 是它内部记录的路由（如 /home），
+/// 但 NavigationController 的 selectedIndex 可能在其他 Tab 上。
+/// 此观察器在 pop 发生后的下一帧调用 syncUrlToCurrentTab() 修正。
+class UrlSyncObserver extends NavigatorObserver {
+  @override
+  void didPop(Route route, Route? previousRoute) {
+    super.didPop(route, previousRoute);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (Get.isRegistered<NavigationController>()) {
+        Get.find<NavigationController>().syncUrlToCurrentTab();
+      }
+    });
   }
 }

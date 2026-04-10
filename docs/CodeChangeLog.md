@@ -5,6 +5,22 @@
 
 ---
 
+## [2026-04-10] BUG-002 URL 路由不随页面切换更新
+
+- **修改文件**：
+  - [修改] `lib/features/layout/main_layout.dart`
+  - [修改] `lib/main.dart`
+  - [修改] `lib/features/home/home_view.dart`
+- **原因**：v1.0 回归测试发现所有 Tab 切换后浏览器 URL 始终停留在 `/#/home`，导致浏览器前进/后退失效、无法通过 URL 直达特定 Tab。根因是 `NavigationController.changePage()` 仅修改内存中的 `selectedIndex`，从未通知浏览器更新 URL。
+- **修复方案**（方案 B — Browser History API 同步）：
+  1. `main_layout.dart`：重构 `NavigationController`，新增 Tab↔URL 双向映射表（0:/home, 1:/diary, 2:/profile, 3:/search, 4:/messages, 5:/about）。`changePage()` 调用时通过 `window.history.pushState()` 同步 URL；`onInit()` 读取当前 URL 设置初始 Tab；监听 `popstate` 事件处理浏览器前进/后退。
+  2. `main.dart`：在 `getPages` 中为 `/diary`、`/profile`、`/search`、`/messages`、`/about` 注册独立路由（均指向 `MainLayout()`），支持地址栏直达。同时修复 `_checkAuthAndRedirect()` 不再硬编码跳转 `/home`，改为读取当前 URL hash 做智能跳转。
+  3. `home_view.dart`：将 `ContentTabView` 从 `StatelessWidget + DefaultTabController` 改为 `StatefulWidget + 手动 TabController`，监听 Tab 切换事件同步 URL（心情广场→`/#/home`，专栏文章→`/#/home?tab=articles`），支持浏览器前进/后退在广场/专栏间切换。
+- **设计决策**：选择方案 B（Browser History API）而非方案 A（每个 Tab 独立 GetPage 路由），因为后者会销毁/重建页面导致状态丢失（滚动位置、已加载数据等）。方案 B 保持 IndexedStack 架构不变，零风险。
+- **自测结果**：`flutter analyze` 通过，0 error / 0 warning，118 条 info 全为已有的 avoid_print。
+
+---
+
 ## [2026-04-09] BUG-001 首屏加载性能优化（Dart 层）
 
 - **修改文件**：

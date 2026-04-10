@@ -4,6 +4,7 @@ import 'package:music_community_mvp/core/shim_google_fonts.dart';
 import 'package:music_community_mvp/features/search/search_view.dart';
 import 'package:music_community_mvp/features/messages/message_controller.dart';
 import 'package:music_community_mvp/features/messages/message_center_view.dart';
+import 'package:universal_html/html.dart' as html;
 import '../player/player_bar.dart';
 import '../home/home_view.dart';
 import '../player/player_controller.dart';
@@ -16,11 +17,69 @@ import '../about/about_view.dart';
 import '../sponsor/sponsor_dialog.dart';
 import 'package:music_community_mvp/core/widgets/common_dialog.dart';
 
+/// 导航控制器 — 管理侧栏/底栏 Tab 切换，并双向同步浏览器 URL
+///
+/// Tab 索引与 URL 路径映射：
+/// 0:心情驿站→/home, 1:心事角落→/diary, 2:个人中心→/profile,
+/// 3:搜索发现→/search, 4:消息中心→/messages, 5:关于→/about
 class NavigationController extends GetxController {
   final RxInt selectedIndex = 0.obs;
 
+  /// Tab 索引 → URL 路径映射
+  static const Map<int, String> tabRoutes = {
+    0: '/home',
+    1: '/diary',
+    2: '/profile',
+    3: '/search',
+    4: '/messages',
+    5: '/about',
+  };
+
+  /// URL 路径 → Tab 索引反向映射
+  static final Map<String, int> routeToTab = {
+    for (var e in tabRoutes.entries) e.value: e.key,
+  };
+
+  @override
+  void onInit() {
+    super.onInit();
+    // 根据当前 URL 设置初始 Tab（支持地址栏直达）
+    _syncTabFromUrl();
+  }
+
+  /// 切换页面并同步 URL 到浏览器地址栏
   void changePage(int index) {
+    if (selectedIndex.value == index) return;
     selectedIndex.value = index;
+    _replaceUrlForTab(index);
+  }
+
+  /// 使用 replaceState 更新地址栏 URL（不创建浏览器历史条目）
+  ///
+  /// 为什么不用 pushState：Flutter Web 的 GetX 路由引擎会监听 popstate
+  /// 事件做页面导航，与我们的手动 URL 管理冲突。使用 replaceState
+  /// 只更新地址栏显示，不触发导航事件，避免双系统冲突。
+  void _replaceUrlForTab(int index) {
+    final path = tabRoutes[index] ?? '/home';
+    html.window.history.replaceState(null, '', '/#$path');
+  }
+
+  /// 根据当前浏览器 URL 同步 Tab 索引（仅用于初始加载）
+  void _syncTabFromUrl() {
+    final hash = html.window.location.hash; // e.g. "#/diary"
+    final path = hash.replaceFirst('#', '').split('?').first;
+    final tab = routeToTab[path];
+    if (tab != null) {
+      selectedIndex.value = tab;
+    }
+  }
+
+  /// 确保地址栏 URL 与当前 Tab 一致
+  ///
+  /// 场景：从 admin/article 等页面返回时，GetX 会恢复它内部记录的路由
+  /// （如 /home），但 selectedIndex 可能在其他 Tab 上。调用此方法可以修正不一致。
+  void syncUrlToCurrentTab() {
+    _replaceUrlForTab(selectedIndex.value);
   }
 }
 

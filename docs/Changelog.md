@@ -4,6 +4,18 @@
 
 ---
 
+## [2026-04-10] BUG-002 — URL 路由同步修复
+
+- **变更文件**：`lib/features/layout/main_layout.dart`、`lib/main.dart`、`lib/features/home/home_view.dart`
+- **变更内容**：
+  1. NavigationController 增加 Tab↔URL 双向同步（Browser History API pushState/popstate）
+  2. 6 个主 Tab 路由注册到 getPages，支持地址栏直达
+  3. 修复启动时硬编码跳转 /home，改为尊重用户输入的 URL
+  4. 主页广场/专栏 Tab 也追踪到 URL（?tab=articles）
+- **设计决策**：采用方案 B（Browser History API 同步），保持 IndexedStack 架构不变，页面状态零丢失
+
+---
+
 ## [2026-04-09] BUG-001 — 首屏加载性能优化
 
 - **变更文件**：`web/index.html`、`lib/main.dart`、`lib/core/app_binding.dart`、`lib/features/profile/profile_controller.dart`
