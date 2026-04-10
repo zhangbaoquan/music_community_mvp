@@ -19,20 +19,21 @@ class CommentsController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    // Listen to song changes
-    ever(_playerCtrl.currentMood, (mood) {
-      if (mood.isNotEmpty) {
-        _loadCommentsForMood(mood);
+    // Listen to song changes — 用 song.id 而非 mood tag
+    ever(_playerCtrl.currentSong, (song) {
+      if (song != null) {
+        _loadCommentsForSong(song.id);
       }
     });
 
     // Initial load if song is already playing
-    if (_playerCtrl.currentMood.value.isNotEmpty) {
-      _loadCommentsForMood(_playerCtrl.currentMood.value);
+    final song = _playerCtrl.currentSong.value;
+    if (song != null) {
+      _loadCommentsForSong(song.id);
     }
   }
 
-  Future<void> _loadCommentsForMood(String mood) async {
+  Future<void> _loadCommentsForSong(String songId) async {
     isLoading.value = true;
     comments.clear();
 
@@ -44,7 +45,7 @@ class CommentsController extends GetxController {
 
     try {
       // Fetch initial
-      final list = await _service.fetchComments(mood);
+      final list = await _service.fetchComments(songId);
 
       // Fetch status (isLiked/isCollected) for these comments
       // Note: For MVP we do this in loop or parallel, acceptable for small lists.
@@ -82,7 +83,7 @@ class CommentsController extends GetxController {
       comments.assignAll(list);
 
       // Subscribe realtime
-      _subscription = _service.subscribeToComments(mood, (newComment) {
+      _subscription = _service.subscribeToComments(songId, (newComment) {
         // Insert at top if not already there (dedupe just in case)
         if (!comments.any((c) => c.id == newComment.id)) {
           comments.insert(0, newComment);
@@ -98,8 +99,11 @@ class CommentsController extends GetxController {
 
   Future<void> postComment(String content) async {
     if (content.trim().isEmpty) return;
-    final mood = _playerCtrl.currentMood.value;
-    if (mood.isEmpty) return;
+    final song = _playerCtrl.currentSong.value;
+    if (song == null) {
+      Get.snackbar("提示", "请先播放一首歌曲");
+      return;
+    }
 
     isPosting.value = true;
     try {
@@ -108,7 +112,7 @@ class CommentsController extends GetxController {
       final nickname = email.split('@')[0];
 
       await _service.postComment(
-        songId: mood,
+        songId: song.id,
         content: content,
         userNickname: nickname,
       );

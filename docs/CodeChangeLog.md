@@ -5,6 +5,21 @@
 
 ---
 
+## [2026-04-11] BUG-005（新） 音乐评论发送失败 — "网络开小差了"
+
+- **修改文件**：
+  - [修改] `lib/features/social/comments_controller.dart`
+- **原因**：`CommentsController` 中所有涉及 `song_id` 的逻辑都错误地使用了 `PlayerController.currentMood`（心情标签字符串，如 "治愈"、"User Upload"），而 Supabase `comments` 表中 `song_id` 字段是 `uuid` 类型（引用 `songs.id`）。将一个普通字符串插入 `uuid` 字段 → Supabase 类型校验失败 → 抛异常 → 前端显示"发送失败"。这是一个从第一版就存在的隐藏 BUG。
+- **修复方案**：
+  1. `postComment()`：从 `_playerCtrl.currentMood.value` 改为 `_playerCtrl.currentSong.value?.id`（歌曲真实 UUID）。
+  2. `onInit()` 监听：从 `ever(_playerCtrl.currentMood, ...)` 改为 `ever(_playerCtrl.currentSong, ...)`，按歌曲 ID 加载评论。
+  3. `_loadCommentsForMood()` → 重命名为 `_loadCommentsForSong(String songId)`，内部 `fetchComments()` 和 `subscribeToComments()` 均改用 `songId`。
+  4. 增加空歌曲保护：`currentSong == null` 时提示"请先播放一首歌曲"，避免空指针。
+- **设计决策**：`song_id` 应始终使用歌曲的真实 UUID，而非 mood tag 字符串。mood tag 是用于 UI 分类/展示的，不应作为数据库主键。
+- **自测结果**：`flutter analyze` 通过，0 error / 0 warning。
+
+---
+
 ## [2026-04-11] BUG-004（新） 播放按钮在音频播放中仍显示 Loading 圈
 
 - **修改文件**：
