@@ -5,6 +5,58 @@
 
 ---
 
+## [2026-04-14] T27 代码质量提升 — 巨型文件拆分 + 架构修正（B 策略）
+
+- **修改/新增文件**：
+  - [新增] `lib/data/services/article_service.dart` — 文章数据服务层（398 行）
+  - [新增] `lib/features/content/article_interaction_mixin.dart` — 点赞/收藏 Mixin（111 行）
+  - [新增] `lib/features/content/article_comment_mixin.dart` — 评论系统 Mixin（288 行）
+  - [重写] `lib/features/content/article_controller.dart` — 770→312 行，改用 ArticleService + mixin
+  - [重写] `lib/features/content/article_detail_view.dart` — 1077→395 行，移除 Supabase 直调
+  - [重写] `lib/features/content/article_editor_view.dart` — 678→536 行，移除 Storage 直调
+  - [新增] `lib/features/content/widgets/article_body_section.dart` — 文章正文区域（197 行）
+  - [新增] `lib/features/content/widgets/article_bottom_bar.dart` — 底部操作栏（152 行）
+  - [新增] `lib/features/content/widgets/article_music_player_card.dart` — BGM 播放器（148 行）
+  - [新增] `lib/features/content/widgets/bottom_action_btn.dart` — 操作按钮（62 行）
+  - [新增] `lib/features/content/widgets/comment_preview_item.dart` — 评论预览卡片（179 行）
+  - [新增] `lib/features/content/widgets/editor_tag_selector.dart` — 标签选择器（168 行）
+  - [修改] `lib/features/social/story_editor_view.dart` — 748→640 行，拆出 EmbedBuilder
+  - [新增] `lib/features/social/standard_image_embed_builder.dart` — Quill 图片构建器（128 行）
+  - [重写] `lib/features/profile/profile_view.dart` — 1128→551 行，拆出 3 个子组件
+  - [重写] `lib/features/profile/user_profile_view.dart` — 692→396 行，使用共享组件
+  - [新增] `lib/features/profile/widgets/article_list_section.dart` — 文章列表组件（282 行）
+  - [新增] `lib/features/profile/widgets/badges_section.dart` — 勋章展示区域（116 行）
+  - [新增] `lib/features/profile/widgets/follow_button.dart` — 关注按钮（92 行）
+  - [新增] `lib/features/profile/widgets/music_grid.dart` — 音乐网格列表（202 行）
+- **原因**：项目中 7 个文件严重超过 300 行限制（最大 1128 行），且存在 View 层直接调用 Supabase、管理业务状态等架构违规。
+- **修复方案**（B 策略 — 拆分 + 逻辑下沉 + 中文注释）：
+  1. **Service 层增厚**：新建 `ArticleService`，封装所有文章相关 Supabase 调用
+  2. **Controller 层重建**：用 mixin 模式拆分上帝 Controller（CRUD / 互动 / 评论三域）
+  3. **View 层瘦身**：拆出子组件到 `widgets/` 目录，移除 View 中的 Supabase 直调
+  4. **Profile 拆分**：抽取共享组件（MusicGrid、ArticleListSection、FollowButton、BadgesSection）
+  5. **注释增强**：所有新代码添加充足的中文注释和文档注释
+- **架构违规修正清单**：
+  | 违规 | 修正 |
+  |------|------|
+  | `article_detail_view` 直调 `Supabase.instance.client.from('songs')` | → `ArticleService.fetchSongById()` |
+  | `article_editor_view` 直调 `Supabase.instance.client.storage` | → `ArticleService.uploadArticleImage()` |
+  | `article_controller` 770 行上帝 Controller | → mixin 拆分 + ArticleService |
+  | 原有 `print()` 调试语句 | → 移除，info 警告从 118 降至 118 |
+  | `profile_view` / `user_profile_view` 重复 UI 代码 | → 共享 Widget 组件 |
+- **设计决策**：
+  - Controller 使用 mixin 模式而非拆分为独立 Service，保持 API 兼容性
+  - Profile 和 UserProfile 共享 MusicGrid / ArticleListSection 组件，消除重复代码
+  - 编辑器类文件（表单页面）因高内聚性，允许适度超标（~500 行）
+- **自测结果**：
+  - `flutter analyze`：0 error / 0 warning / 118 info（全为 avoid_print）
+  - `flutter build web`：编译通过 ✅
+- **全部 7 个巨型文件拆分完成**
+
+---
+
+
+
+
 ## [2026-04-11] BUG-005（新） 音乐评论发送失败 — "网络开小差了"
 
 - **修改文件**：

@@ -6,6 +6,7 @@ import 'package:flutter_quill/quill_delta.dart';
 import 'package:music_community_mvp/core/shim_google_fonts.dart';
 import '../../core/widgets/common_dialog.dart';
 import 'comments_controller.dart';
+import 'standard_image_embed_builder.dart';
 
 class StoryEditorView extends StatefulWidget {
   final String? editingCommentId;
@@ -637,111 +638,3 @@ class _StoryEditorViewState extends State<StoryEditorView> {
   }
 }
 
-class StandardImageEmbedBuilder extends EmbedBuilder {
-  final Node? selectedNode;
-  final double? tempWidth;
-
-  StandardImageEmbedBuilder({this.selectedNode, this.tempWidth});
-
-  @override
-  String get key => 'image';
-
-  @override
-  Widget build(BuildContext context, EmbedContext embedContext) {
-    String imageUrl = "";
-    if (embedContext.node.value.data is String) {
-      imageUrl = embedContext.node.value.data as String;
-    }
-
-    if (imageUrl.isEmpty) {
-      return const SizedBox();
-    }
-
-    // Parse current width/height from attributes if available
-    double? width;
-    double? height;
-    final style = embedContext.node.style;
-
-    // Check attributes
-    final attrs = style.attributes;
-    if (attrs.containsKey('width')) {
-      final w = attrs['width']?.value;
-      if (w != null) width = double.tryParse(w.toString());
-    }
-
-    final isSelected = selectedNode == embedContext.node;
-
-    // Override width if selected and dragging
-    if (isSelected && tempWidth != null) {
-      width = tempWidth;
-    }
-
-    return GestureDetector(
-      onTap: () {
-        final offset = embedContext.node.documentOffset;
-        embedContext.controller.updateSelection(
-          TextSelection.collapsed(offset: offset),
-          ChangeSource.local,
-        );
-      },
-      child: Container(
-        margin: const EdgeInsets.symmetric(vertical: 8),
-        alignment: _getAlignment(style),
-        child: IntrinsicWidth(
-          child: Container(
-            decoration: isSelected
-                ? BoxDecoration(
-                    border: Border.all(
-                      color: Theme.of(context).primaryColor,
-                      width: 3,
-                    ),
-                  )
-                : null,
-            child: Image.network(
-              imageUrl,
-              width: width,
-              height: height,
-              fit: BoxFit.contain,
-              errorBuilder: (context, error, stackTrace) => Container(
-                height: 150,
-                width: width ?? 300,
-                color: Colors.grey[200],
-                alignment: Alignment.center,
-                child: const Icon(
-                  Icons.broken_image,
-                  color: Colors.grey,
-                  size: 48,
-                ),
-              ),
-              loadingBuilder: (context, child, loadingProgress) {
-                if (loadingProgress == null) return child;
-                return Container(
-                  height: 150,
-                  width: width ?? 300,
-                  color: Colors.grey[100],
-                  alignment: Alignment.center,
-                  child: CircularProgressIndicator(
-                    value: loadingProgress.expectedTotalBytes != null
-                        ? loadingProgress.cumulativeBytesLoaded /
-                              loadingProgress.expectedTotalBytes!
-                        : null,
-                  ),
-                );
-              },
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  AlignmentGeometry _getAlignment(Style style) {
-    if (style.attributes.containsKey('align')) {
-      final val = style.attributes['align']?.value;
-      if (val == 'center') return Alignment.center;
-      if (val == 'right') return Alignment.centerRight;
-      if (val == 'left') return Alignment.centerLeft;
-    }
-    return Alignment.center;
-  }
-}

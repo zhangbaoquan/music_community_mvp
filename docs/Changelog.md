@@ -4,6 +4,21 @@
 
 ---
 
+## [2026-04-14] T27 代码质量提升 — 巨型文件拆分（全部完成）
+
+- **变更文件**：新增 14 个文件，重写 6 个文件
+- **变更内容**：
+  1. 新建 `ArticleService` 数据服务层，封装所有文章相关 Supabase 调用
+  2. 用 mixin 拆分上帝 Controller（article_controller 770→312 行）
+  3. View 层移除 Supabase 直调，拆出 6 个子组件到 content/widgets/ 目录
+  4. Profile 模块拆出 4 个共享组件到 profile/widgets/ 目录
+  5. 所有新代码添加充足的中文注释
+- **设计决策**：采用 B 策略（拆分 + 逻辑下沉），不仅是机械拆分文件，同时修正了 View 层的架构违规
+- **关联任务**：T27-1/2/3/4/5/6 全部完成
+
+---
+
+
 ## [2026-04-10] BUG-002 — URL 路由同步修复
 
 - **变更文件**：`lib/features/layout/main_layout.dart`、`lib/main.dart`、`lib/features/home/home_view.dart`
