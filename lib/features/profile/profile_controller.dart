@@ -493,9 +493,9 @@ class ProfileController extends GetxController {
 
       return {
         ...profileRes,
-        'followers': (followersRes as List).length,
-        'following': (followingRes as List).length,
-        'diary': (articlesRes as List).length,
+        'followers_count': (followersRes as List).length,
+        'following_count': (followingRes as List).length,
+        'diary_count': (articlesRes as List).length,
       };
     } catch (e) {
       print('Error fetching public profile: $e');
