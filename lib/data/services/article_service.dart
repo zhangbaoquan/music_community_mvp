@@ -17,7 +17,10 @@ import '../models/article.dart';
 import '../models/article_comment.dart';
 
 class ArticleService {
-  final _supabase = Supabase.instance.client;
+  final SupabaseClient _supabase;
+
+  ArticleService({SupabaseClient? supabaseClient})
+      : _supabase = supabaseClient ?? Supabase.instance.client;
 
   // ============================================================
   // 文章查询
