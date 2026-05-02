@@ -11,7 +11,7 @@ import 'package:get/get.dart';
 import 'package:music_community_mvp/core/shim_google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../music/music_controller.dart';
-import '../player/player_controller.dart';
+
 import 'profile_controller.dart';
 import 'edit_profile_dialog.dart';
 import '../content/article_controller.dart';
