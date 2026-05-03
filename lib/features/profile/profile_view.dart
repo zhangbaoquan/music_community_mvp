@@ -163,7 +163,7 @@ class ProfileView extends StatelessWidget {
             children: [
               // 社交数据
               InkWell(
-                onTap: () => Get.toNamed(
+                onTap: () => appRouter.push(
                   '/follows/${Supabase.instance.client.auth.currentUser!.id}/following',
                 ),
                 child: _buildStatItem("关注",
@@ -172,7 +172,7 @@ class ProfileView extends StatelessWidget {
               ),
               const SizedBox(width: 32),
               InkWell(
-                onTap: () => Get.toNamed(
+                onTap: () => appRouter.push(
                   '/follows/${Supabase.instance.client.auth.currentUser!.id}/followers',
                 ),
                 child: _buildStatItem("粉丝",

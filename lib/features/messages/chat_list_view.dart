@@ -4,6 +4,7 @@ import 'package:music_community_mvp/features/messages/message_controller.dart';
 import 'package:music_community_mvp/core/utils/string_extensions.dart';
 
 import 'package:timeago/timeago.dart' as timeago;
+import '../../core/router/app_router.dart';
 
 class ChatListView extends StatelessWidget {
   const ChatListView({super.key});
@@ -108,12 +109,8 @@ class ChatListView extends StatelessWidget {
               style: const TextStyle(fontSize: 12, color: Colors.grey),
             ),
             onTap: () {
-              Get.toNamed(
-                '/chat/$partnerId',
-                parameters: {
-                  'name': partnerName ?? 'Unknown',
-                  'avatar': partnerAvatar ?? '',
-                },
+              appRouter.push(
+                '/chat/$partnerId?name=${Uri.encodeComponent(partnerName ?? 'Unknown')}&avatar=${Uri.encodeComponent(partnerAvatar ?? '')}',
               );
             },
           );

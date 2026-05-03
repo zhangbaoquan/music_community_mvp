@@ -117,7 +117,9 @@ class _FeedbackItem extends StatelessWidget {
           ),
         ],
       ),
-      onTap: () => Get.to(() => FeedbackDetailView(feedback: feedback)),
+      onTap: () => Navigator.of(context, rootNavigator: true).push(
+        MaterialPageRoute(builder: (_) => FeedbackDetailView(feedback: feedback)),
+      ),
     );
   }
 }

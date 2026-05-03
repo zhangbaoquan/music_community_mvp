@@ -235,21 +235,23 @@ class FeedbackDetailView extends StatelessWidget {
   }
 
   void _showImagePreview(BuildContext context, String url) {
-    Get.to(
-      () => Scaffold(
-        backgroundColor: Colors.black,
-        appBar: AppBar(
+    Navigator.of(context, rootNavigator: true).push(
+      MaterialPageRoute(
+        fullscreenDialog: true,
+        builder: (_) => Scaffold(
           backgroundColor: Colors.black,
-          iconTheme: const IconThemeData(color: Colors.white),
-        ),
-        body: Center(
-          child: Hero(
-            tag: url,
-            child: InteractiveViewer(child: Image.network(url.toSecureUrl())),
+          appBar: AppBar(
+            backgroundColor: Colors.black,
+            iconTheme: const IconThemeData(color: Colors.white),
+          ),
+          body: Center(
+            child: Hero(
+              tag: url,
+              child: InteractiveViewer(child: Image.network(url.toSecureUrl())),
+            ),
           ),
         ),
       ),
-      fullscreenDialog: true,
     );
   }
 }

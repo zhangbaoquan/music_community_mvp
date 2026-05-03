@@ -183,9 +183,9 @@ class _ArticleCard extends StatelessWidget {
                         color: Colors.grey[400],
                         count: article.commentsCount,
                         onTap: () {
-                          Get.toNamed(
+                          appRouter.push(
                             '/article/${article.id}',
-                            arguments: article,
+                            extra: article,
                           );
                         },
                       ),

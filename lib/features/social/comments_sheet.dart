@@ -194,9 +194,11 @@ class CommentsSheet extends StatelessWidget {
                     TextButton.icon(
                       onPressed: () {
                         // Open Full Screen Editor
-                        Get.to(
-                          () => const StoryEditorView(),
-                          transition: Transition.downToUp,
+                        Navigator.of(context, rootNavigator: true).push(
+                          MaterialPageRoute(
+                            fullscreenDialog: true,
+                            builder: (_) => const StoryEditorView(),
+                          ),
                         );
                       },
                       icon: const Icon(
@@ -304,13 +306,18 @@ class CommentsSheet extends StatelessWidget {
                         ),
                         onSelected: (value) {
                           if (value == 'edit') {
-                            Get.to(
-                              () => StoryEditorView(
-                                editingCommentId: comment.id,
-                                initialContent: comment.content,
-                              ),
-                              transition: Transition.downToUp,
-                            );
+                            final ctx = Get.key.currentContext;
+                            if (ctx != null) {
+                              Navigator.of(ctx, rootNavigator: true).push(
+                                MaterialPageRoute(
+                                  fullscreenDialog: true,
+                                  builder: (_) => StoryEditorView(
+                                    editingCommentId: comment.id,
+                                    initialContent: comment.content,
+                                  ),
+                                ),
+                              );
+                            }
                           } else if (value == 'delete') {
                             controller.deleteComment(comment.id);
                           }

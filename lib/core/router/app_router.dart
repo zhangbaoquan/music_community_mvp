@@ -24,17 +24,17 @@ import '../../features/gamification/badge_detail_view.dart';
 import '../../features/profile/visitor_list_view.dart';
 import '../../features/profile/follow_list_view.dart';
 
-/// 全局 Navigator 键，用于后续可能的弹窗兜底等
-final GlobalKey<NavigatorState> rootNavigatorKey = GlobalKey<NavigatorState>();
-final GlobalKey<NavigatorState> _shellNavigatorKey = GlobalKey<NavigatorState>();
+/// 根级导航键 — go_router 与 GetX 共享此键，使 Get.dialog/snackbar 正常工作
+/// 所有需要脱离 Shell 全屏展示的路由，必须指定 parentNavigatorKey 为此键
+final GlobalKey<NavigatorState> _rootNavigatorKey = Get.key;
 
 final GoRouter appRouter = GoRouter(
-  navigatorKey: Get.key,
+  navigatorKey: _rootNavigatorKey,
   initialLocation: '/home',
-  // 避免出现 URL 带有末尾斜杠导致的 404
   routerNeglect: false,
   routes: [
-    // 嵌套路由：带底部导航的主布局
+    // ==================== Shell 路由 ====================
+    // 嵌套路由：带底部/侧边导航栏的主布局
     StatefulShellRoute.indexedStack(
       builder: (context, state, navigationShell) {
         return MainLayout(navigationShell: navigationShell);
@@ -97,15 +97,20 @@ final GoRouter appRouter = GoRouter(
       ],
     ),
 
-    // ---------- 根级路由 (Root Routes) ----------
+    // ==================== 根级路由 (Root Routes) ====================
+    // 以下路由全部指定 parentNavigatorKey 为根导航器，
+    // 确保它们在 Shell 之上全屏展示，URL 地址栏正确更新。
+
     GoRoute(
       path: '/login',
+      parentNavigatorKey: _rootNavigatorKey,
       builder: (context, state) => const LoginView(),
     ),
-    
+
     // Admin 路由，包含路由守卫
     GoRoute(
       path: '/admin',
+      parentNavigatorKey: _rootNavigatorKey,
       builder: (context, state) => AdminLayout(),
       redirect: (context, state) {
         if (!Get.isRegistered<ProfileController>()) {
@@ -122,6 +127,7 @@ final GoRouter appRouter = GoRouter(
 
     GoRoute(
       path: '/profile/:id',
+      parentNavigatorKey: _rootNavigatorKey,
       builder: (context, state) => UserProfileView(
         userId: state.pathParameters['id']!,
       ),
@@ -129,6 +135,7 @@ final GoRouter appRouter = GoRouter(
 
     GoRoute(
       path: '/article/:id',
+      parentNavigatorKey: _rootNavigatorKey,
       builder: (context, state) {
         final id = state.pathParameters['id'];
         final extra = state.extra;
@@ -138,10 +145,10 @@ final GoRouter appRouter = GoRouter(
         } else {
           article = Article.empty().copyWith(id: id);
         }
-        
+
         // autoOpen 参数可以通过 queryParameters 获取
         final autoOpen = state.uri.queryParameters['autoOpen'] == 'true';
-        
+
         return ArticleDetailView(
           article: article,
           autoOpenComments: autoOpen,
@@ -151,6 +158,7 @@ final GoRouter appRouter = GoRouter(
 
     GoRoute(
       path: '/chat/:userId',
+      parentNavigatorKey: _rootNavigatorKey,
       builder: (context, state) {
         return ChatDetailView(
           partnerId: state.pathParameters['userId']!,
@@ -162,11 +170,13 @@ final GoRouter appRouter = GoRouter(
 
     GoRoute(
       path: '/upload_music',
+      parentNavigatorKey: _rootNavigatorKey,
       builder: (context, state) => const UploadMusicView(),
     ),
 
     GoRoute(
       path: '/editor',
+      parentNavigatorKey: _rootNavigatorKey,
       builder: (context, state) {
         final extra = state.extra;
         final article = extra is Article ? extra : null;
@@ -176,21 +186,25 @@ final GoRouter appRouter = GoRouter(
 
     GoRoute(
       path: '/user_articles',
+      parentNavigatorKey: _rootNavigatorKey,
       builder: (context, state) => const UserArticlesView(),
     ),
 
     GoRoute(
       path: '/badges',
+      parentNavigatorKey: _rootNavigatorKey,
       builder: (context, state) => const BadgeDetailView(),
     ),
 
     GoRoute(
       path: '/visitors',
+      parentNavigatorKey: _rootNavigatorKey,
       builder: (context, state) => const VisitorListView(),
     ),
 
     GoRoute(
       path: '/follows/:userId/:type',
+      parentNavigatorKey: _rootNavigatorKey,
       builder: (context, state) {
         final type = state.pathParameters['type'] ?? 'followers';
         final title = type == 'followers' ? '粉丝列表' : '关注列表';

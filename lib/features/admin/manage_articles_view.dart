@@ -184,7 +184,7 @@ class ManageArticlesView extends StatelessWidget {
               ],
               icon: const Icon(Icons.more_vert),
             ),
-            onTap: () => Get.to(() => ArticleDetailView(article: article)),
+            onTap: () => appRouter.push('/article/${article.id}', extra: article),
           ),
         );
       },
@@ -212,7 +212,7 @@ class ManageArticlesView extends StatelessWidget {
         ),
         DataCell(
           InkWell(
-            onTap: () => Get.to(() => ArticleDetailView(article: article)),
+            onTap: () => appRouter.push('/article/${article.id}', extra: article),
             child: SizedBox(
               width: 200,
               child: Text(article.title, overflow: TextOverflow.ellipsis),

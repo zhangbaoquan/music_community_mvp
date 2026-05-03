@@ -160,12 +160,14 @@ class _ManageUsersViewState extends State<ManageUsersView> {
             ),
             trailing: _buildActionMenu(user, username, isBanned),
             onTap: () {
-              Get.to(
-                () => AdminUserDetailView(
-                  userId: user['id'],
-                  username: username,
-                  email: email,
-                  avatarUrl: avatarUrl,
+              Navigator.of(context, rootNavigator: true).push(
+                MaterialPageRoute(
+                  builder: (_) => AdminUserDetailView(
+                    userId: user['id'],
+                    username: username,
+                    email: email,
+                    avatarUrl: avatarUrl,
+                  ),
                 ),
               );
             },
@@ -187,12 +189,14 @@ class _ManageUsersViewState extends State<ManageUsersView> {
 
     return DataRow(
       onSelectChanged: (_) {
-        Get.to(
-          () => AdminUserDetailView(
-            userId: user['id'],
-            username: username,
-            email: email,
-            avatarUrl: avatarUrl,
+        Navigator.of(context, rootNavigator: true).push(
+          MaterialPageRoute(
+            builder: (_) => AdminUserDetailView(
+              userId: user['id'],
+              username: username,
+              email: email,
+              avatarUrl: avatarUrl,
+            ),
           ),
         );
       },

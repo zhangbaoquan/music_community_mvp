@@ -9,11 +9,17 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:timeago/timeago.dart' as timeago;
 import 'package:sentry_flutter/sentry_flutter.dart';
 
+import 'package:go_router/go_router.dart';
+
 import 'core/app_binding.dart'; 
 import 'core/router/app_router.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // 🔑 关键：开启 go_router 命令式 API 的 URL 同步
+  // 使 appRouter.push() 能正确更新浏览器地址栏
+  GoRouter.optionURLReflectsImperativeAPIs = true;
 
   // Initialize Supabase BEFORE runApp to ensure services are ready
   await Supabase.initialize(

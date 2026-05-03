@@ -518,17 +518,17 @@ class _AdminUserDetailViewState extends State<AdminUserDetailView>
   }
 
   void _openDayLogs(String date, List<Map<String, dynamic>> dailyLogs) {
-    Get.to(
-      () => AdminUserLogView(
-        date: date,
-        userId: widget.userId,
-        username: widget.username,
-        initialLogs: dailyLogs, // Pass reference
-        onDelete: (logId) {
-          deleteItem('app_logs', logId, logs);
-          // logs RxList update will trigger UI rebuild in parent
-          // The child view maintains its own 'logs' list state for immediate UI feedback.
-        },
+    Navigator.of(context, rootNavigator: true).push(
+      MaterialPageRoute(
+        builder: (_) => AdminUserLogView(
+          date: date,
+          userId: widget.userId,
+          username: widget.username,
+          initialLogs: dailyLogs, // Pass reference
+          onDelete: (logId) {
+            deleteItem('app_logs', logId, logs);
+          },
+        ),
       ),
     );
   }

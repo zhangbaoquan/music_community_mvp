@@ -170,9 +170,12 @@ class _NotificationItemState extends State<_NotificationItem> {
     if (widget.notification.resourceId != null &&
         (widget.notification.type == 'like_article' ||
             widget.notification.type == 'comment_article')) {
-      Get.dialog(
-        const Center(child: CircularProgressIndicator()),
+      // 使用 rootNavigator 打开 Loading，确保在根导航器上操作
+      showDialog(
+        context: context,
         barrierDismissible: false,
+        useRootNavigator: true,
+        builder: (_) => const Center(child: CircularProgressIndicator()),
       );
 
       try {
@@ -180,32 +183,31 @@ class _NotificationItemState extends State<_NotificationItem> {
             .from('articles')
             .select('*, profiles(username, avatar_url)')
             .eq('id', widget.notification.resourceId!)
-            .maybeSingle(); // Use maybeSingle to avoid exception on deleted items
+            .maybeSingle();
 
-        // Close loading dialog if open
-        if (Get.isDialogOpen ?? false) {
-          appRouter.pop();
+        // 关闭 loading 蒙层（从根导航器 pop）
+        if (mounted) {
+          Navigator.of(context, rootNavigator: true).pop();
         }
 
         if (articleRes != null) {
           final article = Article.fromMap(articleRes);
-          // Auto-open comments if it's a comment or like_comment notification
-          // Assuming 'comment_article' or 'like_comment'
           final isCommentAction =
               widget.notification.type == 'comment_article' ||
               widget.notification.type == 'like_comment';
 
-          Get.toNamed(
-            '/article/${article.id}?autoOpen=$isCommentAction',
-            arguments: article,
-          );
+          final articlePath = isCommentAction
+              ? '/article/${article.id}?autoOpen=true'
+              : '/article/${article.id}';
+
+          appRouter.push(articlePath, extra: article);
         } else {
           Get.snackbar('提示', '该内容可能已被删除');
         }
       } catch (e) {
         print("Error fetching article: $e");
-        if (Get.isDialogOpen ?? false) {
-          appRouter.pop();
+        if (mounted) {
+          Navigator.of(context, rootNavigator: true).pop();
         }
         Get.snackbar('错误', '无法加载内容');
       }
@@ -290,8 +292,8 @@ class _NotificationItemState extends State<_NotificationItem> {
             GestureDetector(
               onTap: () {
                 if (!isSystemReply) {
-                  Get.to(
-                    () => UserProfileView(userId: widget.notification.actorId),
+                  appRouter.push(
+                    '/profile/${widget.notification.actorId}',
                   );
                 }
               },

@@ -249,10 +249,9 @@ class _UserProfileViewState extends State<UserProfileView> {
     return OutlinedButton.icon(
       onPressed: () async {
         if (!await _profileCtrl.checkActionAllowed('发送私信')) return;
-        Get.toNamed('/chat/${widget.userId}', parameters: {
-          'name': _profileData!['username'] ?? 'Unknown',
-          'avatar': _profileData!['avatar_url'] ?? '',
-        });
+        appRouter.push(
+          '/chat/${widget.userId}?name=${Uri.encodeComponent(_profileData!['username'] ?? 'Unknown')}&avatar=${Uri.encodeComponent(_profileData!['avatar_url'] ?? '')}',
+        );
       },
       icon: const Icon(Icons.mail_outline, size: 18),
       label: const Text("私信"),
