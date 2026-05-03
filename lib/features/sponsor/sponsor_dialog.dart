@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:music_community_mvp/core/shim_google_fonts.dart';
+import '../../core/router/app_router.dart';
 
 class SponsorDialog extends StatelessWidget {
   const SponsorDialog({super.key});
@@ -56,7 +57,7 @@ class SponsorDialog extends StatelessWidget {
                   ),
                 ),
                 IconButton(
-                  onPressed: () => Get.back(),
+                  onPressed: () => appRouter.pop(),
                   icon: const Icon(Icons.close),
                   color: Colors.grey[400],
                 ),

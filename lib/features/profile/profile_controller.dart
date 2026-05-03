@@ -6,6 +6,7 @@ import '../../data/models/badge.dart';
 import '../../data/models/article.dart'; // Import Article Model
 import '../../data/services/log_service.dart';
 import '../gamification/badge_service.dart';
+import '../../core/router/app_router.dart';
 
 class ProfileController extends GetxController {
   final _supabase = Supabase.instance.client;
@@ -42,18 +43,18 @@ class ProfileController extends GetxController {
         content: const Text('该功能需要登录后才能使用，是否前往登录？'),
         actions: [
           TextButton(
-            onPressed: () => Get.back(result: false),
+            onPressed: () => appRouter.pop(false),
             child: const Text('取消'),
           ),
           TextButton(
-            onPressed: () => Get.back(result: true),
+            onPressed: () => appRouter.pop(true),
             child: const Text('去登录'),
           ),
         ],
       ),
     );
     if (confirm == true) {
-      Get.toNamed('/login');
+      appRouter.push('/login');
     }
     return false;
   }

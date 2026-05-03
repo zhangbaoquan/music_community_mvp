@@ -4,6 +4,7 @@ import 'package:music_community_mvp/features/search/search_controller.dart'
     as s;
 import 'package:timeago/timeago.dart' as timeago;
 import 'package:music_community_mvp/core/widgets/common_dialog.dart';
+import '../../core/router/app_router.dart';
 
 class SearchView extends StatefulWidget {
   const SearchView({super.key});
@@ -193,7 +194,7 @@ class _SearchViewState extends State<SearchView>
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
       ),
-      onTap: () => Get.toNamed('/profile/${user['id']}'),
+      onTap: () => appRouter.push('/profile/${user['id']}'),
     );
   }
 
@@ -238,8 +239,8 @@ class _SearchViewState extends State<SearchView>
           confirmText: "去主页",
           cancelText: "关闭",
           onConfirm: () {
-            Get.back();
-            Get.toNamed('/profile/${diary['user_id']}');
+            appRouter.pop();
+            appRouter.push('/profile/${diary['user_id']}');
           },
         );
       },
@@ -263,7 +264,7 @@ class _SearchViewState extends State<SearchView>
       margin: const EdgeInsets.only(bottom: 12),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: InkWell(
-        onTap: () => Get.toNamed('/article/${article.id}', arguments: article),
+        onTap: () => appRouter.push('/article/${article.id}', extra: article),
         borderRadius: BorderRadius.circular(12),
         child: Padding(
           padding: const EdgeInsets.all(12),

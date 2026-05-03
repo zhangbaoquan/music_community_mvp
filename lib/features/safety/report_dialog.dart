@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:music_community_mvp/core/shim_google_fonts.dart';
 import 'safety_service.dart';
+import '../../core/router/app_router.dart';
 
 class ReportDialog extends StatefulWidget {
   final String targetType; // 'article', 'comment', 'user', 'music', 'diary'
@@ -105,7 +106,7 @@ class _ReportDialogState extends State<ReportDialog> {
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
                 TextButton(
-                  onPressed: () => Get.back(),
+                  onPressed: () => appRouter.pop(),
                   child: const Text('取消', style: TextStyle(color: Colors.grey)),
                 ),
                 const SizedBox(width: 12),

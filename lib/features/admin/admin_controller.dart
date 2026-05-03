@@ -5,6 +5,7 @@ import 'package:music_community_mvp/data/models/feedback_model.dart';
 import 'package:music_community_mvp/features/notifications/notification_service.dart';
 import '../../features/content/article_controller.dart';
 import '../profile/profile_controller.dart';
+import '../../core/router/app_router.dart';
 
 class AdminController extends GetxController {
   final currentTab = 0
@@ -27,7 +28,7 @@ class AdminController extends GetxController {
       final profileController = Get.find<ProfileController>();
       ever(profileController.isAdmin, (isAdmin) {
         if (!isAdmin) {
-          Get.offAllNamed('/home');
+          appRouter.go('/home');
         }
       });
     } else {
@@ -227,14 +228,14 @@ class AdminController extends GetxController {
 
       // Close Loading Dialog
       if (Get.isDialogOpen ?? false) {
-        Get.back();
+        appRouter.pop();
       }
 
       Get.snackbar('处理完成', '操作执行成功');
     } catch (e) {
       // Close Loading Dialog on Error
       if (Get.isDialogOpen ?? false) {
-        Get.back();
+        appRouter.pop();
       }
       print("Resolve Report Error: $e");
       Get.snackbar('错误', '处理失败: $e');
@@ -291,7 +292,7 @@ class AdminController extends GetxController {
         fetchFeedbacks();
       }
 
-      Get.back(); // Close dialog
+      appRouter.pop(); // Close dialog
       Get.snackbar('Success', 'Reply sent successfully');
     } catch (e) {
       Get.snackbar('Error', 'Failed to reply: $e');
@@ -381,10 +382,10 @@ class AdminController extends GetxController {
       // 5. Delete Notifications (triggered by user)
       await client.from('notifications').delete().eq('actor_id', userId);
 
-      if (Get.isDialogOpen ?? false) Get.back();
+      if (Get.isDialogOpen ?? false) appRouter.pop();
       Get.snackbar('成功', '用户内容已清空');
     } catch (e) {
-      if (Get.isDialogOpen ?? false) Get.back();
+      if (Get.isDialogOpen ?? false) appRouter.pop();
       print("Clear Content Error: $e");
       Get.snackbar('错误', '清空失败: $e');
     }

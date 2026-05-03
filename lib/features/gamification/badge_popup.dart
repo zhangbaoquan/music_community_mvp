@@ -5,6 +5,7 @@ import '../../data/models/badge.dart';
 import 'dart:math' as math;
 import 'package:confetti/confetti.dart';
 import 'premium_badge_widget.dart';
+import '../../core/router/app_router.dart';
 
 class BadgePopup extends StatefulWidget {
   final BadgeModel badge;
@@ -150,7 +151,7 @@ class _BadgePopupState extends State<BadgePopup>
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     TextButton(
-                      onPressed: () => Get.back(),
+                      onPressed: () => appRouter.pop(),
                       child: Text(
                         "关闭",
                         style: GoogleFonts.outfit(color: Colors.grey),
@@ -218,7 +219,7 @@ class _BadgePopupState extends State<BadgePopup>
             top: 5,
             right: 5,
             child: IconButton(
-              onPressed: () => Get.back(),
+              onPressed: () => appRouter.pop(),
               icon: const Icon(Icons.close, color: Colors.grey),
             ),
           ),

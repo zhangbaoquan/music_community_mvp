@@ -20,6 +20,7 @@ import 'package:music_community_mvp/core/utils/string_extensions.dart';
 import 'widgets/badges_section.dart';
 import 'widgets/music_grid.dart';
 import 'widgets/article_list_section.dart';
+import '../../core/router/app_router.dart';
 
 class ProfileView extends StatelessWidget {
   const ProfileView({super.key});
@@ -180,7 +181,7 @@ class ProfileView extends StatelessWidget {
               ),
               const SizedBox(width: 32),
               InkWell(
-                onTap: () => Get.toNamed('/visitors'),
+                onTap: () => appRouter.push('/visitors'),
                 child: _buildStatItem("访客",
                     "${controller.visitorsCount.value}",
                     isHighlight: true, icon: Icons.visibility_outlined),
@@ -247,7 +248,7 @@ class ProfileView extends StatelessWidget {
             ElevatedButton.icon(
               onPressed: () async {
                 if (await controller.checkActionAllowed('上传音乐')) {
-                  Get.toNamed('/upload_music');
+                  appRouter.push('/upload_music');
                 }
               },
               icon: const Icon(Icons.upload_file, size: 18),
@@ -276,7 +277,7 @@ class ProfileView extends StatelessWidget {
               actionLabel: "去发布第一首",
               onAction: () async {
                 if (await controller.checkActionAllowed('上传音乐')) {
-                  Get.toNamed('/upload_music');
+                  appRouter.push('/upload_music');
                 }
               },
             );
@@ -293,10 +294,10 @@ class ProfileView extends StatelessWidget {
                 cancelText: "取消",
                 isDestructive: true,
                 onConfirm: () async {
-                  Get.back();
+                  appRouter.pop();
                   await musicController.deleteSong(song.id);
                 },
-                onCancel: () => Get.back(),
+                onCancel: () => appRouter.pop(),
               );
             },
           );

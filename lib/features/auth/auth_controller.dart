@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'package:music_community_mvp/features/auth/update_password_dialog.dart';
+import '../../core/router/app_router.dart';
 
 class AuthController extends GetxController {
   final _supabase = Supabase.instance.client;
@@ -59,7 +60,7 @@ class AuthController extends GetxController {
               targetRoute == '/login' ||
               targetRoute.isEmpty) {
             if (Get.currentRoute != '/home') {
-              Get.offAllNamed('/home');
+              appRouter.go('/home');
             }
           } else {
             // Ensure route starts with /
@@ -67,7 +68,7 @@ class AuthController extends GetxController {
               targetRoute = '/$targetRoute';
             }
             if (Get.currentRoute != targetRoute) {
-              Get.offAllNamed(targetRoute);
+              appRouter.go(targetRoute);
             }
           }
         } else {
@@ -75,7 +76,7 @@ class AuthController extends GetxController {
           final current = Get.currentRoute;
           if (current == '/' || current == '/login' || current.isEmpty) {
             if (Get.currentRoute != '/home') {
-              Get.offAllNamed('/home');
+              appRouter.go('/home');
             }
           }
         }
@@ -136,7 +137,7 @@ class AuthController extends GetxController {
       );
       // Determine what to do next? usually stay logged in or logout.
       // Supabase keeps you logged in after update.
-      Get.offAllNamed('/home');
+      appRouter.go('/home');
     } on AuthException catch (e) {
       Get.snackbar(
         '更新失败',

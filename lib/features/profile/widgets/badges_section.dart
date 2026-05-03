@@ -7,6 +7,7 @@ import 'package:get/get.dart';
 import 'package:music_community_mvp/core/shim_google_fonts.dart';
 import 'package:music_community_mvp/features/gamification/badge_service.dart';
 import 'package:music_community_mvp/features/gamification/premium_badge_widget.dart';
+import '../../../core/router/app_router.dart';
 
 /// 勋章展示区域
 ///
@@ -33,7 +34,7 @@ class BadgesSection extends StatelessWidget {
               ),
             ),
             InkWell(
-              onTap: () => Get.toNamed('/badges'),
+              onTap: () => appRouter.push('/badges'),
               child: Row(
                 children: [
                   Text(

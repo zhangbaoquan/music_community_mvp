@@ -23,6 +23,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'widgets/comment_preview_item.dart';
 import 'widgets/article_body_section.dart';
 import 'widgets/article_bottom_bar.dart';
+import '../../core/router/app_router.dart';
 
 class ArticleDetailView extends StatefulWidget {
   final Article article;
@@ -303,11 +304,11 @@ class _ArticleDetailViewState extends State<ArticleDetailView> {
                   content: const Text('删除后无法恢复，确定要删除吗？'),
                   actions: [
                     TextButton(
-                      onPressed: () => Get.back(result: false),
+                      onPressed: () => appRouter.pop(false),
                       child: const Text('取消'),
                     ),
                     TextButton(
-                      onPressed: () => Get.back(result: true),
+                      onPressed: () => appRouter.pop(true),
                       child: const Text('删除',
                           style: TextStyle(color: Colors.red)),
                     ),
@@ -317,7 +318,7 @@ class _ArticleDetailViewState extends State<ArticleDetailView> {
               if (confirm == true) {
                 final success = await Get.find<ArticleController>()
                     .deleteArticle(_currentArticle.id);
-                if (success) Get.back();
+                if (success) appRouter.pop();
               }
             },
           ),

@@ -4,6 +4,7 @@ import 'package:music_community_mvp/features/music/music_controller.dart';
 import 'package:music_community_mvp/features/player/player_controller.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:music_community_mvp/core/utils/string_extensions.dart';
+import '../../core/router/app_router.dart';
 
 class MusicPickerSheet extends StatefulWidget {
   final Function(String songId, String songTitle) onSelected;
@@ -138,7 +139,7 @@ class _MusicPickerSheetState extends State<MusicPickerSheet>
             trailing: ElevatedButton(
               onPressed: () {
                 widget.onSelected(song.id, song.title);
-                Get.back();
+                appRouter.pop();
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.black,

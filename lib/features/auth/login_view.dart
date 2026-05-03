@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:music_community_mvp/core/shim_google_fonts.dart';
 import 'auth_controller.dart';
+import '../../core/router/app_router.dart';
 
 class LoginView extends StatefulWidget {
   const LoginView({super.key});
@@ -219,7 +220,7 @@ class _LoginViewState extends State<LoginView> {
                           const SizedBox(height: 20),
                           // Guest Text
                           GestureDetector(
-                            onTap: () => Get.offAllNamed('/home'),
+                            onTap: () => appRouter.go('/home'),
                             child: Text(
                               '先逛逛 (游客模式)',
                               style: TextStyle(
@@ -273,7 +274,7 @@ class _LoginViewState extends State<LoginView> {
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
                   TextButton(
-                    onPressed: () => Get.back(),
+                    onPressed: () => appRouter.pop(),
                     child: const Text(
                       '取消',
                       style: TextStyle(color: Colors.grey),
@@ -287,7 +288,7 @@ class _LoginViewState extends State<LoginView> {
                         Get.snackbar('提示', '请输入有效的邮箱地址');
                         return;
                       }
-                      Get.back(); // Close dialog
+                      appRouter.pop(); // Close dialog
                       _authCtrl.sendPasswordResetEmail(email);
                     },
                     style: ElevatedButton.styleFrom(

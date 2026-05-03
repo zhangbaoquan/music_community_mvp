@@ -6,6 +6,7 @@ import 'package:timeago/timeago.dart' as timeago;
 import 'admin_user_detail_view.dart';
 import 'admin_controller.dart';
 import 'package:music_community_mvp/core/utils/string_extensions.dart';
+import '../../core/router/app_router.dart';
 
 class ManageUsersView extends StatefulWidget {
   const ManageUsersView({super.key});
@@ -301,26 +302,26 @@ class _ManageUsersViewState extends State<ManageUsersView> {
         children: [
           ListTile(
             title: const Text("1 天"),
-            onTap: () => {Get.back(), controller.banUser(userId, 1)},
+            onTap: () => {appRouter.pop(), controller.banUser(userId, 1)},
           ),
           ListTile(
             title: const Text("7 天"),
-            onTap: () => {Get.back(), controller.banUser(userId, 7)},
+            onTap: () => {appRouter.pop(), controller.banUser(userId, 7)},
           ),
           ListTile(
             title: const Text("1 个月"),
-            onTap: () => {Get.back(), controller.banUser(userId, 30)},
+            onTap: () => {appRouter.pop(), controller.banUser(userId, 30)},
           ),
           ListTile(
             title: const Text("永久封禁"),
-            onTap: () => {Get.back(), controller.banUser(userId, 36500)},
+            onTap: () => {appRouter.pop(), controller.banUser(userId, 36500)},
           ),
         ],
       ),
       confirmText:
           "取消", // Only cancel button needed as actions are inside list tiles
       isDestructive: true,
-      onConfirm: () => Get.back(),
+      onConfirm: () => appRouter.pop(),
     );
   }
 
@@ -338,7 +339,7 @@ class _ManageUsersViewState extends State<ManageUsersView> {
       isDestructive: true,
       confirmColor: Colors.red,
       onConfirm: () {
-        Get.back();
+        appRouter.pop();
         controller.clearUserContent(userId);
       },
     );

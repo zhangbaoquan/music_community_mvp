@@ -4,6 +4,7 @@ import 'package:music_community_mvp/core/shim_google_fonts.dart';
 import 'package:music_community_mvp/features/profile/profile_controller.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:music_community_mvp/core/utils/string_extensions.dart';
+import '../../core/router/app_router.dart';
 
 class FollowListView extends StatefulWidget {
   final String userId;
@@ -91,9 +92,9 @@ class _FollowListViewState extends State<FollowListView> {
                   onTap: () {
                     if (isMe) {
                       // Navigate to my own profile (tab switch) or just back
-                      Get.back(); // Simplest for now
+                      appRouter.pop(); // Simplest for now
                     } else {
-                      Get.toNamed('/profile/${user['user_id']}');
+                      appRouter.push('/profile/${user['user_id']}');
                     }
                   },
                   child: Row(

@@ -4,6 +4,7 @@ import 'package:music_community_mvp/core/shim_google_fonts.dart';
 import 'package:music_community_mvp/features/content/article_controller.dart';
 import 'package:music_community_mvp/data/models/article.dart';
 import 'package:music_community_mvp/core/utils/string_extensions.dart';
+import '../../core/router/app_router.dart';
 
 class UserArticlesView extends GetView<ArticleController> {
   const UserArticlesView({super.key});
@@ -107,7 +108,7 @@ class UserArticlesView extends GetView<ArticleController> {
         clipBehavior: Clip.antiAlias,
         child: InkWell(
           onTap: () =>
-              Get.toNamed('/article/${article.id}', arguments: article),
+              appRouter.push('/article/${article.id}', extra: article),
           child: Padding(
             padding: const EdgeInsets.all(16),
             child: Row(

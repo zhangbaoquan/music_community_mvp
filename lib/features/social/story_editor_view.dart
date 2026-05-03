@@ -7,6 +7,7 @@ import 'package:music_community_mvp/core/shim_google_fonts.dart';
 import '../../core/widgets/common_dialog.dart';
 import 'comments_controller.dart';
 import 'standard_image_embed_builder.dart';
+import '../../core/router/app_router.dart';
 
 class StoryEditorView extends StatefulWidget {
   final String? editingCommentId;
@@ -346,7 +347,7 @@ class _StoryEditorViewState extends State<StoryEditorView> {
       } else {
         controller.postComment(markdown);
       }
-      Get.back();
+      appRouter.pop();
     }
   }
 
@@ -359,7 +360,7 @@ class _StoryEditorViewState extends State<StoryEditorView> {
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.close_rounded, color: Colors.black54),
-          onPressed: () => Get.back(),
+          onPressed: () => appRouter.pop(),
         ),
         title: Text(
           widget.editingCommentId != null ? "编辑故事" : "撰写故事",
@@ -579,7 +580,7 @@ class _StoryEditorViewState extends State<StoryEditorView> {
                 cancelText: "取消",
                 isDestructive: true,
                 onConfirm: () {
-                  Get.back(); // Close dialog
+                  appRouter.pop(); // Close dialog
                   _quillController.replaceText(
                     _selectedImageNode!.documentOffset,
                     1,

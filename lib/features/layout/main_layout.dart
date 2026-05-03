@@ -1,113 +1,36 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:go_router/go_router.dart';
 import 'package:music_community_mvp/core/shim_google_fonts.dart';
-import 'package:music_community_mvp/features/search/search_view.dart';
-import 'package:music_community_mvp/features/messages/message_controller.dart';
-import 'package:music_community_mvp/features/messages/message_center_view.dart';
-import 'package:universal_html/html.dart' as html;
+
 import '../player/player_bar.dart';
-import '../home/home_view.dart';
 import '../player/player_controller.dart';
-import '../diary/diary_view.dart';
-import '../profile/profile_view.dart';
 import '../auth/auth_controller.dart';
 import '../notifications/notification_service.dart';
 import '../profile/profile_controller.dart';
-import '../about/about_view.dart';
 import '../sponsor/sponsor_dialog.dart';
 import 'package:music_community_mvp/core/widgets/common_dialog.dart';
-
-/// 导航控制器 — 管理侧栏/底栏 Tab 切换，并双向同步浏览器 URL
-///
-/// Tab 索引与 URL 路径映射：
-/// 0:心情驿站→/home, 1:心事角落→/diary, 2:个人中心→/profile,
-/// 3:搜索发现→/search, 4:消息中心→/messages, 5:关于→/about
-class NavigationController extends GetxController {
-  final RxInt selectedIndex = 0.obs;
-
-  /// Tab 索引 → URL 路径映射
-  static const Map<int, String> tabRoutes = {
-    0: '/home',
-    1: '/diary',
-    2: '/profile',
-    3: '/search',
-    4: '/messages',
-    5: '/about',
-  };
-
-  /// URL 路径 → Tab 索引反向映射
-  static final Map<String, int> routeToTab = {
-    for (var e in tabRoutes.entries) e.value: e.key,
-  };
-
-  @override
-  void onInit() {
-    super.onInit();
-    // 根据当前 URL 设置初始 Tab（支持地址栏直达）
-    _syncTabFromUrl();
-  }
-
-  /// 切换页面并同步 URL 到浏览器地址栏
-  void changePage(int index) {
-    if (selectedIndex.value == index) return;
-    selectedIndex.value = index;
-    _replaceUrlForTab(index);
-  }
-
-  /// 使用 replaceState 更新地址栏 URL（不创建浏览器历史条目）
-  ///
-  /// 为什么不用 pushState：Flutter Web 的 GetX 路由引擎会监听 popstate
-  /// 事件做页面导航，与我们的手动 URL 管理冲突。使用 replaceState
-  /// 只更新地址栏显示，不触发导航事件，避免双系统冲突。
-  void _replaceUrlForTab(int index) {
-    final path = tabRoutes[index] ?? '/home';
-    html.window.history.replaceState(null, '', '/#$path');
-  }
-
-  /// 根据当前浏览器 URL 同步 Tab 索引（仅用于初始加载）
-  void _syncTabFromUrl() {
-    final hash = html.window.location.hash; // e.g. "#/diary"
-    final path = hash.replaceFirst('#', '').split('?').first;
-    final tab = routeToTab[path];
-    if (tab != null) {
-      selectedIndex.value = tab;
-    }
-  }
-
-  /// 确保地址栏 URL 与当前 Tab 一致
-  ///
-  /// 场景：从 admin/article 等页面返回时，GetX 会恢复它内部记录的路由
-  /// （如 /home），但 selectedIndex 可能在其他 Tab 上。调用此方法可以修正不一致。
-  void syncUrlToCurrentTab() {
-    _replaceUrlForTab(selectedIndex.value);
-  }
-}
+import '../messages/message_controller.dart';
+import '../../core/router/app_router.dart';
 
 class MainLayout extends StatelessWidget {
-  MainLayout({super.key});
+  final StatefulNavigationShell navigationShell;
 
-  final NavigationController navCtrl = Get.put(NavigationController());
-  // Removed explicit authCtrl to avoid Get.find error on refresh if not yet initialized
+  MainLayout({super.key, required this.navigationShell});
+
   final PlayerController playerCtrl = Get.find<PlayerController>();
   final ProfileController profileCtrl = Get.put(ProfileController());
   final NotificationService notificationService = Get.put(
     NotificationService(),
   );
 
-  final List<Widget> _pages = [
-    // Tab 0: Home
-    HomeView(),
-    // Tab 1: Diary
-    const DiaryView(),
-    // Tab 2: Profile
-    const ProfileView(),
-    // Tab 3: Search
-    const SearchView(),
-    // Tab 4: Message Center (Merged)
-    const MessageCenterView(),
-    // Tab 5: About
-    const AboutView(),
-  ];
+  void _goBranch(int index) {
+    navigationShell.goBranch(
+      index,
+      // 如果已经在该 branch 上，再次点击时退回它的初始路由
+      initialLocation: index == navigationShell.currentIndex,
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -145,13 +68,13 @@ class MainLayout extends StatelessWidget {
                   actions: [
                     IconButton(
                       icon: const Icon(Icons.search),
-                      onPressed: () => navCtrl.changePage(3),
+                      onPressed: () => _goBranch(3),
                     ),
                     Stack(
                       children: [
                         IconButton(
                           icon: const Icon(Icons.notifications_none),
-                          onPressed: () => navCtrl.changePage(4),
+                          onPressed: () => _goBranch(4),
                         ),
                         Obx(() {
                           final msgCtrl = Get.put(MessageController());
@@ -185,16 +108,16 @@ class MainLayout extends StatelessWidget {
                 )
               : null,
           drawer: isMobile
-              ? Drawer(child: _buildSideNav(isDrawer: true))
+              ? Drawer(child: _buildSideNav(isDrawer: true, context: context))
               : null,
           body: Column(
             children: [
               Expanded(
                 child: Row(
                   children: [
-                    if (!isMobile) _buildSideNav(),
+                    if (!isMobile) _buildSideNav(context: context),
                     Expanded(
-                      child: Obx(() => _pages[navCtrl.selectedIndex.value]),
+                      child: navigationShell,
                     ),
                   ],
                 ),
@@ -208,7 +131,7 @@ class MainLayout extends StatelessWidget {
     );
   }
 
-  Widget _buildSideNav({bool isDrawer = false}) {
+  Widget _buildSideNav({bool isDrawer = false, required BuildContext context}) {
     return Container(
       width: 270,
       color: Colors.grey[50],
@@ -299,7 +222,7 @@ class MainLayout extends StatelessWidget {
             index: 2,
             onTap: () async {
               if (await profileCtrl.requireLogin()) {
-                navCtrl.changePage(2);
+                _goBranch(2);
               }
             },
           ),
@@ -308,32 +231,32 @@ class MainLayout extends StatelessWidget {
             if (profileCtrl.isAdmin.value) {
               return Padding(
                 padding: const EdgeInsets.only(bottom: 8.0),
-                child: _navItem(
+                child: _customNavItem(
                   icon: Icons.admin_panel_settings,
                   label: '后台管理',
-                  index: 88,
-                  onTap: () => Get.toNamed('/admin'),
+                  isSelected: false,
+                  onTap: () => context.push('/admin'),
                 ),
               );
             }
             return const SizedBox.shrink();
           }),
-          _navItem(
+          _customNavItem(
             icon: Icons.favorite_border,
             label: '赞助支持',
-            index: 77,
+            isSelected: false,
             onTap: () => Get.dialog(const SponsorDialog()),
           ),
           _navItem(icon: Icons.info_outline, label: '关于与帮助', index: 5),
           Obx(() {
             final isGuest = !Get.find<AuthController>().isLoggedIn;
-            return _navItem(
+            return _customNavItem(
               icon: isGuest ? Icons.login : Icons.logout,
               label: isGuest ? '立即登录' : '退出登录',
-              index: 99,
+              isSelected: false,
               onTap: () {
                 if (isGuest) {
-                  Get.toNamed('/login');
+                  context.push('/login');
                 } else {
                   CommonDialog.show(
                     title: "退出登录",
@@ -342,12 +265,11 @@ class MainLayout extends StatelessWidget {
                     cancelText: "取消",
                     isDestructive: true,
                     onConfirm: () {
-                      Get.back(); // Close dialog
+                      appRouter.pop(); // Close dialog
                       if (Get.isRegistered<AuthController>()) {
                         Get.find<AuthController>().signOut();
-                      } else {
-                        Get.offAllNamed('/login');
                       }
+                      context.go('/login');
                       Get.snackbar('已退出', '您已安全退出登录');
                     },
                   );
@@ -361,72 +283,64 @@ class MainLayout extends StatelessWidget {
   }
 
   Widget _buildBottomNav() {
-    return Obx(() {
-      // Fix: Map global page index to BottomNav index to avoid OutOfBounds and mismatch
-      // Pages: 0:Home, 1:Diary, 2:Profile, 3:Search, 4:Messages, 5:About
-      // NavItems: 0:Home, 1:Diary, 2:Profile, 3:Messages
-      int currentIndex = 0;
-      final pageIndex = navCtrl.selectedIndex.value;
+    int currentIndex = 0;
+    final pageIndex = navigationShell.currentIndex;
 
-      if (pageIndex == 0) {
-        currentIndex = 0;
-      } else if (pageIndex == 1) {
-        currentIndex = 1;
-      } else if (pageIndex == 2) {
-        currentIndex = 2;
-      } else if (pageIndex == 4) {
-        currentIndex = 3; // Map Page 4 to Item 3
-      } else {
-        // For Search (3) or About(5), they don't have a bottom tab.
-        // We can default to 0 (Home) or keep the previous valid selection?
-        // Defaulting to 0 is safest to avoid crash.
-        currentIndex = 0;
-      }
+    if (pageIndex == 0) {
+      currentIndex = 0;
+    } else if (pageIndex == 1) {
+      currentIndex = 1;
+    } else if (pageIndex == 2) {
+      currentIndex = 2;
+    } else if (pageIndex == 4) {
+      currentIndex = 3; 
+    } else {
+      currentIndex = 0;
+    }
 
-      return BottomNavigationBar(
-        currentIndex: currentIndex,
-        onTap: (index) async {
-          if (index == 0) {
-            navCtrl.changePage(0);
-          } else if (index == 1) {
-            navCtrl.changePage(1);
-          } else if (index == 2) {
-            if (!await profileCtrl.requireLogin()) return;
-            navCtrl.changePage(2);
-          } else if (index == 3) {
-            if (!await profileCtrl.requireLogin()) return;
-            navCtrl.changePage(4); // Map Item 3 to Page 4
-          }
-        },
-        backgroundColor: Colors.white,
-        selectedItemColor: const Color(0xFF1A1A1A),
-        unselectedItemColor: Colors.grey[400],
-        type: BottomNavigationBarType.fixed,
-        items: [
-          const BottomNavigationBarItem(
-            icon: Icon(Icons.radio_button_checked),
-            label: '驿站',
-          ),
-          BottomNavigationBarItem(icon: Icon(Icons.book), label: '日记'),
-          BottomNavigationBarItem(icon: Icon(Icons.person), label: '我的'),
-          BottomNavigationBarItem(
-            icon: Obx(() {
-              final msgCtrl = Get.put(MessageController());
-              final msgCount = msgCtrl.unreadCount.value;
-              final notifCount = notificationService.unreadCount.value;
-              final totalCount = msgCount + notifCount;
+    return BottomNavigationBar(
+      currentIndex: currentIndex,
+      onTap: (index) async {
+        if (index == 0) {
+          _goBranch(0);
+        } else if (index == 1) {
+          _goBranch(1);
+        } else if (index == 2) {
+          if (!await profileCtrl.requireLogin()) return;
+          _goBranch(2);
+        } else if (index == 3) {
+          if (!await profileCtrl.requireLogin()) return;
+          _goBranch(4); 
+        }
+      },
+      backgroundColor: Colors.white,
+      selectedItemColor: const Color(0xFF1A1A1A),
+      unselectedItemColor: Colors.grey[400],
+      type: BottomNavigationBarType.fixed,
+      items: [
+        const BottomNavigationBarItem(
+          icon: Icon(Icons.radio_button_checked),
+          label: '驿站',
+        ),
+        const BottomNavigationBarItem(icon: Icon(Icons.book), label: '日记'),
+        const BottomNavigationBarItem(icon: Icon(Icons.person), label: '我的'),
+        BottomNavigationBarItem(
+          icon: Obx(() {
+            final msgCtrl = Get.put(MessageController());
+            final msgCount = msgCtrl.unreadCount.value;
+            final notifCount = notificationService.unreadCount.value;
+            final totalCount = msgCount + notifCount;
 
-              return Badge(
-                isLabelVisible: totalCount > 0,
-                label: Text('$totalCount'),
-                child: const Icon(Icons.notifications_none),
-              );
-            }),
-            label: '消息',
-          ),
-        ],
-      );
-    });
+            return Badge(
+              isLabelVisible: totalCount > 0,
+              label: Text('$totalCount'),
+              child: const Icon(Icons.notifications_none),
+            );
+          }),
+          label: '消息',
+        ),
+      ],
+    );
   }
 
   Widget _navItem({
@@ -435,47 +349,55 @@ class MainLayout extends StatelessWidget {
     required int index,
     VoidCallback? onTap,
   }) {
-    return Obx(() {
-      final isSelected = navCtrl.selectedIndex.value == index;
-      return Container(
-        margin: const EdgeInsets.only(bottom: 8),
-        child: Material(
-          color: Colors.transparent,
-          child: InkWell(
-            onTap: onTap ?? () => navCtrl.changePage(index),
-            borderRadius: BorderRadius.circular(12),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              decoration: BoxDecoration(
-                color: isSelected
-                    ? const Color(0xFF1A1A1A)
-                    : Colors.transparent,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Row(
-                children: [
-                  Icon(
-                    icon,
+    final isSelected = navigationShell.currentIndex == index;
+    return _customNavItem(
+      icon: icon,
+      label: label,
+      isSelected: isSelected,
+      onTap: onTap ?? () => _goBranch(index),
+    );
+  }
+
+  Widget _customNavItem({
+    required IconData icon,
+    required String label,
+    required bool isSelected,
+    required VoidCallback onTap,
+  }) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(12),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: BoxDecoration(
+              color: isSelected ? const Color(0xFF1A1A1A) : Colors.transparent,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  icon,
+                  color: isSelected ? Colors.white : Colors.grey[600],
+                  size: 20,
+                ),
+                const SizedBox(width: 12),
+                Text(
+                  label,
+                  style: GoogleFonts.outfit(
                     color: isSelected ? Colors.white : Colors.grey[600],
-                    size: 20,
+                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
                   ),
-                  const SizedBox(width: 12),
-                  Text(
-                    label,
-                    style: GoogleFonts.outfit(
-                      color: isSelected ? Colors.white : Colors.grey[600],
-                      fontWeight: isSelected
-                          ? FontWeight.w600
-                          : FontWeight.normal,
-                    ),
-                  ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
         ),
-      );
-    });
+      ),
+    );
   }
 
   Widget _buildPlayerBar() {

@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import 'package:music_community_mvp/features/profile/profile_controller.dart';
 import 'dart:typed_data';
 import 'package:music_community_mvp/core/utils/string_extensions.dart';
+import '../../core/router/app_router.dart';
 
 class EditProfileDialog extends StatefulWidget {
   const EditProfileDialog({super.key});
@@ -158,7 +159,7 @@ class _EditProfileDialogState extends State<EditProfileDialog> {
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
                 TextButton(
-                  onPressed: _isSaving ? null : () => Get.back(),
+                  onPressed: _isSaving ? null : () => appRouter.pop(),
                   child: const Text('取消', style: TextStyle(color: Colors.grey)),
                 ),
                 const SizedBox(width: 16),
@@ -179,7 +180,7 @@ class _EditProfileDialogState extends State<EditProfileDialog> {
                               if (mounted) {
                                 Navigator.of(
                                   context,
-                                ).pop(); // Use Navigator as fallback to Get.back()
+                                ).pop(); // Use Navigator as fallback to appRouter.pop()
                               }
                             }
                           } finally {

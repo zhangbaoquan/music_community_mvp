@@ -15,6 +15,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../safety/report_dialog.dart';
 import 'widgets/follow_button.dart';
 import 'widgets/music_grid.dart';
+import '../../core/router/app_router.dart';
 
 class UserProfileView extends StatefulWidget {
   final String userId;
@@ -132,7 +133,7 @@ class _UserProfileViewState extends State<UserProfileView> {
                         title: const Text('举报用户',
                             style: TextStyle(color: Colors.red)),
                         onTap: () {
-                          Get.back();
+                          appRouter.pop();
                           Get.dialog(ReportDialog(
                               targetType: 'user', targetId: widget.userId));
                         },
@@ -269,12 +270,12 @@ class _UserProfileViewState extends State<UserProfileView> {
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
           InkWell(
-            onTap: () => Get.toNamed('/follows/${widget.userId}/following'),
+            onTap: () => appRouter.push('/follows/${widget.userId}/following'),
             child:
                 _statItem("关注", "${_profileData!['following_count'] ?? 0}"),
           ),
           InkWell(
-            onTap: () => Get.toNamed('/follows/${widget.userId}/followers'),
+            onTap: () => appRouter.push('/follows/${widget.userId}/followers'),
             child:
                 _statItem("粉丝", "${_profileData!['followers_count'] ?? 0}"),
           ),
@@ -335,8 +336,7 @@ class _UserProfileViewState extends State<UserProfileView> {
             itemBuilder: (context, index) {
               final article = articles[index];
               return InkWell(
-                onTap: () => Get.toNamed('/article/${article.id}',
-                    arguments: article),
+                onTap: () => appRouter.push('/article/${article.id}', extra: article),
                 child: Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(

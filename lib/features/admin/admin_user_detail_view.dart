@@ -7,6 +7,7 @@ import '../../core/shim_google_fonts.dart';
 import 'package:music_community_mvp/core/widgets/common_dialog.dart';
 import 'admin_controller.dart'; // Import AdminController
 import 'package:music_community_mvp/core/utils/string_extensions.dart';
+import '../../core/router/app_router.dart';
 
 class AdminUserDetailView extends StatefulWidget {
   final String userId;
@@ -225,7 +226,7 @@ class _AdminUserDetailViewState extends State<AdminUserDetailView>
           Get.snackbar('提示', '密码长度至少6位');
           return;
         }
-        Get.back(); // Close dialog first
+        appRouter.pop(); // Close dialog first
         await controller.resetUserPassword(
           widget.userId,
           passwordController.text.trim(),
@@ -504,7 +505,7 @@ class _AdminUserDetailViewState extends State<AdminUserDetailView>
                 content: "确定要删除 $date 的所有日志吗？",
                 isDestructive: true,
                 onConfirm: () {
-                  Get.back();
+                  appRouter.pop();
                   deleteLogsByDate(date);
                 },
               );

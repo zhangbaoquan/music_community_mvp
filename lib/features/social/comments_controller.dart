@@ -4,6 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../player/player_controller.dart';
 import 'comment_model.dart';
 import 'comment_service.dart';
+import '../../core/router/app_router.dart';
 
 class CommentsController extends GetxController {
   final _service = CommentService();
@@ -117,7 +118,7 @@ class CommentsController extends GetxController {
         userNickname: nickname,
       );
       // No need to add manually, Realtime will catch it
-      Get.back(); // Close sheet
+      appRouter.pop(); // Close sheet
       Get.snackbar("发射成功", "你的故事已送达星空 ✨");
     } catch (e) {
       print("Post error: $e");

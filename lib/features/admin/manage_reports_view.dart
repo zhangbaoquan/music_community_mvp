@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:music_community_mvp/features/admin/admin_controller.dart';
 import 'package:timeago/timeago.dart' as timeago;
+import '../../core/router/app_router.dart';
 
 class ManageReportsView extends StatelessWidget {
   const ManageReportsView({super.key});
@@ -210,7 +211,7 @@ class ManageReportsView extends StatelessWidget {
                 title: const Text('下架文章'),
                 subtitle: const Text('仅作者可见，通知作者修改'),
                 onTap: () {
-                  Get.back(); // Close option dialog
+                  appRouter.pop(); // Close option dialog
                   _confirmAction(
                     controller,
                     report,
@@ -227,7 +228,7 @@ class ManageReportsView extends StatelessWidget {
               title: const Text('直接删除'),
               subtitle: const Text('删除内容，通知作者'),
               onTap: () {
-                Get.back();
+                appRouter.pop();
                 _confirmAction(
                   controller,
                   report,
@@ -240,7 +241,7 @@ class ManageReportsView extends StatelessWidget {
           ],
         ),
         actions: [
-          TextButton(onPressed: () => Get.back(), child: const Text("取消")),
+          TextButton(onPressed: () => appRouter.pop(), child: const Text("取消")),
         ],
       ),
     );
@@ -258,10 +259,10 @@ class ManageReportsView extends StatelessWidget {
         title: const Text("确认操作"),
         content: Text(confirmTitle),
         actions: [
-          TextButton(onPressed: () => Get.back(), child: const Text("取消")),
+          TextButton(onPressed: () => appRouter.pop(), child: const Text("取消")),
           TextButton(
             onPressed: () {
-              Get.back(); // Close Confirm Dialog immediately
+              appRouter.pop(); // Close Confirm Dialog immediately
               controller.resolveReport(
                 reportId: report['id'],
                 action: action,

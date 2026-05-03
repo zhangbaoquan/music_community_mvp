@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import '../router/app_router.dart';
 
 class ActionSheetItem {
   final String title;
@@ -46,7 +47,7 @@ void showCustomActionSheet({
             ...actions.map((action) {
               return InkWell(
                 onTap: () {
-                  Get.back(); // Close first
+                  appRouter.pop(); // Close first
                   action.onTap();
                 },
                 child: Container(
@@ -96,7 +97,7 @@ void showCustomActionSheet({
             Container(height: 8, color: Colors.grey[50]),
             // Cancel Button
             InkWell(
-              onTap: () => Get.back(),
+              onTap: () => appRouter.pop(),
               child: Container(
                 padding: const EdgeInsets.symmetric(vertical: 16),
                 width: double.infinity,

@@ -9,6 +9,7 @@ import 'package:music_community_mvp/data/models/article.dart';
 import 'package:music_community_mvp/features/content/article_controller.dart';
 import 'package:music_community_mvp/features/profile/profile_controller.dart';
 import 'package:music_community_mvp/core/utils/string_extensions.dart';
+import '../../../core/router/app_router.dart';
 
 /// 文章列表
 ///
@@ -68,7 +69,7 @@ class ArticleListSection extends StatelessWidget {
             ElevatedButton(
               onPressed: () async {
                 if (await controller.checkActionAllowed('发布文章')) {
-                  Get.toNamed('/editor');
+                  appRouter.push('/editor');
                 }
               },
               style: ElevatedButton.styleFrom(
@@ -104,7 +105,7 @@ class ArticleListSection extends StatelessWidget {
         clipBehavior: Clip.antiAlias,
         child: InkWell(
           onTap: () =>
-              Get.toNamed('/article/${article.id}', arguments: article),
+              appRouter.push('/article/${article.id}', extra: article),
           child: Padding(
             padding: const EdgeInsets.all(16),
             child: Row(
@@ -182,7 +183,7 @@ class ArticleListSection extends StatelessWidget {
                               onTap: () async {
                                 if (await controller
                                     .checkActionAllowed('编辑文章')) {
-                                  Get.toNamed('/editor', arguments: article);
+                                  appRouter.push('/editor', extra: article);
                                 }
                               },
                             ),
@@ -203,7 +204,7 @@ class ArticleListSection extends StatelessWidget {
                                     content: const Text("确定要删除这篇文章吗？操作不可恢复。"),
                                     actions: [
                                       TextButton(
-                                        onPressed: () => Get.back(),
+                                        onPressed: () => appRouter.pop(),
                                         child: const Text("取消"),
                                       ),
                                       TextButton(
@@ -212,7 +213,7 @@ class ArticleListSection extends StatelessWidget {
                                               await articleController
                                                   .deleteArticle(article.id);
                                           if (success) {
-                                            Get.back();
+                                            appRouter.pop();
                                             Get.snackbar("删除成功", "文章已删除");
                                           }
                                         },

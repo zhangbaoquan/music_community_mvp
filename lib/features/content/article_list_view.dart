@@ -6,6 +6,7 @@ import 'package:music_community_mvp/core/utils/string_extensions.dart';
 import '../profile/profile_controller.dart';
 
 import 'package:timeago/timeago.dart' as timeago;
+import '../../core/router/app_router.dart';
 
 class ArticleListView extends StatelessWidget {
   const ArticleListView({super.key});
@@ -19,7 +20,7 @@ class ArticleListView extends StatelessWidget {
       floatingActionButton: FloatingActionButton(
         onPressed: () async {
           if (await Get.find<ProfileController>().checkActionAllowed('发布文章')) {
-            Get.toNamed('/editor');
+            appRouter.push('/editor');
           }
         },
         child: const Icon(Icons.edit_note),
@@ -67,7 +68,7 @@ class _ArticleCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () {
-        Get.toNamed('/article/${article.id}', arguments: article);
+        appRouter.push('/article/${article.id}', extra: article);
       },
       child: Container(
         margin: const EdgeInsets.only(bottom: 20),

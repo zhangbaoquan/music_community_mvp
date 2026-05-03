@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:music_community_mvp/data/models/feedback_model.dart';
 import 'package:music_community_mvp/features/admin/admin_controller.dart';
 import 'package:music_community_mvp/core/utils/string_extensions.dart';
+import '../../core/router/app_router.dart';
 
 class FeedbackDetailView extends StatelessWidget {
   final FeedbackModel feedback;
@@ -22,7 +23,7 @@ class FeedbackDetailView extends StatelessWidget {
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.black),
-          onPressed: () => Get.back(),
+          onPressed: () => appRouter.pop(),
         ),
         titleTextStyle: const TextStyle(
           color: Colors.black,

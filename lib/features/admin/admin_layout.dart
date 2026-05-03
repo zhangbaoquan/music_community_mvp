@@ -10,6 +10,7 @@ import 'manage_diaries_view.dart';
 import 'manage_users_view.dart';
 import 'manage_feedbacks_view.dart';
 import 'manage_reports_view.dart';
+import '../../core/router/app_router.dart';
 
 class AdminLayout extends GetResponsiveView<AdminController> {
   AdminLayout({super.key});
@@ -34,7 +35,7 @@ class AdminLayout extends GetResponsiveView<AdminController> {
         actions: [
           IconButton(
             icon: const Icon(Icons.exit_to_app),
-            onPressed: () => Get.offAllNamed('/home'),
+            onPressed: () => appRouter.go('/home'),
             tooltip: "返回前台",
           ),
         ],
@@ -131,7 +132,7 @@ class AdminLayout extends GetResponsiveView<AdminController> {
       onTap: () {
         controller.switchTab(index);
         if (isMobile) {
-          Get.back(); // Close Drawer
+          appRouter.pop(); // Close Drawer
         }
       },
       trailing:

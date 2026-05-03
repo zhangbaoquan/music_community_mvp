@@ -6,6 +6,7 @@ import '../content/article_controller.dart';
 import '../content/article_detail_view.dart';
 import '../../data/models/article.dart';
 import 'package:music_community_mvp/core/utils/string_extensions.dart';
+import '../../core/router/app_router.dart';
 
 class ManageArticlesView extends StatelessWidget {
   const ManageArticlesView({super.key});
@@ -240,7 +241,7 @@ class ManageArticlesView extends StatelessWidget {
       cancelText: "取消",
       isDestructive: true,
       onConfirm: () async {
-        Get.back(); // close dialog
+        appRouter.pop(); // close dialog
         await controller.deleteArticle(article.id);
       },
     );

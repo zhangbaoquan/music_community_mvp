@@ -5,6 +5,7 @@ import '../../core/widgets/common_dialog.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:timeago/timeago.dart' as timeago;
 import 'package:music_community_mvp/core/utils/string_extensions.dart';
+import '../../core/router/app_router.dart';
 
 class ManageDiariesView extends StatefulWidget {
   const ManageDiariesView({super.key});
@@ -274,7 +275,7 @@ class _ManageDiariesViewState extends State<ManageDiariesView> {
       cancelText: "取消",
       isDestructive: true,
       onConfirm: () async {
-        Get.back(); // close dialog
+        appRouter.pop(); // close dialog
         await deleteDiary(diary['id']);
       },
     );

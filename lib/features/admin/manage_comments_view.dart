@@ -4,6 +4,7 @@ import '../../core/shim_google_fonts.dart';
 import '../../core/widgets/common_dialog.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:timeago/timeago.dart' as timeago;
+import '../../core/router/app_router.dart';
 
 class ManageCommentsView extends StatefulWidget {
   const ManageCommentsView({super.key});
@@ -242,7 +243,7 @@ class _ManageCommentsViewState extends State<ManageCommentsView> {
       cancelText: "取消",
       isDestructive: true,
       onConfirm: () async {
-        Get.back(); // close dialog
+        appRouter.pop(); // close dialog
         await deleteComment(comment['id']);
       },
     );

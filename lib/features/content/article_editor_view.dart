@@ -19,6 +19,7 @@ import 'package:flutter_quill_extensions/flutter_quill_extensions.dart';
 import 'article_controller.dart';
 import 'dart:convert';
 import 'widgets/editor_tag_selector.dart';
+import '../../core/router/app_router.dart';
 
 class ArticleEditorView extends StatefulWidget {
   final Article? article;
@@ -210,7 +211,7 @@ class _ArticleEditorViewState extends State<ArticleEditorView> {
         duration: const Duration(seconds: 2),
       );
       await Future.delayed(const Duration(milliseconds: 500));
-      Get.back(closeOverlays: true);
+      appRouter.pop();
     } else {
       Get.snackbar(
         '发布失败',

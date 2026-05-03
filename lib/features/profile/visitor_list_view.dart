@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:music_community_mvp/features/profile/profile_controller.dart';
 import 'package:timeago/timeago.dart' as timeago;
 import 'package:music_community_mvp/core/utils/string_extensions.dart';
+import '../../core/router/app_router.dart';
 
 class VisitorListView extends StatefulWidget {
   const VisitorListView({super.key});
@@ -102,7 +103,7 @@ class _VisitorItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return InkWell(
-      onTap: () => Get.toNamed('/profile/$userId'),
+      onTap: () => appRouter.push('/profile/$userId'),
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
         child: Row(

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:music_community_mvp/core/shim_google_fonts.dart';
+import '../router/app_router.dart';
 
 class CommonDialog extends StatelessWidget {
   final String title;
@@ -100,7 +101,7 @@ class CommonDialog extends StatelessWidget {
               children: [
                 Expanded(
                   child: TextButton(
-                    onPressed: onCancel ?? () => Get.back(),
+                    onPressed: onCancel ?? () => appRouter.pop(),
                     style: TextButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 14),
                       shape: RoundedRectangleBorder(

@@ -9,6 +9,7 @@ import 'package:music_community_mvp/data/models/article_comment.dart';
 import 'package:music_community_mvp/core/utils/string_extensions.dart';
 import 'package:music_community_mvp/features/content/article_controller.dart';
 import 'package:music_community_mvp/features/safety/report_dialog.dart';
+import '../../../core/router/app_router.dart';
 
 /// 评论预览组件
 ///
@@ -45,7 +46,7 @@ class CommentPreviewItem extends StatelessWidget {
                     style: TextStyle(color: Colors.red),
                   ),
                   onTap: () {
-                    Get.back();
+                    appRouter.pop();
                     Get.dialog(
                       ReportDialog(
                         targetType: 'comment',

@@ -5,6 +5,7 @@ import '../../core/widgets/common_dialog.dart';
 import '../music/music_controller.dart';
 import '../../data/models/song.dart';
 import 'package:music_community_mvp/core/utils/string_extensions.dart';
+import '../../core/router/app_router.dart';
 
 class ManageMusicView extends StatelessWidget {
   const ManageMusicView({super.key});
@@ -246,7 +247,7 @@ class ManageMusicView extends StatelessWidget {
       cancelText: "取消",
       isDestructive: true,
       onConfirm: () async {
-        Get.back(); // close dialog
+        appRouter.pop(); // close dialog
         await controller.deleteSong(song.id);
       },
     );

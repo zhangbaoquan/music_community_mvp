@@ -7,6 +7,7 @@ import 'package:music_community_mvp/data/models/article.dart'; // Needed for nav
 import 'package:supabase_flutter/supabase_flutter.dart'; // To fetch article details if needed
 import 'package:timeago/timeago.dart' as timeago;
 import 'package:music_community_mvp/core/utils/string_extensions.dart';
+import '../../core/router/app_router.dart';
 
 class NotificationView extends StatelessWidget {
   const NotificationView({super.key});
@@ -148,7 +149,7 @@ class _NotificationItemState extends State<_NotificationItem> {
 
     // Navigation
     if (widget.notification.type == 'follow') {
-      Get.toNamed('/profile/${widget.notification.actorId}');
+      appRouter.push('/profile/${widget.notification.actorId}');
       return;
     }
 
@@ -159,7 +160,7 @@ class _NotificationItemState extends State<_NotificationItem> {
           title: const Text("管理员回复"),
           content: Text(widget.notification.content!),
           actions: [
-            TextButton(onPressed: () => Get.back(), child: const Text("关闭")),
+            TextButton(onPressed: () => appRouter.pop(), child: const Text("关闭")),
           ],
         ),
       );
@@ -183,7 +184,7 @@ class _NotificationItemState extends State<_NotificationItem> {
 
         // Close loading dialog if open
         if (Get.isDialogOpen ?? false) {
-          Get.back();
+          appRouter.pop();
         }
 
         if (articleRes != null) {
@@ -204,7 +205,7 @@ class _NotificationItemState extends State<_NotificationItem> {
       } catch (e) {
         print("Error fetching article: $e");
         if (Get.isDialogOpen ?? false) {
-          Get.back();
+          appRouter.pop();
         }
         Get.snackbar('错误', '无法加载内容');
       }
@@ -217,7 +218,7 @@ class _NotificationItemState extends State<_NotificationItem> {
           title: const Text("系统通知", style: TextStyle(color: Colors.red)),
           content: Text(widget.notification.content!),
           actions: [
-            TextButton(onPressed: () => Get.back(), child: const Text("了解")),
+            TextButton(onPressed: () => appRouter.pop(), child: const Text("了解")),
           ],
         ),
       );

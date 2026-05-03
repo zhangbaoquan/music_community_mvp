@@ -7,6 +7,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'comments_controller.dart';
 import 'comment_model.dart';
 import 'story_editor_view.dart';
+import '../../core/router/app_router.dart';
 
 class CommentsSheet extends StatelessWidget {
   const CommentsSheet({super.key});
@@ -59,7 +60,7 @@ class CommentsSheet extends StatelessWidget {
                 ),
                 IconButton(
                   icon: const Icon(Icons.close_rounded, color: Colors.black54),
-                  onPressed: () => Get.back(),
+                  onPressed: () => appRouter.pop(),
                 ),
               ],
             ),
