@@ -117,8 +117,9 @@ class _ManageUsersViewState extends State<ManageUsersView> {
         final avatarUrl = user['avatar_url'] as String?;
         final username = user['username'] ?? "Unknown";
         final email = user['email'] as String?;
+        final timeString = user['last_sign_in_at'] ?? user['updated_at'] ?? user['created_at'];
         final time =
-            DateTime.tryParse(user['updated_at'].toString()) ?? DateTime.now();
+            DateTime.tryParse(timeString?.toString() ?? '') ?? DateTime.now();
         final status = user['status'] ?? 'active';
         final isBanned = status == 'banned';
 
@@ -182,8 +183,9 @@ class _ManageUsersViewState extends State<ManageUsersView> {
     final username = user['username'] ?? "Unknown";
     final email = user['email'] as String?;
     final signature = user['signature'] ?? "-";
+    final timeString = user['last_sign_in_at'] ?? user['updated_at'] ?? user['created_at'];
     final time =
-        DateTime.tryParse(user['updated_at'].toString()) ?? DateTime.now();
+        DateTime.tryParse(timeString?.toString() ?? '') ?? DateTime.now();
     final status = user['status'] ?? 'active';
     final isBanned = status == 'banned';
 

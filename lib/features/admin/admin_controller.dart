@@ -81,9 +81,7 @@ class AdminController extends GetxController {
     try {
       isLoadingUsers.value = true;
       final response = await Supabase.instance.client
-          .from('profiles')
-          .select()
-          .order('updated_at', ascending: false);
+          .rpc('admin_get_users');
 
       users.value = List<Map<String, dynamic>>.from(response);
     } catch (e) {
