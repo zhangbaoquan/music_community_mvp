@@ -13,6 +13,7 @@
 *   **HTTPS 与高并发网络分发防卫战**：
     *   *遭遇战*：前期采取直连 HTTPS 和 Cloudflare 方案，遭遇严重的国际出口防火墙 (GFW) 封杀及神秘的网关握手错误 `ERR_CONNECTION_CLOSED`。
     *   *决胜演进架构*：全面拥抱本地云骨干网络调度。撤销 Cloudflare 流量代理代理（仅依赖其硬解根域名的高级 CNAME Flattening 特性作纯 DNS） ➜ 全面切换**腾讯云 CDN 泛边缘加速节点**部署 ➜ 通过 Let's Encrypt / TrustAsia 通配证书完成 CDN 前置 SSL 卸载。
+    *   *(2026-05-19 基建补丁)*：为解决跨平台 SSL 证书自动续期验证失败的痛点，已将 DNS 彻底从 Cloudflare 迁回腾讯云 DNSPod，实现域名/CDN/SSL证书统一全链路闭环，Cloudflare 已完全废弃。
     *   *网关追猎计划*：通过分析底层 CDN 的请求 Header 透传链路（寻找 `X-Forwarded-For`），重构了部署在国内计算节点的应用层 Nginx 防火墙规则（删掉原有 CF IP 白名单，更新安全拦截准入及针对 TCP 等级恶意抓取的并发 `limit_conn` 锁死策略），完全溯源出 C端真实操作 IP。
 *   **API 阻断与框架依赖降级风波**：
     *   排查并紧急处理由于 Supabase 官方 SDK（由于 Flutter 本地 pub 版本更新差异），由 `.count(CountOption.exact)` 所引发的底层返回值改变报错（从类对象变成了直切纯 `int` 基础结构）。直接在 [profile_controller.dart](cci:7://file:///Users/zhangbaoquan/Documents/Work/Porject/music_community_mvp/lib/features/profile/profile_controller.dart:0:0-0:0) 切割赋值语句避免系统 Panic。

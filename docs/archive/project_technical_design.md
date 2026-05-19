@@ -70,8 +70,8 @@
 ### 4.3 边缘网络加速与回源链路演进方案
 *   **阶段一尝试（Cloudflare）：** 顶层设计为 DNS + Cloudflare (代理与 SSL 卸载) + Origin 服务器。
     *   *遭遇瓶颈：* 因 Cloudflare 海外非企业版节点长期受到国际互联网骨干线路封锁的干扰（GFW 随机阻断机制），大量出现 SSL Handshake 未知终止导致 `ERR_CONNECTION_CLOSED` 及反复白屏重连事件。国内终端用户可用性受到严重破坏。
-*   **阶段二落地（国内头部 CDN 架构迁移 —— 最终重构方案）：**
-    *   **解析扁平化与剥离：** Cloudflare 仅保留底层 DNS 调度权威解析服务，停止其网关代理层（关闭橙色云）。使用 Cloudflare 提供的 CNAME Flattening 高级特性，合法地将根域名 `@` CNAME 到复杂的第三方网关池。
+    *   *过渡方案 (解析扁平化)：* Cloudflare 仅保留底层 DNS 调度权威解析服务，停止其网关代理层（关闭橙色云）。使用 Cloudflare 提供的 CNAME Flattening 高级特性，合法地将根域名 `@` CNAME 到复杂的第三方网关池。
+    *   **最终演进 (彻底剥离 Cloudflare)：** (2026-05-19 更新) 为解决跨平台 SSL 证书自动续期验证失败、运维复杂度高的问题，最终将域名控制权整体迁回腾讯云 DNSPod，实现“域名-DNS-CDN-证书”的全链路闭环。
     *   **就近边缘计算节点接入：** 启用了国内**腾讯云 CDN**进行全国全链路节点内容加速与分发 (`dnsv1.com`)。从根本物理层面上清除了跨境数据包丢失及大延迟带来的握手崩溃。
     *   **HTTPS 零成本前置卸载：** 使用腾讯云控制台内置流程直接申请 TrustAsia (Digicert) 免费通配版 SSL 证书并部署于 CDN 流量入口侧。
     *   **网络源真实性反穿透 (Origin Real-IP Bypass)：** 重写 Nginx `set_real_ip_from` 白名单配置块。清空海外网关名单。基于腾讯云提供的 `X-Forwarded-For` 将请求追踪链提取能力赋予 Nginx 上游，确保社区后台用户行为抓取的溯源精确无误。
